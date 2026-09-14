@@ -1,0 +1,49 @@
+import type { RoleId } from "./taxonomy"
+
+/**
+ * Suggested skills per craft. Suggestions only - the picker accepts anything,
+ * because a curated list always lags what people actually do. What matters is
+ * that the same string is reused, so the home-page skill filter has something
+ * to group on.
+ */
+export const SKILL_SUGGESTIONS: Record<RoleId, string[]> = {
+  design: [
+    "Design systems", "Figma", "Prototyping", "Interaction design", "Accessibility",
+    "Usability testing", "Design ops", "Motion", "Brand", "Information architecture",
+    "Data visualisation", "Service design",
+  ],
+  engineering: [
+    "TypeScript", "React", "Go", "Rust", "Java", "Python", "Kubernetes", "Postgres",
+    "Kafka", "Distributed systems", "Performance", "API design", "Event sourcing",
+    "React Native", "C++", "GraphQL",
+  ],
+  product: [
+    "Discovery", "Product strategy", "Roadmapping", "Pricing", "PLG", "Experimentation",
+    "Stakeholder management", "Marketplaces", "B2B SaaS", "Analytics", "Zero-to-one",
+  ],
+  data: [
+    "Python", "PyTorch", "SQL", "dbt", "Airflow", "Feature engineering", "Evaluation",
+    "Graph ML", "Forecasting", "Causal inference", "MLOps", "Spark", "Experiment design",
+  ],
+  infra: [
+    "Terraform", "Kubernetes", "AWS", "GCP", "Observability", "CI/CD", "SRE",
+    "Cost optimisation", "Incident response", "Platform engineering", "Networking", "Security",
+  ],
+  quality: [
+    "Playwright", "Cypress", "Contract testing", "Test strategy", "Performance testing",
+    "CI/CD", "Accessibility testing", "Exploratory testing", "Automation architecture",
+  ],
+  growth: [
+    "Lifecycle marketing", "Paid acquisition", "SEO", "Experimentation", "Attribution",
+    "Onboarding", "Retention", "Content", "Community", "Analytics",
+  ],
+  research: [
+    "Contextual inquiry", "Usability testing", "Diary studies", "Survey design",
+    "Synthesis", "ResearchOps", "Ethnography", "Concept testing", "Accessibility research",
+  ],
+}
+
+/** Every suggestion, de-duplicated - used for the free-text picker's autocomplete. */
+export const ALL_SKILLS: string[] = [
+  ...new Set(Object.values(SKILL_SUGGESTIONS).flat()),
+].sort((a, b) => a.localeCompare(b))

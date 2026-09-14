@@ -1,0 +1,593 @@
+import { useMemo, useState } from "react"
+import { PanelShell, type PanelNavItem } from "@/components/panel/PanelShell"
+import { WorkStarter } from "@/components/panel/WorkStarter"
+import { TrafficPanel } from "@/components/panel/TrafficPanel"
+import { WorkEditor } from "@/components/panel/WorkEditor"
+import { WorkCover } from "@/components/work/WorkCover"
+import { Button } from "@/components/ui/Button"
+import { Badge } from "@/components/ui/Badge"
+import { Avatar } from "@/components/ui/Avatar"
+import { ChipGroup, Field, SelectInput, TextArea, TextInput } from "@/components/ui/Field"
+import { ArrowUpRight, Check, Plus } from "@/components/ui/Icon"
+import { emptyDraft, TOPIC_QUOTA, topicUsage, type Account, type WorkDraft, type WorkMode } from "@/data/account"
+import { CATEGORIES, ROLES, roleById, type CategoryId, type RoleId } from "@/data/taxonomy"
+import { draftCompleteness } from "@/lib/workMapper"
+import { totalProfileViews, totalWorkOpens } from "@/data/traffic"
+import { useAccount } from "@/hooks/useAccount"
+import type { Author } from "@/lib/authors"
+import { navigate, type Route } from "@/lib/router"
+import { cn, initialsOf } from "@/lib/utils"
+
+const CATEGORY_OPTIONS = CATEGORIES.map((c) => ({ id: c.id, label: c.label }))
+
+interface PanelPageProps {
+  route: Route
+  author: Author
+  onJoin: () => void
+}
+
+export function PanelPage({ route, author, onJoin }: PanelPageProps) {
+  const { account, drafts, traffic, saveDraft, deleteDraft, updateProfile } = useAccount()
+
+  if (!account) return <SignedOut onJoin={onJoin} />
+
+  const section = route.segments[1] ?? "overview"
+  const published = drafts.filter((d) => d.published).length
+
+  const items: PanelNavItem[] = [
+    { id: "overview", label: "Overview", href: "/panel" },
+    { id: "profile", label: "Profile", href: "/panel/profile" },
+    {
+      id: "portfolio",
+      label: "Portfolio",
+      href: "/panel/portfolio",
+      badge: drafts.length ? `${published}/${drafts.length}` : undefined,
+    },
+    { id: "traffic", label: "Traffic", href: "/panel/traffic" },
+  ]
+
+  if (section === "profile") {
+    return (
+      <PanelShell items={items} activeId="profile" title="Profile" description="How you appear in the directory.">
+        <ProfileForm account={account} onSave={updateProfile} />
+      </PanelShell>
+    )
+  }
+
+  if (section === "traffic") {
+    return (
+      <PanelShell
+        items={items}
+        activeId="traffic"
+        title="Traffic"
+        description="Who is looking, and at what."
+      >
+        <TrafficPanel traffic={traffic} drafts={drafts} />
+      </PanelShell>
+    )
+  }
+
+  if (section === "portfolio") {
+    return (
+      <PortfolioSection
+        route={route}
+        items={items}
+        account={account}
+        author={author}
+        drafts={drafts}
+        onSave={saveDraft}
+        onDelete={deleteDraft}
+      />
+    )
+  }
+
+  return (
+    <PanelShell
+      items={items}
+      activeId="overview"
+      title={`Hey, ${account.name.split(" ")[0]}`}
+      description="Your profile is live in this browser. Fill it in and publish work to be findable."
+      action={
+        <Button onClick={() => navigate("/panel/portfolio/new")}>
+          <Plus size={16} />
+          Add work
+        </Button>
+      }
+    >
+      <Overview
+        account={account}
+        drafts={drafts}
+        author={author}
+        profileViews={totalProfileViews(traffic)}
+        workOpens={totalWorkOpens(traffic)}
+      />
+    </PanelShell>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+
+function SignedOut({ onJoin }: { onJoin: () => void }) {
+  return (
+    <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-5 text-center">
+      <h1 className="display text-3xl">No profile in this browser</h1>
+      <p className="mt-3 text-sm leading-relaxed text-muted">
+        The panel opens once you create a profile. Everything is stored locally - there is no
+        server, so nothing to sign into.
+      </p>
+      <div className="mt-7 flex flex-wrap justify-center gap-3">
+        <Button onClick={onJoin}>Create a profile</Button>
+        <Button variant="outline" onClick={() => navigate("/")}>
+          Back to the directory
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+const PROFILE_CHECKS: Array<{ label: string; test: (a: Account) => boolean }> = [
+  { label: "Name and city", test: (a) => Boolean(a.name && a.location) },
+  { label: "Craft and title", test: (a) => Boolean(a.role && a.title) },
+  { label: "At least one topic", test: (a) => a.topics.length > 0 },
+  { label: "Portfolio link", test: (a) => Boolean(a.portfolio.trim()) },
+  { label: "One line about your work", test: (a) => a.pitch.trim().length >= 20 },
+]
+
+function Overview({
+  account,
+  drafts,
+  author,
+  profileViews,
+  workOpens,
+}: {
+  account: Account
+  drafts: WorkDraft[]
+  author: Author
+  profileViews: number
+  workOpens: number
+}) {
+  const done = PROFILE_CHECKS.filter((check) => check.test(account))
+  const percent = Math.round((done.length / PROFILE_CHECKS.length) * 100)
+  const published = drafts.filter((d) => d.published)
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="flex flex-col gap-6">
+        <section className="rounded-card border border-line bg-card p-6">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="font-display text-base font-semibold tracking-tight">
+              Profile strength
+            </h2>
+            <span className="font-display text-2xl font-bold tracking-tight">{percent}%</span>
+          </div>
+          <div className="mt-4 h-2 overflow-hidden rounded-pill bg-paper-2">
+            <div
+              className="h-full rounded-pill bg-ink transition-[width] duration-500 ease-pop"
+              style={{ width: `${percent}%` }}
+            />
+          </div>
+          <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+            {PROFILE_CHECKS.map((check) => {
+              const ok = check.test(account)
+              return (
+                <li
+                  key={check.label}
+                  className={cn("flex items-center gap-2 text-sm", ok ? "text-ink" : "text-muted")}
+                >
+                  <span
+                    className={cn(
+                      "grid size-5 shrink-0 place-items-center rounded-full",
+                      ok ? "bg-pop-lime text-ink" : "border border-dashed border-ink/25",
+                    )}
+                  >
+                    {ok && <Check size={12} />}
+                  </span>
+                  {check.label}
+                </li>
+              )
+            })}
+          </ul>
+          {percent < 100 && (
+            <Button variant="outline" size="sm" className="mt-5" onClick={() => navigate("/panel/profile")}>
+              Finish your profile
+            </Button>
+          )}
+        </section>
+
+        <section className="rounded-card border border-line bg-card p-6">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="font-display text-base font-semibold tracking-tight">Your work</h2>
+            <Button size="sm" variant="ghost" onClick={() => navigate("/panel/portfolio")}>
+              Manage
+              <ArrowUpRight size={15} />
+            </Button>
+          </div>
+
+          {drafts.length === 0 ? (
+            <div className="mt-5 rounded-2xl border border-dashed border-ink/20 px-5 py-10 text-center">
+              <p className="font-display text-sm font-semibold text-ink">Nothing published yet</p>
+              <p className="mx-auto mt-2 max-w-xs text-xs leading-relaxed text-muted">
+                A profile without work is a business card. Add one case study - the form asks the
+                right questions for your craft.
+              </p>
+              <Button size="sm" className="mt-5" onClick={() => navigate("/panel/portfolio/new")}>
+                <Plus size={15} />
+                Add your first entry
+              </Button>
+            </div>
+          ) : (
+            <dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {[
+                { label: "Published", value: published.length },
+                { label: "Drafts", value: drafts.length - published.length },
+                { label: "Profile views", value: profileViews },
+                { label: "Opens", value: workOpens },
+              ].map((stat) => (
+                <div key={stat.label} className="rounded-2xl bg-paper px-4 py-4">
+                  <dt className="font-display text-[0.6875rem] tracking-[0.14em] uppercase text-muted">
+                    {stat.label}
+                  </dt>
+                  <dd className="mt-1 font-display text-2xl font-bold tracking-tight">{stat.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </section>
+      </div>
+
+      {/* The card as other people will see it - the thing all of this produces. */}
+      <aside className="lg:sticky lg:top-24 lg:self-start">
+        <p className="eyebrow">Your directory card</p>
+        <article className="mt-4 rounded-card border border-line bg-card p-5">
+          <div className="flex items-start gap-4">
+            <span className="grid size-14 shrink-0 place-items-center rounded-[30%] bg-ink font-display text-lg font-bold text-paper">
+              {initialsOf(account.name)}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate font-display text-base font-semibold text-ink">{account.name}</p>
+              <p className="truncate text-sm text-ink-2">{account.title || "Add your title"}</p>
+              <p className="mt-1 truncate text-xs text-muted">
+                {account.location} · {account.years || "?"} yrs
+              </p>
+            </div>
+          </div>
+          <ul className="mt-4 flex flex-wrap gap-1.5">
+            <li>
+              <Badge className="border-ink/20 bg-paper-2">{roleById(account.role).label}</Badge>
+            </li>
+            {account.topics.map((topic) => (
+              <li key={topic}>
+                <Badge>{CATEGORIES.find((c) => c.id === topic)?.label}</Badge>
+              </li>
+            ))}
+          </ul>
+          {account.pitch.trim() && (
+            <p className="mt-4 border-t border-line pt-4 text-sm leading-relaxed text-ink-2">
+              “{account.pitch.trim()}”
+            </p>
+          )}
+        </article>
+        <div className="mt-3 flex items-center gap-2 text-xs text-muted">
+          <Avatar src={author.photo} name={author.name} className="size-5 rounded-full text-[0.5rem]" />
+          Signed in as {account.email}
+        </div>
+      </aside>
+    </div>
+  )
+}
+
+function ProfileForm({
+  account,
+  onSave,
+}: {
+  account: Account
+  onSave: (patch: Partial<Account>) => void
+}) {
+  const [values, setValues] = useState<Account>(account)
+  const [saved, setSaved] = useState(false)
+
+  function set<K extends keyof Account>(key: K, value: Account[K]) {
+    setValues((prev) => ({ ...prev, [key]: value }))
+    setSaved(false)
+  }
+
+  return (
+    <form
+      className="grid max-w-2xl gap-5"
+      onSubmit={(event) => {
+        event.preventDefault()
+        onSave(values)
+        setSaved(true)
+      }}
+    >
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Full name" required>
+          {({ id, invalid }) => (
+            <TextInput id={id} invalid={invalid} value={values.name} onChange={(e) => set("name", e.target.value)} />
+          )}
+        </Field>
+        <Field label="Email">
+          {({ id, invalid }) => (
+            <TextInput id={id} type="email" invalid={invalid} value={values.email} onChange={(e) => set("email", e.target.value)} />
+          )}
+        </Field>
+        <Field label="City & country">
+          {({ id, invalid }) => (
+            <TextInput id={id} invalid={invalid} value={values.location} onChange={(e) => set("location", e.target.value)} />
+          )}
+        </Field>
+        <Field label="Years of experience">
+          {({ id, invalid }) => (
+            <TextInput id={id} type="number" min={0} max={60} invalid={invalid} value={values.years} onChange={(e) => set("years", e.target.value)} />
+          )}
+        </Field>
+        <Field label="Craft">
+          {({ id, invalid }) => (
+            <SelectInput id={id} invalid={invalid} value={values.role} onChange={(e) => set("role", e.target.value as RoleId)}>
+              {ROLES.map((role) => (
+                <option key={role.id} value={role.id}>
+                  {role.label}
+                </option>
+              ))}
+            </SelectInput>
+          )}
+        </Field>
+        <Field label="Current title">
+          {({ id, invalid }) => (
+            <TextInput id={id} invalid={invalid} value={values.title} onChange={(e) => set("title", e.target.value)} />
+          )}
+        </Field>
+      </div>
+
+      <ChipGroup
+        legend="Topics"
+        options={CATEGORY_OPTIONS}
+        value={values.topics}
+        onToggle={(id: CategoryId) =>
+          set(
+            "topics",
+            values.topics.includes(id)
+              ? values.topics.filter((t) => t !== id)
+              : [...values.topics, id],
+          )
+        }
+        hint="The worlds you have really shipped in."
+      />
+
+      <Field label="Portfolio or profile link" hint="Site, GitHub, Dribbble - whatever shows the work.">
+        {({ id, invalid }) => (
+          <TextInput id={id} type="url" invalid={invalid} value={values.portfolio} placeholder="https://" onChange={(e) => set("portfolio", e.target.value)} />
+        )}
+      </Field>
+
+      <Field label="One line about your work">
+        {({ id, invalid }) => (
+          <TextArea id={id} invalid={invalid} rows={3} value={values.pitch} onChange={(e) => set("pitch", e.target.value)} />
+        )}
+      </Field>
+
+      <div className="flex items-center gap-4 border-t border-line pt-6">
+        <Button type="submit">Save profile</Button>
+        {saved && (
+          <p role="status" className="flex items-center gap-1.5 font-display text-sm font-medium text-ink-2">
+            <Check size={15} className="text-pop-violet" />
+            Saved to this browser.
+          </p>
+        )}
+      </div>
+    </form>
+  )
+}
+
+function PortfolioSection({
+  route,
+  items,
+  account,
+  author,
+  drafts,
+  onSave,
+  onDelete,
+}: {
+  route: Route
+  items: PanelNavItem[]
+  account: Account
+  author: Author
+  drafts: WorkDraft[]
+  onSave: (draft: WorkDraft) => void
+  onDelete: (id: string) => void
+}) {
+  const target = route.segments[2]
+  const existing = useMemo(() => drafts.find((d) => d.id === target), [drafts, target])
+
+  // Format and craft for a brand-new entry, before a draft object exists.
+  const [mode, setMode] = useState<WorkMode>("template")
+  const [newDraft, setNewDraft] = useState<WorkDraft | null>(null)
+
+  // This component stays mounted across /new -> /:id, so an unreset draft
+  // would reopen the previous entry the next time someone taps "Add work".
+  const [lastTarget, setLastTarget] = useState(target)
+  if (target !== lastTarget) {
+    setLastTarget(target)
+    if (target === "new") {
+      setNewDraft(null)
+      setMode("template")
+    }
+  }
+
+  if (target === "new") {
+    return (
+      <PanelShell
+        items={items}
+        activeId="portfolio"
+        title={newDraft ? "New entry" : "Add work"}
+        description={
+          newDraft
+            ? "Fill in what you can - you can save a draft and come back."
+            : "Two choices before you start writing."
+        }
+      >
+        {newDraft ? (
+          <WorkEditor
+            draft={newDraft}
+            account={account}
+            author={author}
+            siblings={drafts}
+            onRestart={() => setNewDraft(null)}
+            onSave={(next) => {
+              onSave(next)
+              navigate(`/panel/portfolio/${next.id}`)
+            }}
+          />
+        ) : (
+          <>
+            <WorkStarter
+              mode={mode}
+              role={null}
+              profileRole={account.role}
+              onModeChange={setMode}
+              onRoleSelect={(role) => setNewDraft(emptyDraft(role, mode))}
+            />
+            <Button variant="ghost" className="mt-8" onClick={() => navigate("/panel/portfolio")}>
+              Cancel
+            </Button>
+          </>
+        )}
+      </PanelShell>
+    )
+  }
+
+  if (existing) {
+    return (
+      <PanelShell
+        items={items}
+        activeId="portfolio"
+        title={existing.values.title || "Untitled entry"}
+        description={`${roleById(existing.role).label} · ${
+          existing.mode === "template" ? "guided template" : "own structure"
+        } · ${existing.published ? "published" : "draft"}`}
+      >
+        <WorkEditor
+          draft={existing}
+          account={account}
+          author={author}
+          siblings={drafts}
+          onRestart={() => navigate("/panel/portfolio/new")}
+          onSave={(next) => onSave(next)}
+          onDelete={() => {
+            onDelete(existing.id)
+            navigate("/panel/portfolio")
+          }}
+        />
+      </PanelShell>
+    )
+  }
+
+  const usage = topicUsage(drafts)
+  const atCap = CATEGORIES.filter((category) => (usage[category.id] ?? 0) >= TOPIC_QUOTA)
+
+  return (
+    <PanelShell
+      items={items}
+      activeId="portfolio"
+      title="Portfolio"
+      description="Each entry carries its own craft and format - they do not have to match your profile."
+      action={
+        <Button onClick={() => navigate("/panel/portfolio/new")}>
+          <Plus size={16} />
+          Add work
+        </Button>
+      }
+    >
+      {atCap.length > 0 && (
+        <p className="mb-5 rounded-card border border-dashed border-ink/20 px-5 py-3.5 text-xs leading-relaxed text-muted">
+          <span className="font-display font-semibold text-ink">Topic quota reached</span> for{" "}
+          {atCap.map((category) => category.label).join(", ")}. Two published entries per topic -
+          unpublish one to make room.
+        </p>
+      )}
+
+      {drafts.length === 0 ? (
+        <div className="rounded-card border border-dashed border-ink/20 bg-card px-6 py-16 text-center">
+          <h2 className="display text-xl">No entries yet</h2>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
+            Start with the piece of work you would actually talk about in an interview.
+          </p>
+          <Button className="mt-6" onClick={() => navigate("/panel/portfolio/new")}>
+            <Plus size={16} />
+            Add your first entry
+          </Button>
+        </div>
+      ) : (
+        <ul className="grid gap-3">
+          {drafts.map((draft) => {
+            const percent = Math.round(draftCompleteness(draft) * 100)
+            return (
+              <li key={draft.id}>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/panel/portfolio/${draft.id}`)}
+                  className="group flex w-full cursor-pointer flex-col gap-3 rounded-card border border-line bg-card p-5 text-left transition-all duration-250 ease-pop hover:-translate-y-0.5 hover:border-ink/30 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="flex min-w-0 items-center gap-4">
+                    {draft.thumbnail ? (
+                      <img
+                        src={draft.thumbnail}
+                        alt=""
+                        className="hidden aspect-[16/9] w-28 shrink-0 rounded-xl border border-line object-cover sm:block"
+                      />
+                    ) : (
+                      <WorkCover
+                        seed={draft.id}
+                        role={draft.role}
+                        className="hidden aspect-[16/9] w-28 shrink-0 rounded-xl sm:block"
+                      />
+                    )}
+
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge className="border-ink/20 bg-paper-2">
+                          {roleById(draft.role).label}
+                        </Badge>
+                        <Badge
+                          className={
+                            draft.published
+                              ? "border-ink/20 bg-pop-lime text-ink"
+                              : "border-dashed border-ink/25 bg-card"
+                          }
+                        >
+                          {draft.published ? "Published" : "Draft"}
+                        </Badge>
+                        {draft.mode === "custom" && <Badge>Own structure</Badge>}
+                      </div>
+                      <p className="mt-2.5 truncate font-display text-base font-semibold text-ink">
+                        {draft.values.title || "Untitled entry"}
+                      </p>
+                      <p className="mt-1 truncate text-sm text-muted">
+                        {draft.values.summary || "No summary yet"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-4">
+                    <div className="w-28">
+                      <div className="h-1.5 overflow-hidden rounded-pill bg-paper-2">
+                        <div className="h-full rounded-pill bg-ink" style={{ width: `${percent}%` }} />
+                      </div>
+                      <p className="mt-1.5 font-display text-[0.6875rem] text-muted">
+                        {percent}% complete
+                      </p>
+                    </div>
+                    <ArrowUpRight
+                      size={18}
+                      className="text-muted transition-colors duration-200 group-hover:text-ink"
+                    />
+                  </div>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </PanelShell>
+  )
+}

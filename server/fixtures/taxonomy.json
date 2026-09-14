@@ -1,0 +1,209 @@
+{
+  "roles": [
+    {
+      "id": "design",
+      "label": "Designer",
+      "blurb": "Product, brand, motion"
+    },
+    {
+      "id": "engineering",
+      "label": "Developer",
+      "blurb": "Frontend, backend, mobile"
+    },
+    {
+      "id": "product",
+      "label": "Product",
+      "blurb": "PM, owner, strategy"
+    },
+    {
+      "id": "data",
+      "label": "Data & AI",
+      "blurb": "ML, analytics, research"
+    },
+    {
+      "id": "infra",
+      "label": "DevOps",
+      "blurb": "Platform, SRE, cloud"
+    },
+    {
+      "id": "quality",
+      "label": "QA",
+      "blurb": "Automation, reliability"
+    },
+    {
+      "id": "growth",
+      "label": "Growth",
+      "blurb": "Marketing, lifecycle"
+    },
+    {
+      "id": "research",
+      "label": "Research",
+      "blurb": "UXR, discovery"
+    }
+  ],
+  "topics": [
+    {
+      "id": "saas",
+      "label": "SaaS",
+      "tint": "bg-pop-lime",
+      "kind": "industry"
+    },
+    {
+      "id": "ai",
+      "label": "AI",
+      "tint": "bg-pop-violet text-paper",
+      "kind": "industry"
+    },
+    {
+      "id": "leadership",
+      "label": "Leadership",
+      "tint": "bg-pop-pink",
+      "kind": "practice"
+    },
+    {
+      "id": "banking",
+      "label": "Banking",
+      "tint": "bg-pop-sky",
+      "kind": "industry"
+    },
+    {
+      "id": "finance",
+      "label": "Finance",
+      "tint": "bg-pop-tangerine",
+      "kind": "industry"
+    },
+    {
+      "id": "erp",
+      "label": "ERP",
+      "tint": "bg-ink",
+      "kind": "industry"
+    },
+    {
+      "id": "energy",
+      "label": "Gas & Oil",
+      "tint": "bg-pop-lime",
+      "kind": "industry"
+    },
+    {
+      "id": "mobility",
+      "label": "Transportation",
+      "tint": "bg-pop-sky",
+      "kind": "industry"
+    },
+    {
+      "id": "healthtech",
+      "label": "Health Tech",
+      "tint": "bg-pop-pink",
+      "kind": "industry",
+      "extra": true
+    },
+    {
+      "id": "gaming",
+      "label": "Gaming",
+      "tint": "bg-pop-violet text-paper",
+      "kind": "industry",
+      "extra": true
+    },
+    {
+      "id": "climate",
+      "label": "Climate",
+      "tint": "bg-pop-lime",
+      "kind": "industry",
+      "extra": true
+    },
+    {
+      "id": "security",
+      "label": "Cybersecurity",
+      "tint": "bg-ink",
+      "kind": "industry",
+      "extra": true
+    },
+    {
+      "id": "design-ops",
+      "label": "Design Ops",
+      "tint": "bg-pop-pink",
+      "kind": "practice",
+      "extra": true
+    },
+    {
+      "id": "devex",
+      "label": "Developer Experience",
+      "tint": "bg-pop-sky",
+      "kind": "practice",
+      "extra": true
+    },
+    {
+      "id": "accessibility",
+      "label": "Accessibility",
+      "tint": "bg-pop-lime",
+      "kind": "practice",
+      "extra": true
+    },
+    {
+      "id": "hiring",
+      "label": "Hiring & Teams",
+      "tint": "bg-pop-tangerine",
+      "kind": "practice",
+      "extra": true
+    },
+    {
+      "id": "reliability",
+      "label": "Reliability",
+      "tint": "bg-ink",
+      "kind": "practice",
+      "extra": true
+    }
+  ],
+  "businessModels": [
+    {
+      "id": "b2b-saas",
+      "label": "B2B SaaS",
+      "blurb": "Subscription software sold to companies"
+    },
+    {
+      "id": "consumer",
+      "label": "Consumer",
+      "blurb": "Sold to, or used directly by, individuals"
+    },
+    {
+      "id": "marketplace",
+      "label": "Marketplace",
+      "blurb": "Two-sided supply and demand"
+    },
+    {
+      "id": "enterprise",
+      "label": "Enterprise / on-prem",
+      "blurb": "Licensed, long cycles, deployed per client"
+    },
+    {
+      "id": "platform",
+      "label": "Internal platform",
+      "blurb": "Built for other teams inside the company"
+    },
+    {
+      "id": "ecommerce",
+      "label": "E-commerce",
+      "blurb": "Direct sale of goods"
+    },
+    {
+      "id": "agency",
+      "label": "Agency / client work",
+      "blurb": "Delivered for an external client"
+    },
+    {
+      "id": "open-source",
+      "label": "Open source",
+      "blurb": "Public code, community governance"
+    },
+    {
+      "id": "deep-tech",
+      "label": "Deep tech / R&D",
+      "blurb": "Research-led, long horizon"
+    },
+    {
+      "id": "public",
+      "label": "Public sector / non-profit",
+      "blurb": "Funded by mandate, not margin"
+    }
+  ]
+}

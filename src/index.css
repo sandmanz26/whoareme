@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ *
+ * Design tokens - "whoareyou"
+ * Editorial minimalism with pop-culture accents.
+ * Ink on warm paper, one loud accent, three supporting pops.
+ * ------------------------------------------------------------------ */
+@theme {
+ --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+ --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Neutrals */
+ --color-ink: #0b0b0f;
+ --color-ink-2: #2a2a31;
+ --color-muted: #6b6b76;
+ --color-paper: #f5f4ef;
+ --color-paper-2: #ecebe4;
+ --color-card: #ffffff;
+ --color-line: #e2e0d7;
+ --color-line-strong: #0b0b0f;
+
+  /* Pops */
+ --color-pop-pink: #ff4f87;
+ --color-pop-lime: #d6ff4f;
+ --color-pop-violet: #6c4cf1;
+ --color-pop-sky: #4fd1ff;
+ --color-pop-tangerine: #ff8a3d;
+
+  /* Radii - soft, not bubbly */
+ --radius-card: 1.25rem;
+ --radius-pill: 999px;
+
+  /* Motion */
+ --ease-pop: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+ -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+    font-synthesis-weight: none;
+  }
+
+  /* One consistent, visible focus treatment across the whole product. */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-pop-violet;
+  }
+
+  ::selection {
+    @apply bg-pop-lime text-ink;
+  }
+}
+
+@layer components {
+  /* Headlines are the loudest thing on the page: tight, dense, confident. */
+  .display {
+    @apply font-display font-bold tracking-[-0.035em];
+    line-height: 0.92;
+  }
+
+  .eyebrow {
+    @apply font-display text-[0.6875rem] font-medium uppercase tracking-[0.18em] text-muted;
+  }
+
+  .hairline {
+    @apply border-line;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Hero orbit
+ * A ring spins; each portrait counter-spins at the same rate so faces
+ * stay upright. Radius is a single custom property so the whole system
+ * scales with the viewport.
+ * ------------------------------------------------------------------ */
+@keyframes wru-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes wru-spin-reverse {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+@keyframes wru-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
+@keyframes wru-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes wru-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes wru-pop-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.orbit-ring {
+  position: absolute;
+  inset: 0;
+  animation: wru-spin var(--orbit-duration, 56s) linear infinite;
+}
+
+.orbit-ring[data-direction="ccw"] {
+  animation-name: wru-spin-reverse;
+}
+
+.orbit-slot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: calc(var(--slot-size) / -2);
+  margin-left: calc(var(--slot-size) / -2);
+  width: var(--slot-size);
+  height: var(--slot-size);
+  transform: rotate(var(--angle)) translateX(var(--orbit-radius)) rotate(calc(var(--angle) * -1));
+}
+
+.orbit-upright {
+  width: 100%;
+  height: 100%;
+  animation: wru-spin-reverse var(--orbit-duration, 56s) linear infinite;
+}
+
+.orbit-ring[data-direction="ccw"] .orbit-upright {
+  animation-name: wru-spin;
+}
+
+.marquee-track {
+  animation: wru-marquee var(--marquee-duration, 40s) linear infinite;
+}
+
+.animate-fade-up {
+  animation: wru-fade-up 0.6s var(--ease-pop) both;
+}
+
+.animate-pop-in {
+  animation: wru-pop-in 0.45s var(--ease-pop) both;
+}
+
+.animate-float {
+  animation: wru-float 5s ease-in-out infinite;
+}
+
+/* Hide scrollbar on horizontal rails while keeping them scrollable. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
