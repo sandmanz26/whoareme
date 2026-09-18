@@ -1,5 +1,5 @@
-import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react"
-import { ChevronDown } from "./Icon"
+import { useId, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from "react"
+import { Combobox, type ComboOption } from "./Combobox"
 import { cn } from "@/lib/utils"
 
 const CONTROL =
@@ -78,31 +78,42 @@ export function TextArea({
   )
 }
 
+/**
+ * The form's dropdown. Same component as the filter bar's, so a list long
+ * enough to need typing at gets a filter in both places rather than only
+ * where someone remembered to add one.
+ */
 export function SelectInput({
+  id,
+  value,
+  onChange,
+  options,
+  placeholder,
   invalid,
-  className,
-  children,
-  ...rest
-}: SelectHTMLAttributes<HTMLSelectElement> & ControlState) {
+  describedBy,
+}: {
+  id: string
+  value: string
+  onChange: (value: string) => void
+  options: ReadonlyArray<ComboOption>
+  placeholder: string
+  invalid: boolean
+  describedBy?: string
+}) {
   return (
-    <div className="relative">
-      <select
-        className={cn(
-          CONTROL,
-          "cursor-pointer appearance-none pr-10",
-          invalid ? "border-pop-pink" : "border-line",
-          className,
-        )}
-        aria-invalid={invalid || undefined}
-        {...rest}
-      >
-        {children}
-      </select>
-      <ChevronDown
-        size={16}
-        className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-muted"
-      />
-    </div>
+    <Combobox
+      id={id}
+      value={value}
+      onChange={onChange}
+      options={options}
+      emptyLabel={placeholder}
+      invalid={invalid}
+      describedBy={describedBy}
+      className={cn(
+        "rounded-2xl border bg-card px-4 py-3 text-sm",
+        invalid ? "border-pop-pink" : "border-line",
+      )}
+    />
   )
 }
 

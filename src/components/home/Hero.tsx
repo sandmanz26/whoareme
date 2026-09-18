@@ -2,13 +2,24 @@ import { Container } from "@/components/layout/Container"
 import { Button } from "@/components/ui/Button"
 import { ArrowRight, Search, Sparkle } from "@/components/ui/Icon"
 import { OrbitRing } from "./OrbitRing"
-import { PEOPLE, TOTAL_PEOPLE } from "@/data/people"
+import { PEOPLE } from "@/data/people"
 import { SEED_WORK } from "@/data/portfolios"
-import { CATEGORIES } from "@/data/taxonomy"
+import { isRoleLive } from "@/data/taxonomy"
 import type { CSSVars } from "@/lib/css"
 
-const OUTER = PEOPLE.slice(0, 8)
-const INNER = PEOPLE.slice(8, 13)
+/**
+ * Counted over the launch scope, not the whole fixture set.
+ *
+ * The badge used to read straight off `PEOPLE` and `SEED_WORK`, which claimed
+ * 54 case studies while the index next to it listed 37. A number on the hero
+ * that the very next screen contradicts is worse than no number.
+ */
+const LIVE_PEOPLE = PEOPLE.filter((person) => isRoleLive(person.role))
+const LIVE_WORK = SEED_WORK.filter((work) => isRoleLive(work.role))
+const LIVE_TOPICS = new Set(LIVE_WORK.flatMap((work) => work.topics))
+
+const OUTER = LIVE_PEOPLE.slice(0, 8)
+const INNER = LIVE_PEOPLE.slice(8, 13)
 
 interface HeroProps {
   query: string
@@ -29,7 +40,7 @@ export function Hero({ query, onQueryChange, onSearchSubmit, onJoin }: HeroProps
       <Container className="flex flex-col items-center">
         <p className="animate-fade-up mb-8 inline-flex items-center gap-2 rounded-pill border border-ink/10 bg-card px-4 py-2 font-display text-xs font-medium tracking-wide text-ink-2">
           <Sparkle size={14} className="text-pop-violet" />
-          {TOTAL_PEOPLE} people, {SEED_WORK.length} case studies, {CATEGORIES.length} topics
+          {LIVE_PEOPLE.length} people, {LIVE_WORK.length} case studies, {LIVE_TOPICS.size} topics
         </p>
 
         {/* ── The stage: heading at the centre, portraits revolving around it ── */}
@@ -73,9 +84,14 @@ export function Hero({ query, onQueryChange, onSearchSubmit, onJoin }: HeroProps
           </h1>
         </div>
 
+        {/* The contrast, not the feature list. A visitor who has seen three
+            portfolio sites this week needs one sentence telling them why this
+            one is different, and the difference is that the entries are made
+            to state an outcome. Kept under twenty words so the search field
+            below it stays above the fold. */}
         <p className="animate-fade-up mt-14 max-w-xl sm:mt-20 text-center text-base leading-relaxed text-ink-2 sm:text-lg">
-          Tech people are more than a job title. Build one profile, segmented by the craft and the
-          industry you actually work in - and get found by the teams looking for exactly that.
+          Not a gallery of screenshots. Every entry states the problem, the decisions, and the
+          number that changed.
         </p>
 
         {/* Search is the primary CTA for a directory - keep the friction near zero. */}

@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { BUSINESS_MODELS, ROLES, TOPICS } from "../../types.js"
+import { BUSINESS_MODELS, EXPERIENCE_BAND_IDS, ROLES, TOPICS, isRoleLive } from "../../types.js"
 import { paginationSchema } from "../../lib/pagination.js"
 
 const csv = z
@@ -12,6 +12,12 @@ export const listWorkQuerySchema = paginationSchema.extend({
   topic: z.enum(TOPICS).optional(),
   model: z.enum(BUSINESS_MODELS).optional(),
   skills: csv.pipe(z.array(z.string().max(60)).max(8)),
+  // Both OR-ed within themselves. Unknown band ids are dropped rather than
+  // rejected: a stale bookmark should show an unfiltered page, not a 400.
+  experience: csv.pipe(
+    z.array(z.string()).transform((values) => values.filter((v) => EXPERIENCE_BAND_IDS.includes(v as never))),
+  ),
+  language: csv.pipe(z.array(z.string().max(40)).max(12)),
   q: z.string().trim().max(120).optional(),
   sort: z.enum(["recent", "title", "role", "popular"]).default("recent"),
 })
@@ -40,7 +46,11 @@ const sectionSchema = z.object({
 export const workInputSchema = z
   .object({
     mode: z.enum(["template", "custom"]),
-    role: z.enum(ROLES),
+    // Same rule as registration: an entry cannot be filed under a craft the
+    // directory does not serve yet, or it would be written and never seen.
+    role: z.enum(ROLES).refine(isRoleLive, {
+      message: "That craft is not open yet. Pick one of the live ones.",
+    }),
     topics: z.array(z.enum(TOPICS)).max(4).default([]),
     model: z.enum(BUSINESS_MODELS).nullable().default(null),
     skills: z.array(z.string().trim().min(1).max(60)).max(8).default([]),

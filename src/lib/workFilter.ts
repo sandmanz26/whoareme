@@ -40,11 +40,13 @@ function matchesQuery(work: Work, query: string, author?: Author): boolean {
  * claiming it matches a language we cannot verify is the worse failure.
  */
 function matchesAuthor(filters: Filters, author: Author | undefined): boolean {
-  if (filters.experience === null && filters.language === null) return true
+  if (filters.experience.length === 0 && filters.language.length === 0) return true
   if (!author) return false
   return (
-    withinBand(author.years, filters.experience) &&
-    (filters.language === null || author.languages.includes(filters.language))
+    (filters.experience.length === 0 ||
+      filters.experience.some((band) => withinBand(author.years, band))) &&
+    (filters.language.length === 0 ||
+      filters.language.some((language) => author.languages.includes(language)))
   )
 }
 
@@ -56,9 +58,14 @@ export function filterWork(
   return work.filter((item) => {
     const author = authors.get(item.authorId)
     return (
-      (filters.role === null || item.role === filters.role) &&
-      (filters.topic === null || item.topics.includes(filters.topic)) &&
-      (filters.model === null || item.model === filters.model) &&
+      // Empty list means no opinion; otherwise any one of the values will do.
+      (filters.role.length === 0 || filters.role.includes(item.role)) &&
+      (filters.topic.length === 0 ||
+        filters.topic.some((topic) => item.topics.includes(topic))) &&
+      (filters.practice.length === 0 ||
+        filters.practice.some((practice) => item.topics.includes(practice))) &&
+      (filters.model.length === 0 ||
+        (item.model !== undefined && filters.model.includes(item.model))) &&
       matchesAuthor(filters, author) &&
       filters.skills.every((skill) => item.skills.includes(skill)) &&
       matchesQuery(item, filters.query, author)

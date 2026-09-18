@@ -37,3 +37,28 @@ export const writeLimiter = rateLimit({
   limit: 60,
   message: { error: { code: "rate_limited", message: "Too many writes. Slow down." } },
 })
+
+/**
+ * Reporting is open to anyone, signed in or not, which makes it the cheapest
+ * thing on the API to abuse.
+ *
+ * Tighter than `writeLimiter` because the cost of a flood is not server load,
+ * it is a moderation queue nobody can read - and a queue nobody reads is the
+ * same as no moderation. The unique index on `reports` already collapses the
+ * same person filing the same complaint twice; this stops a script filing one
+ * about every entry in the directory.
+ *
+ * Successful reports are counted. `skipSuccessfulRequests` would defeat the
+ * point here, because the successes are the flood.
+ */
+export const reportLimiter = rateLimit({
+  ...shared,
+  windowMs: 60 * 60_000,
+  limit: 10,
+  message: {
+    error: {
+      code: "rate_limited",
+      message: "That is a lot of reports in an hour. Give the moderators a chance to read them.",
+    },
+  },
+})

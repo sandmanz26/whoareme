@@ -2,6 +2,7 @@ import type { Account } from "@/data/account"
 import { PEOPLE, languagesFor, type Person } from "@/data/people"
 import type { Work } from "@/data/work"
 import type { CategoryId, RoleId } from "@/data/taxonomy"
+import { linksFor, type PersonLink } from "@/data/platforms"
 
 export interface Author {
   id: string
@@ -15,6 +16,7 @@ export interface Author {
   years: number
   languages: string[]
   photo?: string
+  links: PersonLink[]
   /** True for the signed-in person, so their own work can be marked as theirs. */
   isViewer?: boolean
 }
@@ -32,6 +34,7 @@ const SEED_AUTHORS = new Map<string, Author>(
       years: person.years,
       languages: person.languages,
       photo: person.photo,
+      links: person.links,
     },
   ]),
 )
@@ -52,8 +55,12 @@ export function personFromAccount(account: Account, skills: string[]): Person {
     skills: skills.slice(0, 4),
     years: Number(account.years) || 0,
     open: true,
-    photo: "",
+    photo: account.photo ?? "",
+    links: account.portfolio
+      ? [{ platform: "website", href: account.portfolio, handle: account.portfolio.replace(/^https?:\/\//, "") }]
+      : linksFor(account.role, account.id),
     languages: languagesFor(account.location),
+    bio: account.pitch ?? "",
   }
 }
 
@@ -70,6 +77,17 @@ export function authorIndex(account: Account | null): Map<string, Author> {
     role: account.role,
     years: Number(account.years) || 0,
     languages: languagesFor(account.location),
+    // A real account states its own links; until it does, the portfolio URL
+    // given at signup is the only one we can honestly show.
+    links: account.portfolio
+      ? [
+          {
+            platform: "website" as const,
+            href: account.portfolio,
+            handle: account.portfolio.replace(/^https?:\/\//, ""),
+          },
+        ]
+      : [],
     isViewer: true,
   })
   return merged

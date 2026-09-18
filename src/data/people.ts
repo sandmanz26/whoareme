@@ -1,3 +1,4 @@
+import { linksFor, type PersonLink } from "./platforms"
 import type { CategoryId, RoleId } from "./taxonomy"
 
 export interface Person {
@@ -15,6 +16,10 @@ export interface Person {
   photo: string
   /** Working languages. Seeded from the country in `location`; see LANGUAGES. */
   languages: string[]
+  /** Where else this person can be found. Seeded from the craft; see linksFor. */
+  links: PersonLink[]
+  /** One or two sentences in their own voice. Empty until someone writes one. */
+  bio: string
 }
 
 /**
@@ -35,92 +40,61 @@ type Row = [
 ]
 
 const ROWS: Row[] = [
-  // ── SaaS ────────────────────────────────────────────────────────────
-  ["Rani Ardhana", "Senior Product Designer", "Notionary", "design", ["saas"], "Jakarta, ID", ["Design systems", "Figma", "Prototyping"], 7, true, "women/11"],
-  ["Elias Kovač", "Staff Frontend Engineer", "Loopbase", "engineering", ["saas"], "Berlin, DE", ["React", "TypeScript", "Performance"], 9, false, "men/3"],
-  ["Maya Tanuwijaya", "Group Product Manager", "Stackline", "product", ["saas", "leadership"], "Singapore, SG", ["PLG", "Pricing", "Roadmapping"], 11, true, "women/18"],
-  ["Tobi Adeyemi", "Platform Engineer", "Rundeck Cloud", "infra", ["saas"], "Lagos, NG", ["Kubernetes", "Terraform", "Go"], 6, true, "men/10"],
-  ["Hana Sugiarto", "Lifecycle Marketing Lead", "Fieldnote", "growth", ["saas"], "Bandung, ID", ["Retention", "SQL", "Email"], 8, false, "women/25"],
-  ["Dmitri Volkov", "QA Automation Engineer", "Loopbase", "quality", ["saas"], "Tbilisi, GE", ["Playwright", "CI/CD", "Load testing"], 5, true, "men/17"],
+  // ── SaaS & commerce tooling ─────────────────────────────────────────
+  ["Rangga Mahendra", "Staff Backend Engineer", "Warungku", "engineering", ["saas"], "Jakarta, ID", ["Go", "Postgres", "Distributed systems", "Performance"], 9, false, "men/12"],
+  ["Ayu Pramesti", "Senior Product Designer", "Warungku", "design", ["saas", "accessibility"], "Jakarta, ID", ["Design systems", "Accessibility", "Usability testing"], 7, true, "women/14"],
+  ["Tan Wei Sheng", "Group Product Manager", "Rantai", "product", ["erp", "leadership"], "Singapore, SG", ["Product strategy", "Roadmapping", "Stakeholder management"], 12, true, "men/19"],
+  ["Nurul Aisyah", "Lifecycle Marketing Lead", "Warungku", "growth", ["saas"], "Bandung, ID", ["Lifecycle marketing", "Retention", "Analytics"], 8, true, "women/21"],
+  ["Somchai Wattana", "QA Automation Lead", "Siam Ledger", "quality", ["saas", "reliability"], "Bangkok, TH", ["Playwright", "Test strategy", "CI/CD"], 10, false, "men/26"],
+  ["Chayada Srisuk", "Senior UX Researcher", "Siam Ledger", "research", ["saas", "finance"], "Bangkok, TH", ["Contextual inquiry", "Usability testing", "Synthesis"], 8, true, "women/28"],
+
+  // ── Payments, banking & lending ─────────────────────────────────────
+  ["Bagus Nugraha", "Principal Engineer, Payments", "Pintar Bayar", "engineering", ["finance", "banking"], "Jakarta, ID", ["Java", "Kafka", "Distributed systems", "API design"], 13, false, "men/33"],
+  ["Siti Rahmawati", "Product Designer, Payments", "Pintar Bayar", "design", ["finance"], "Jakarta, ID", ["Interaction design", "Usability testing", "Accessibility"], 6, true, "women/35"],
+  ["Nguyen Thi Mai Anh", "Staff Engineer, Core Rails", "Saigon Rails", "engineering", ["finance"], "Ho Chi Minh City, VN", ["Go", "Postgres", "Event sourcing", "Performance"], 10, true, "women/40"],
+  ["Tran Quoc Bao", "Site Reliability Engineer", "Saigon Rails", "infra", ["finance", "reliability"], "Ho Chi Minh City, VN", ["Kubernetes", "Observability", "Incident response", "SRE"], 8, true, "men/41"],
+  ["Lim Mei Ling", "Head of Risk Data", "Bank Sahabat", "data", ["banking", "leadership"], "Jakarta, ID", ["SQL", "Forecasting", "Causal inference", "Experiment design"], 14, false, "women/44"],
+  ["Ahmad Faizal Hamzah", "Engineering Manager", "Selat Pay", "engineering", ["banking", "leadership"], "Kuala Lumpur, MY", ["Java", "API design", "Distributed systems"], 12, true, "men/47"],
+  ["Priya Naidu", "Compliance Product Manager", "Selat Pay", "product", ["banking"], "Kuala Lumpur, MY", ["Stakeholder management", "Discovery", "Roadmapping"], 9, false, "women/49"],
+  ["Sok Dara", "Mobile Engineer", "Angkor Pay", "engineering", ["finance"], "Phnom Penh, KH", ["React Native", "Performance", "API design"], 6, true, "men/51"],
+  ["Ratna Kusumawati", "Credit Data Scientist", "Padi Finance", "data", ["finance"], "Yogyakarta, ID", ["Python", "SQL", "Forecasting", "Evaluation"], 7, true, "women/54"],
+
+  // ── Mobility & logistics ────────────────────────────────────────────
+  ["Yoga Prasetyo", "Principal Engineer, Routing", "Jangkar Logistik", "engineering", ["mobility"], "Surabaya, ID", ["Go", "Distributed systems", "Performance", "API design"], 11, false, "men/56"],
+  ["Dewi Larasati", "Product Designer, Driver", "Jangkar Logistik", "design", ["mobility", "accessibility"], "Surabaya, ID", ["Interaction design", "Usability testing", "Motion"], 6, true, "women/58"],
+  ["Le Van Hung", "Operations Data Lead", "Mekong Freight", "data", ["mobility"], "Can Tho, VN", ["SQL", "Forecasting", "Analytics", "dbt"], 9, true, "men/61"],
+  ["Maria Consuelo Reyes", "Chief Product Officer", "Kalesa", "product", ["mobility", "leadership"], "Manila, PH", ["Zero-to-one", "Marketplaces", "Product strategy"], 15, true, "women/63"],
+  ["Jomar Dela Cruz", "Android Engineer", "Kalesa", "engineering", ["mobility"], "Cebu, PH", ["React Native", "Performance", "Offline sync"], 7, true, "men/65"],
+  ["Aung Kyaw Moe", "QA Engineer, Marketplace", "Yangon Commerce", "quality", ["mobility"], "Yangon, MM", ["Exploratory testing", "Test strategy", "Playwright"], 5, true, "men/68"],
 
   // ── AI ──────────────────────────────────────────────────────────────
-  ["Priya Raghunathan", "ML Research Engineer", "Verity Labs", "data", ["ai"], "Bengaluru, IN", ["PyTorch", "Evals", "RAG"], 8, true, "women/32"],
-  ["Noah Lindqvist", "AI Product Designer", "Verity Labs", "design", ["ai"], "Stockholm, SE", ["Conversational UI", "Prompt design"], 5, true, "men/24"],
-  ["Sasha Meier", "Head of Applied AI", "Northsight", "product", ["ai", "leadership"], "Zurich, CH", ["Model strategy", "Team building"], 13, false, "women/39"],
-  ["Kenji Watanabe", "MLOps Engineer", "Tensorfield", "infra", ["ai"], "Tokyo, JP", ["Ray", "Feature stores", "GPU scheduling"], 7, true, "men/31"],
-  ["Amara Diallo", "AI Safety Researcher", "Northsight", "research", ["ai"], "Paris, FR", ["Red-teaming", "Alignment", "Policy"], 6, true, "women/46"],
-  ["Bima Prakoso", "Backend Engineer, Inference", "Tensorfield", "engineering", ["ai"], "Yogyakarta, ID", ["Rust", "gRPC", "Vector DB"], 6, false, "men/38"],
+  ["Kwok Jia Hui", "ML Research Engineer", "Tanya AI", "data", ["ai"], "Singapore, SG", ["PyTorch", "Evaluation", "Python", "MLOps"], 8, true, "women/70"],
+  ["Farhan Maulana", "Backend Engineer, Inference", "Tanya AI", "engineering", ["ai"], "Jakarta, ID", ["Rust", "Performance", "Distributed systems"], 6, false, "men/72"],
+  ["Intan Permatasari", "AI Product Designer", "Tanya AI", "design", ["ai"], "Jakarta, ID", ["Conversational design", "Prototyping", "Usability testing"], 5, true, "women/74"],
+  ["Rajendran Kumar", "AI Research Lead", "Tanya AI", "research", ["ai", "leadership"], "Singapore, SG", ["Evaluation", "Survey design", "Synthesis"], 13, false, "men/76"],
 
-  // ── Leadership ──────────────────────────────────────────────────────
-  ["Clara Whitfield", "VP of Engineering", "Meridian Pay", "engineering", ["leadership", "banking"], "London, UK", ["Org design", "Hiring", "Architecture"], 16, false, "women/53"],
-  ["Yusuf Rahman", "Chief Product Officer", "Kargo Nusantara", "product", ["leadership", "mobility"], "Jakarta, ID", ["Zero-to-one", "Marketplaces"], 15, true, "men/45"],
-  ["Ingrid Salvesen", "Head of Design", "Fjordline Energy", "design", ["leadership", "energy"], "Oslo, NO", ["Design ops", "Brand", "Mentoring"], 14, false, "women/60"],
-  ["Marcus Bell", "Director of Data", "Ledgerworks", "data", ["leadership", "finance"], "New York, US", ["Data strategy", "Governance"], 12, true, "men/52"],
-  ["Fatima Al-Nasr", "Engineering Manager", "Orbit ERP", "engineering", ["leadership", "erp"], "Dubai, AE", ["Delivery", "Coaching", "Systems"], 10, true, "women/67"],
+  // ── Health tech ─────────────────────────────────────────────────────
+  ["Putu Ariani", "Clinical Product Manager", "Klinika", "product", ["healthtech"], "Denpasar, ID", ["Discovery", "Stakeholder management", "Service design"], 9, true, "women/78"],
+  ["Rizki Ramadhan", "Full-stack Engineer", "Klinika", "engineering", ["healthtech"], "Bandung, ID", ["TypeScript", "Postgres", "API design"], 6, true, "men/80"],
+  ["Nadia Roslan", "Accessibility Designer", "Teratai Health", "design", ["healthtech", "accessibility"], "Kuala Lumpur, MY", ["Accessibility", "Design systems", "Usability testing"], 8, true, "women/82"],
+  ["Jose Antonio Villanueva", "Health Data Engineer", "Barangay Health", "data", ["healthtech"], "Manila, PH", ["Python", "Airflow", "SQL", "dbt"], 7, false, "men/84"],
 
-  // ── Banking ─────────────────────────────────────────────────────────
-  ["Andrés Ferrer", "Core Banking Engineer", "Meridian Pay", "engineering", ["banking"], "Madrid, ES", ["Java", "ISO 20022", "Kafka"], 11, false, "men/59"],
-  ["Lily Chen", "Product Designer, Payments", "Bluecrest Bank", "design", ["banking"], "Hong Kong, HK", ["Trust UX", "Accessibility"], 6, true, "women/74"],
-  ["Ravi Menon", "Risk Data Analyst", "Bluecrest Bank", "data", ["banking", "finance"], "Mumbai, IN", ["Credit models", "Python", "dbt"], 9, true, "men/66"],
-  ["Sofia Ricci", "Compliance Product Manager", "Meridian Pay", "product", ["banking"], "Milan, IT", ["KYC", "Regulatory", "Discovery"], 8, false, "women/81"],
-  ["Kwame Boateng", "Security Engineer", "Bluecrest Bank", "infra", ["banking", "security"], "Accra, GH", ["Threat modeling", "IAM"], 7, true, "men/73"],
+  // ── Energy & climate ────────────────────────────────────────────────
+  ["Hendra Simanjuntak", "Industrial Data Scientist", "Sawit Analytics", "data", ["energy", "climate"], "Medan, ID", ["Python", "Forecasting", "Spark", "Evaluation"], 11, false, "men/86"],
+  ["Wayan Sukerta", "Field Systems Designer", "Ombak Bahari", "design", ["climate"], "Denpasar, ID", ["Service design", "Contextual inquiry", "Data visualisation"], 7, true, "men/88"],
+  ["Ni Luh Gede Savitri", "Marine Research Lead", "Ombak Bahari", "research", ["climate"], "Denpasar, ID", ["Ethnography", "Contextual inquiry", "Synthesis"], 6, true, "women/90"],
 
-  // ── Finance ─────────────────────────────────────────────────────────
-  ["Julia Sørensen", "Quant Developer", "Ledgerworks", "engineering", ["finance"], "Copenhagen, DK", ["C++", "Low latency", "Pricing"], 10, true, "women/88"],
-  ["Ethan Park", "Fintech Product Manager", "Ledgerworks", "product", ["finance"], "Seoul, KR", ["Investing UX", "Compliance"], 7, true, "men/80"],
-  ["Nadia Haryanto", "Data Scientist, Fraud", "Sigma Capital", "data", ["finance"], "Jakarta, ID", ["Anomaly detection", "Graph ML"], 6, false, "women/95"],
-  ["Oliver Grant", "Brand Designer", "Sigma Capital", "design", ["finance"], "Toronto, CA", ["Identity", "Motion", "Editorial"], 9, true, "men/87"],
-  ["Zainab Okoye", "Growth Lead", "Sigma Capital", "growth", ["finance"], "Abuja, NG", ["Paid social", "Attribution"], 5, true, "women/2"],
+  // ── Platform, reliability, developer experience & security ──────────
+  ["Adi Kurniawan", "Platform Engineer", "Nusantara Cloud", "infra", ["saas", "devex"], "Jakarta, ID", ["Kubernetes", "Terraform", "Platform engineering", "Observability"], 9, true, "men/92"],
+  ["Chen Yu Xuan", "Staff Site Reliability Engineer", "Nusantara Cloud", "infra", ["reliability", "saas"], "Singapore, SG", ["SRE", "Observability", "Incident response", "Cost optimisation"], 12, false, "men/94"],
+  ["Sharifah Nadhirah", "Application Security Engineer", "Bakau Security", "infra", ["security"], "Singapore, SG", ["Security", "CI/CD", "Python"], 8, true, "women/96"],
+  ["Pham Minh Tuan", "Developer Experience Lead", "Titian", "engineering", ["devex", "leadership"], "Hanoi, VN", ["TypeScript", "CI/CD", "API design", "Platform engineering"], 11, true, "men/98"],
 
-  // ── ERP ─────────────────────────────────────────────────────────────
-  ["Hendrik Vos", "SAP Solution Architect", "Orbit ERP", "engineering", ["erp"], "Rotterdam, NL", ["S/4HANA", "ABAP", "Integrations"], 15, false, "men/94"],
-  ["Ayu Kusuma", "Business Analyst", "Orbit ERP", "product", ["erp"], "Surabaya, ID", ["Process mapping", "Requirements"], 8, true, "women/9"],
-  ["Tomasz Nowak", "UX Designer, Enterprise", "Beltway Systems", "design", ["erp"], "Kraków, PL", ["Complex tables", "Workflow UX"], 10, true, "men/1"],
-  ["Grace Mutua", "QA Lead", "Beltway Systems", "quality", ["erp"], "Nairobi, KE", ["Test strategy", "Selenium"], 9, false, "women/16"],
-  ["Victor Almeida", "Integration Engineer", "Beltway Systems", "infra", ["erp"], "São Paulo, BR", ["MuleSoft", "APIs", "ETL"], 7, true, "men/8"],
-
-  // ── Gas & Oil ───────────────────────────────────────────────────────
-  ["Ingvild Haugen", "Industrial IoT Engineer", "Fjordline Energy", "engineering", ["energy"], "Stavanger, NO", ["Edge", "SCADA", "Python"], 12, false, "women/23"],
-  ["Omar Siddiqui", "Reservoir Data Scientist", "Delta Petro", "data", ["energy"], "Doha, QA", ["Geostatistics", "Simulation"], 11, true, "men/15"],
-  ["Rosa Delgado", "HSE Product Manager", "Delta Petro", "product", ["energy"], "Houston, US", ["Field ops", "Safety systems"], 9, true, "women/30"],
-  ["Arif Maulana", "Field Systems Designer", "Fjordline Energy", "design", ["energy"], "Balikpapan, ID", ["Rugged UI", "Offline-first"], 6, true, "men/22"],
-  ["Peter Lindgren", "Site Reliability Engineer", "Delta Petro", "infra", ["energy"], "Aberdeen, UK", ["Observability", "Incident response"], 8, false, "men/29"],
-
-  // ── Transportation ──────────────────────────────────────────────────
-  ["Sinta Wijaya", "Product Designer, Rider", "Kargo Nusantara", "design", ["mobility"], "Jakarta, ID", ["Maps UX", "Onboarding"], 5, true, "women/37"],
-  ["Luca Bianchi", "Routing Engineer", "Transitly", "engineering", ["mobility"], "Turin, IT", ["Graph algorithms", "Go", "Geo"], 8, true, "men/36"],
-  ["Mei Lin Tan", "Operations Data Lead", "Transitly", "data", ["mobility"], "Kuala Lumpur, MY", ["Forecasting", "Pricing", "SQL"], 10, false, "women/44"],
-  ["Daniel Osei", "Mobile Engineer", "Kargo Nusantara", "engineering", ["mobility"], "Bali, ID", ["React Native", "Offline sync"], 6, true, "men/43"],
-  ["Elena Petrova", "UX Researcher", "Transitly", "research", ["mobility"], "Lisbon, PT", ["Field studies", "Diary studies"], 7, true, "women/51"],
-
-  // ── Health Tech ─────────────────────────────────────────────────────
-  ["Aisha Karim", "Clinical Product Manager", "Caretrail", "product", ["healthtech"], "Amsterdam, NL", ["HL7/FHIR", "Care pathways"], 9, true, "women/58"],
-  ["Jonas Weber", "Full-stack Engineer", "Caretrail", "engineering", ["healthtech"], "Munich, DE", ["Next.js", "Postgres", "HIPAA"], 6, false, "men/50"],
-  ["Nurul Hidayah", "Accessibility Designer", "Caretrail", "design", ["healthtech"], "Jakarta, ID", ["WCAG", "Inclusive design"], 7, true, "women/65"],
-
-  // ── Gaming ──────────────────────────────────────────────────────────
-  ["Kai Nakamura", "Gameplay Engineer", "Pixelburn", "engineering", ["gaming"], "Osaka, JP", ["Unity", "C#", "Netcode"], 8, true, "men/57"],
-  ["Bella Rossi", "Technical Artist", "Pixelburn", "design", ["gaming"], "Vancouver, CA", ["Shaders", "Rigging", "VFX"], 6, true, "women/72"],
-  ["Samuel Adeniyi", "Live Ops Analyst", "Pixelburn", "data", ["gaming"], "Manchester, UK", ["Cohorts", "Economy design"], 5, false, "men/64"],
-
-  // ── Climate ─────────────────────────────────────────────────────────
-  ["Freya Lund", "Carbon Data Engineer", "Terravolt", "data", ["climate"], "Reykjavík, IS", ["LCA", "Airflow", "Spark"], 7, true, "women/79"],
-  ["Miguel Santos", "Hardware-Software Engineer", "Terravolt", "engineering", ["climate"], "Barcelona, ES", ["Embedded", "MQTT", "Rust"], 9, true, "men/71"],
-
-  // ── Cybersecurity ───────────────────────────────────────────────────
-  ["Hannah Fischer", "Application Security Engineer", "Ironvault", "infra", ["security"], "Vienna, AT", ["SAST", "Threat modeling"], 8, true, "women/86"],
-  ["Rizky Pratama", "Detection Engineer", "Ironvault", "engineering", ["security"], "Jakarta, ID", ["SIEM", "Sigma rules", "Python"], 6, false, "men/78"],
-  ["Chloe Dubois", "Security Product Designer", "Ironvault", "design", ["security"], "Montreal, CA", ["Zero-trust UX", "Alert design"], 5, true, "women/93"],
-  // ── Deeper bench for the smaller crafts ─────────────────────────────
-  ["Leo Fitriadi", "QA Engineer, Mobile", "Kargo Nusantara", "quality", ["mobility"], "Jakarta, ID", ["Appium", "Device labs", "Regression"], 6, true, "men/87"],
-  ["Marta Nowicka", "Test Architect", "Meridian Pay", "quality", ["banking"], "Warsaw, PL", ["Contract testing", "Pact", "CI/CD"], 12, false, "women/88"],
-  ["Ryan Cole", "QA Lead, Live Services", "Pixelburn", "quality", ["gaming"], "Austin, US", ["Soak testing", "Telemetry"], 9, true, "men/94"],
-  ["Dewi Anggraini", "Growth Product Manager", "Verity Labs", "growth", ["ai"], "Jakarta, ID", ["Activation", "Experimentation"], 7, true, "women/95"],
-  ["Felix Braun", "Performance Marketing Lead", "Transitly", "growth", ["mobility"], "Hamburg, DE", ["CAC", "Creative testing", "SEO"], 10, false, "men/8"],
-  ["Aicha Bensalem", "Community & Growth", "Terravolt", "growth", ["climate"], "Casablanca, MA", ["Community", "Content", "Partnerships"], 5, true, "women/2"],
-  ["Tomás Ibarra", "Senior UX Researcher", "Orbit ERP", "research", ["erp"], "Santiago, CL", ["Ethnography", "Usability", "Synthesis"], 11, true, "men/15"],
-  ["Saoirse Byrne", "Design Researcher", "Caretrail", "research", ["healthtech"], "Dublin, IE", ["Clinical research", "Co-design"], 8, false, "women/9"],
-  ["Marco Lombardi", "Research Ops", "Ironvault", "research", ["security"], "Rome, IT", ["Panel management", "Repository"], 6, true, "men/22"],
+  // ── Gaming, hiring & growth ─────────────────────────────────────────
+  ["Galih Wicaksono", "QA Lead, Live Services", "Gunung Games", "quality", ["gaming", "reliability"], "Bandung, ID", ["Test strategy", "Automation architecture", "Performance testing"], 8, false, "men/5"],
+  ["Kanya Phuwanat", "Live Ops Analyst", "Gunung Games", "growth", ["gaming"], "Chiang Mai, TH", ["Analytics", "Experimentation", "Retention"], 5, true, "women/7"],
+  ["Farah Zulkifli", "Head of Talent", "Sirkel", "product", ["hiring", "leadership"], "Singapore, SG", ["Hiring", "Stakeholder management", "Discovery"], 13, true, "women/16"],
+  ["Do Thi Kim Ngan", "Growth Lead", "Mekong Freight", "growth", ["mobility"], "Ho Chi Minh City, VN", ["Paid acquisition", "Attribution", "Experimentation", "Onboarding"], 8, true, "women/23"],
 ]
 
 
@@ -128,7 +102,7 @@ const ROWS: Row[] = [
  * Working languages per country, for the seeded directory.
  *
  * Derived from the country code already in `location` rather than typed into
- * all 62 rows: the tuple source stays scannable, and the values cannot drift
+ * all 40 rows: the tuple source stays scannable, and the values cannot drift
  * out of sync with where a person actually is. A real signup would state their
  * own languages; this is fixture data and behaves like fixture data.
  *
@@ -137,39 +111,16 @@ const ROWS: Row[] = [
  * other language genuinely useful, which is the honest trade.
  */
 const COUNTRY_LANGUAGES: Record<string, string[]> = {
-  AE: ["Arabic"],
-  AT: ["German"],
-  BR: ["Portuguese"],
-  CA: ["French"],
-  CH: ["German", "French"],
-  CL: ["Spanish"],
-  DE: ["German"],
-  DK: ["Danish"],
-  ES: ["Spanish"],
-  FR: ["French"],
-  GE: ["Georgian", "Russian"],
-  GH: ["Twi"],
-  HK: ["Cantonese", "Mandarin"],
+  BN: ["Malay"],
   ID: ["Bahasa Indonesia"],
-  IE: ["Irish"],
-  IN: ["Hindi", "Tamil"],
-  IS: ["Icelandic"],
-  IT: ["Italian"],
-  JP: ["Japanese"],
-  KE: ["Swahili"],
-  KR: ["Korean"],
-  MA: ["Arabic", "French"],
-  MY: ["Bahasa Malaysia", "Mandarin"],
-  NG: ["Yoruba"],
-  NL: ["Dutch"],
-  NO: ["Norwegian"],
-  PL: ["Polish"],
-  PT: ["Portuguese"],
-  QA: ["Arabic"],
-  SE: ["Swedish"],
-  SG: ["Mandarin", "Bahasa Malaysia"],
-  UK: [],
-  US: [],
+  KH: ["Khmer"],
+  LA: ["Lao"],
+  MM: ["Burmese"],
+  MY: ["Malay", "Mandarin", "Tamil"],
+  PH: ["Filipino"],
+  SG: ["Mandarin", "Malay", "Tamil"],
+  TH: ["Thai"],
+  VN: ["Vietnamese"],
 }
 
 /** Every language present in the directory, alphabetical, for the filter. */
@@ -199,6 +150,96 @@ export function slugify(value: string): string {
     .replace(/(^-|-$)/g, "")
 }
 
+/**
+ * Bios, keyed by slug rather than added to the tuple.
+ *
+ * A sentence of prose in a positional tuple is unreadable and unreviewable,
+ * and this is the one field where the wording matters more than the shape.
+ * A missing key is a person with no bio, which the profile page handles.
+ */
+const BIOS: Record<string, string> = {
+  "rangga-mahendra":
+    "Backend engineer who has spent most of a decade on systems that have to work when the network does not. Currently on sync and conflict resolution for 61,000 warung.",
+  "ayu-pramesti":
+    "Product designer working on interfaces for sellers who are serving a customer with one hand. Most of what she knows came from testing in warung rather than in a lab.",
+  "tan-wei-sheng":
+    "Product lead for enterprise systems across six Southeast Asian tax regimes. Spends more time on jurisdiction rules than he expected to when he started.",
+  "nurul-aisyah":
+    "Lifecycle marketer who measures with holdouts and is comfortable arguing for sending less. Learned that the hard way across three Ramadans.",
+  "somchai-wattana":
+    "QA lead who got interested in internationalisation after Thai line-breaking shipped broken invoices to two enterprise accounts.",
+  "chayada-srisuk":
+    "Researcher working with Thai SMEs. Best known internally for the study that cancelled a funded education programme.",
+  "bagus-nugraha":
+    "Principal engineer on payment settlement. Thirteen years of ledgers, most of them spent making float positions visible rather than clever.",
+  "siti-rahmawati":
+    "Designs the moments where people hesitate before sending money to a stranger. Believes risk should be stated, not softened.",
+  "nguyen-thi-mai-anh":
+    "Staff engineer on transfer rails. Will trade latency for correctness every time and can show you the backfill that explains why.",
+  "tran-quoc-bao":
+    "SRE who treats Tết as an annual exam. Prefers pre-scaling and load shedding to heroics.",
+  "lim-mei-ling":
+    "Leads risk data at a digital bank. Works on credit for people a bureau cannot see, and insists on a fairness review before launch.",
+  "ahmad-faizal-hamzah":
+    "Engineering manager on cross-border payments. Eleven engineers, two regulators, one corridor at a time.",
+  "priya-naidu":
+    "Compliance product manager who renamed a metric and found a broken control underneath it.",
+  "sok-dara":
+    "Mobile engineer building a wallet for 1GB Android Go phones. Tests on real hardware every sprint, which is less common than it should be.",
+  "ratna-kusumawati":
+    "Credit data scientist working on agri lending. Builds products that admit when the harvest forecast is wrong.",
+  "yoga-prasetyo":
+    "Principal engineer on freight routing across an archipelago, where the road is sometimes a ferry with a timetable.",
+  "dewi-larasati":
+    "Designs for someone on a motorcycle in the rain wearing gloves. Rode along for two weeks before drawing anything.",
+  "le-van-hung":
+    "Operations data lead in the Mekong Delta, working on the economics of cash on delivery.",
+  "maria-consuelo-reyes":
+    "Chief product officer who has stood up a mobility marketplace in a city where two platforms had already burned the supply side.",
+  "jomar-dela-cruz":
+    "Android engineer building dispatch that keeps working when the cell towers are down. Has field-tested that through two typhoons.",
+  "aung-kyaw-moe":
+    "QA engineer who found that half of Myanmar types Zawgyi and half types Unicode, and that the test suite could see neither.",
+  "kwok-jia-hui":
+    "ML research engineer on Southeast Asian language evaluation. Reports per-language, because the aggregate is where the failures hide.",
+  "farhan-maulana":
+    "Backend engineer on inference serving, working on why the tokenizer makes Indonesian cost three times as much as English.",
+  "intan-permatasari":
+    "AI product designer working on formality registers, where getting a pronoun wrong in Javanese is not a small mistake.",
+  "rajendran-kumar":
+    "Research lead who published a Southeast Asian language benchmark that put his own team third.",
+  "putu-ariani":
+    "Clinical product manager on BPJS referral pathways. Thinks about the ferry ticket a wrong referral costs a family.",
+  "rizki-ramadhan":
+    "Full-stack engineer making telehealth work at 64kbps, because video-first excluded the patients who needed it most.",
+  "nadia-roslan":
+    "Accessibility designer on health insurance claims in three languages and two scripts, for a user base whose eyesight is not what it was.",
+  "jose-antonio-villanueva":
+    "Health data engineer running dengue surveillance over SMS, because a feature phone is the one thing every barangay station has.",
+  "hendra-simanjuntak":
+    "Industrial data scientist on plantation traceability. Grades confidence rather than issuing a binary compliant flag.",
+  "wayan-sukerta":
+    "Field systems designer who learned that the best interface for a fishing boat was the one that stayed off the boat.",
+  "ni-luh-gede-savitri":
+    "Marine researcher across six coastal villages. Spent four months negotiating data terms with village councils and would do it again.",
+  "adi-kurniawan":
+    "Platform engineer on data residency across three jurisdictions, without three copies of everything.",
+  "chen-yu-xuan":
+    "Staff SRE who found $380k a year in cross-region traffic and deleted 140 of 190 alerts.",
+  "sharifah-nadhirah":
+    "Application security engineer. Spent six months making an inventory accurate before writing a single blocking policy.",
+  "pham-minh-tuan":
+    "Developer experience lead for a team spread across five countries. Made CI run the setup script so it cannot rot quietly.",
+  "galih-wicaksono":
+    "QA lead for live services, testing on the evening-peak mobile networks players actually have rather than on office fibre.",
+  "kanya-phuwanat":
+    "Live ops analyst who argued the team out of harder paywalls by changing the denominator from 30-day ARPU to two-year LTV.",
+  "farah-zulkifli":
+    "Head of talent who published salary bands across six countries and closed the gap upward.",
+  "do-thi-kim-ngan":
+    "Growth lead who rebuilt acquisition around Zalo after discovering the regional playbook assumed the wrong country.",
+}
+
 export const PEOPLE: Person[] = ROWS.map(
   ([name, title, company, role, categories, location, skills, years, open, portrait]) => ({
     id: slugify(name),
@@ -215,6 +256,8 @@ export const PEOPLE: Person[] = ROWS.map(
     // tinted monogram when the network is unavailable.
     photo: `https://randomuser.me/api/portraits/${portrait}.jpg`,
     languages: languagesFor(location),
+    links: linksFor(role, slugify(name)),
+    bio: BIOS[slugify(name)] ?? "",
   }),
 )
 

@@ -1,1411 +1,1618 @@
 [
   {
-    "id": "rani-ardhana",
-    "name": "Rani Ardhana",
-    "title": "Senior Product Designer",
-    "company": "Notionary",
-    "role": "design",
+    "id": "rangga-mahendra",
+    "name": "Rangga Mahendra",
+    "title": "Staff Backend Engineer",
+    "company": "Warungku",
+    "role": "engineering",
     "categories": [
       "saas"
     ],
     "location": "Jakarta, ID",
     "skills": [
-      "Design systems",
-      "Figma",
-      "Prototyping"
-    ],
-    "years": 7,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/11.jpg",
-    "languages": [
-      "English",
-      "Bahasa Indonesia"
-    ]
-  },
-  {
-    "id": "elias-kovac",
-    "name": "Elias Kovač",
-    "title": "Staff Frontend Engineer",
-    "company": "Loopbase",
-    "role": "engineering",
-    "categories": [
-      "saas"
-    ],
-    "location": "Berlin, DE",
-    "skills": [
-      "React",
-      "TypeScript",
+      "Go",
+      "Postgres",
+      "Distributed systems",
       "Performance"
     ],
     "years": 9,
     "open": false,
-    "photo": "https://randomuser.me/api/portraits/men/3.jpg",
+    "photo": "https://randomuser.me/api/portraits/men/12.jpg",
     "languages": [
       "English",
-      "German"
-    ]
+      "Bahasa Indonesia"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@ranggamahendra",
+        "href": "https://example.com/github/ranggamahendra"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@ranggamahendra",
+        "href": "https://example.com/linkedin/ranggamahendra"
+      },
+      {
+        "platform": "website",
+        "handle": "ranggamahendra.dev",
+        "href": "https://example.com/ranggamahendra.dev"
+      }
+    ],
+    "bio": "Backend engineer who has spent most of a decade on systems that have to work when the network does not. Currently on sync and conflict resolution for 61,000 warung."
   },
   {
-    "id": "maya-tanuwijaya",
-    "name": "Maya Tanuwijaya",
-    "title": "Group Product Manager",
-    "company": "Stackline",
-    "role": "product",
+    "id": "ayu-pramesti",
+    "name": "Ayu Pramesti",
+    "title": "Senior Product Designer",
+    "company": "Warungku",
+    "role": "design",
     "categories": [
       "saas",
+      "accessibility"
+    ],
+    "location": "Jakarta, ID",
+    "skills": [
+      "Design systems",
+      "Accessibility",
+      "Usability testing"
+    ],
+    "years": 7,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/women/14.jpg",
+    "languages": [
+      "English",
+      "Bahasa Indonesia"
+    ],
+    "links": [
+      {
+        "platform": "dribbble",
+        "handle": "@ayupramesti",
+        "href": "https://example.com/dribbble/ayupramesti"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@ayupramesti",
+        "href": "https://example.com/linkedin/ayupramesti"
+      },
+      {
+        "platform": "instagram",
+        "handle": "@ayupramesti",
+        "href": "https://example.com/instagram/ayupramesti"
+      }
+    ],
+    "bio": "Product designer working on interfaces for sellers who are serving a customer with one hand. Most of what she knows came from testing in warung rather than in a lab."
+  },
+  {
+    "id": "tan-wei-sheng",
+    "name": "Tan Wei Sheng",
+    "title": "Group Product Manager",
+    "company": "Rantai",
+    "role": "product",
+    "categories": [
+      "erp",
       "leadership"
     ],
     "location": "Singapore, SG",
     "skills": [
-      "PLG",
-      "Pricing",
-      "Roadmapping"
+      "Product strategy",
+      "Roadmapping",
+      "Stakeholder management"
     ],
-    "years": 11,
+    "years": 12,
     "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/18.jpg",
+    "photo": "https://randomuser.me/api/portraits/men/19.jpg",
     "languages": [
       "English",
       "Mandarin",
-      "Bahasa Malaysia"
-    ]
+      "Malay",
+      "Tamil"
+    ],
+    "links": [
+      {
+        "platform": "linkedin",
+        "handle": "@tanweisheng",
+        "href": "https://example.com/linkedin/tanweisheng"
+      },
+      {
+        "platform": "x",
+        "handle": "@tanweisheng",
+        "href": "https://example.com/x/tanweisheng"
+      }
+    ],
+    "bio": "Product lead for enterprise systems across six Southeast Asian tax regimes. Spends more time on jurisdiction rules than he expected to when he started."
   },
   {
-    "id": "tobi-adeyemi",
-    "name": "Tobi Adeyemi",
-    "title": "Platform Engineer",
-    "company": "Rundeck Cloud",
-    "role": "infra",
-    "categories": [
-      "saas"
-    ],
-    "location": "Lagos, NG",
-    "skills": [
-      "Kubernetes",
-      "Terraform",
-      "Go"
-    ],
-    "years": 6,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/10.jpg",
-    "languages": [
-      "English",
-      "Yoruba"
-    ]
-  },
-  {
-    "id": "hana-sugiarto",
-    "name": "Hana Sugiarto",
+    "id": "nurul-aisyah",
+    "name": "Nurul Aisyah",
     "title": "Lifecycle Marketing Lead",
-    "company": "Fieldnote",
+    "company": "Warungku",
     "role": "growth",
     "categories": [
       "saas"
     ],
     "location": "Bandung, ID",
     "skills": [
+      "Lifecycle marketing",
       "Retention",
-      "SQL",
-      "Email"
+      "Analytics"
     ],
     "years": 8,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/women/25.jpg",
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/women/21.jpg",
     "languages": [
       "English",
       "Bahasa Indonesia"
-    ]
+    ],
+    "links": [
+      {
+        "platform": "linkedin",
+        "handle": "@nurulaisyah",
+        "href": "https://example.com/linkedin/nurulaisyah"
+      },
+      {
+        "platform": "x",
+        "handle": "@nurulaisyah",
+        "href": "https://example.com/x/nurulaisyah"
+      },
+      {
+        "platform": "instagram",
+        "handle": "@nurulaisyah",
+        "href": "https://example.com/instagram/nurulaisyah"
+      }
+    ],
+    "bio": "Lifecycle marketer who measures with holdouts and is comfortable arguing for sending less. Learned that the hard way across three Ramadans."
   },
   {
-    "id": "dmitri-volkov",
-    "name": "Dmitri Volkov",
-    "title": "QA Automation Engineer",
-    "company": "Loopbase",
+    "id": "somchai-wattana",
+    "name": "Somchai Wattana",
+    "title": "QA Automation Lead",
+    "company": "Siam Ledger",
     "role": "quality",
     "categories": [
-      "saas"
+      "saas",
+      "reliability"
     ],
-    "location": "Tbilisi, GE",
+    "location": "Bangkok, TH",
     "skills": [
       "Playwright",
-      "CI/CD",
-      "Load testing"
+      "Test strategy",
+      "CI/CD"
     ],
-    "years": 5,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/17.jpg",
+    "years": 10,
+    "open": false,
+    "photo": "https://randomuser.me/api/portraits/men/26.jpg",
     "languages": [
       "English",
-      "Georgian",
-      "Russian"
-    ]
+      "Thai"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@somchaiwattana",
+        "href": "https://example.com/github/somchaiwattana"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@somchaiwattana",
+        "href": "https://example.com/linkedin/somchaiwattana"
+      }
+    ],
+    "bio": "QA lead who got interested in internationalisation after Thai line-breaking shipped broken invoices to two enterprise accounts."
   },
   {
-    "id": "priya-raghunathan",
-    "name": "Priya Raghunathan",
-    "title": "ML Research Engineer",
-    "company": "Verity Labs",
-    "role": "data",
+    "id": "chayada-srisuk",
+    "name": "Chayada Srisuk",
+    "title": "Senior UX Researcher",
+    "company": "Siam Ledger",
+    "role": "research",
     "categories": [
-      "ai"
+      "saas",
+      "finance"
     ],
-    "location": "Bengaluru, IN",
+    "location": "Bangkok, TH",
     "skills": [
-      "PyTorch",
-      "Evals",
-      "RAG"
+      "Contextual inquiry",
+      "Usability testing",
+      "Synthesis"
     ],
     "years": 8,
     "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/32.jpg",
+    "photo": "https://randomuser.me/api/portraits/women/28.jpg",
     "languages": [
       "English",
-      "Hindi",
-      "Tamil"
-    ]
+      "Thai"
+    ],
+    "links": [
+      {
+        "platform": "linkedin",
+        "handle": "@chayadasrisuk",
+        "href": "https://example.com/linkedin/chayadasrisuk"
+      },
+      {
+        "platform": "website",
+        "handle": "chayadasrisuk.dev",
+        "href": "https://example.com/chayadasrisuk.dev"
+      }
+    ],
+    "bio": "Researcher working with Thai SMEs. Best known internally for the study that cancelled a funded education programme."
   },
   {
-    "id": "noah-lindqvist",
-    "name": "Noah Lindqvist",
-    "title": "AI Product Designer",
-    "company": "Verity Labs",
-    "role": "design",
-    "categories": [
-      "ai"
-    ],
-    "location": "Stockholm, SE",
-    "skills": [
-      "Conversational UI",
-      "Prompt design"
-    ],
-    "years": 5,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/24.jpg",
-    "languages": [
-      "English",
-      "Swedish"
-    ]
-  },
-  {
-    "id": "sasha-meier",
-    "name": "Sasha Meier",
-    "title": "Head of Applied AI",
-    "company": "Northsight",
-    "role": "product",
-    "categories": [
-      "ai",
-      "leadership"
-    ],
-    "location": "Zurich, CH",
-    "skills": [
-      "Model strategy",
-      "Team building"
-    ],
-    "years": 13,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/women/39.jpg",
-    "languages": [
-      "English",
-      "German",
-      "French"
-    ]
-  },
-  {
-    "id": "kenji-watanabe",
-    "name": "Kenji Watanabe",
-    "title": "MLOps Engineer",
-    "company": "Tensorfield",
-    "role": "infra",
-    "categories": [
-      "ai"
-    ],
-    "location": "Tokyo, JP",
-    "skills": [
-      "Ray",
-      "Feature stores",
-      "GPU scheduling"
-    ],
-    "years": 7,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/31.jpg",
-    "languages": [
-      "English",
-      "Japanese"
-    ]
-  },
-  {
-    "id": "amara-diallo",
-    "name": "Amara Diallo",
-    "title": "AI Safety Researcher",
-    "company": "Northsight",
-    "role": "research",
-    "categories": [
-      "ai"
-    ],
-    "location": "Paris, FR",
-    "skills": [
-      "Red-teaming",
-      "Alignment",
-      "Policy"
-    ],
-    "years": 6,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/46.jpg",
-    "languages": [
-      "English",
-      "French"
-    ]
-  },
-  {
-    "id": "bima-prakoso",
-    "name": "Bima Prakoso",
-    "title": "Backend Engineer, Inference",
-    "company": "Tensorfield",
+    "id": "bagus-nugraha",
+    "name": "Bagus Nugraha",
+    "title": "Principal Engineer, Payments",
+    "company": "Pintar Bayar",
     "role": "engineering",
     "categories": [
-      "ai"
-    ],
-    "location": "Yogyakarta, ID",
-    "skills": [
-      "Rust",
-      "gRPC",
-      "Vector DB"
-    ],
-    "years": 6,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/men/38.jpg",
-    "languages": [
-      "English",
-      "Bahasa Indonesia"
-    ]
-  },
-  {
-    "id": "clara-whitfield",
-    "name": "Clara Whitfield",
-    "title": "VP of Engineering",
-    "company": "Meridian Pay",
-    "role": "engineering",
-    "categories": [
-      "leadership",
+      "finance",
       "banking"
-    ],
-    "location": "London, UK",
-    "skills": [
-      "Org design",
-      "Hiring",
-      "Architecture"
-    ],
-    "years": 16,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/women/53.jpg",
-    "languages": [
-      "English"
-    ]
-  },
-  {
-    "id": "yusuf-rahman",
-    "name": "Yusuf Rahman",
-    "title": "Chief Product Officer",
-    "company": "Kargo Nusantara",
-    "role": "product",
-    "categories": [
-      "leadership",
-      "mobility"
     ],
     "location": "Jakarta, ID",
     "skills": [
-      "Zero-to-one",
-      "Marketplaces"
+      "Java",
+      "Kafka",
+      "Distributed systems",
+      "API design"
     ],
-    "years": 15,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/45.jpg",
+    "years": 13,
+    "open": false,
+    "photo": "https://randomuser.me/api/portraits/men/33.jpg",
     "languages": [
       "English",
       "Bahasa Indonesia"
-    ]
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@bagusnugraha",
+        "href": "https://example.com/github/bagusnugraha"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@bagusnugraha",
+        "href": "https://example.com/linkedin/bagusnugraha"
+      },
+      {
+        "platform": "website",
+        "handle": "bagusnugraha.dev",
+        "href": "https://example.com/bagusnugraha.dev"
+      }
+    ],
+    "bio": "Principal engineer on payment settlement. Thirteen years of ledgers, most of them spent making float positions visible rather than clever."
   },
   {
-    "id": "ingrid-salvesen",
-    "name": "Ingrid Salvesen",
-    "title": "Head of Design",
-    "company": "Fjordline Energy",
+    "id": "siti-rahmawati",
+    "name": "Siti Rahmawati",
+    "title": "Product Designer, Payments",
+    "company": "Pintar Bayar",
     "role": "design",
     "categories": [
-      "leadership",
-      "energy"
-    ],
-    "location": "Oslo, NO",
-    "skills": [
-      "Design ops",
-      "Brand",
-      "Mentoring"
-    ],
-    "years": 14,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/women/60.jpg",
-    "languages": [
-      "English",
-      "Norwegian"
-    ]
-  },
-  {
-    "id": "marcus-bell",
-    "name": "Marcus Bell",
-    "title": "Director of Data",
-    "company": "Ledgerworks",
-    "role": "data",
-    "categories": [
-      "leadership",
       "finance"
     ],
-    "location": "New York, US",
+    "location": "Jakarta, ID",
     "skills": [
-      "Data strategy",
-      "Governance"
-    ],
-    "years": 12,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/52.jpg",
-    "languages": [
-      "English"
-    ]
-  },
-  {
-    "id": "fatima-al-nasr",
-    "name": "Fatima Al-Nasr",
-    "title": "Engineering Manager",
-    "company": "Orbit ERP",
-    "role": "engineering",
-    "categories": [
-      "leadership",
-      "erp"
-    ],
-    "location": "Dubai, AE",
-    "skills": [
-      "Delivery",
-      "Coaching",
-      "Systems"
-    ],
-    "years": 10,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/67.jpg",
-    "languages": [
-      "English",
-      "Arabic"
-    ]
-  },
-  {
-    "id": "andres-ferrer",
-    "name": "Andrés Ferrer",
-    "title": "Core Banking Engineer",
-    "company": "Meridian Pay",
-    "role": "engineering",
-    "categories": [
-      "banking"
-    ],
-    "location": "Madrid, ES",
-    "skills": [
-      "Java",
-      "ISO 20022",
-      "Kafka"
-    ],
-    "years": 11,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/men/59.jpg",
-    "languages": [
-      "English",
-      "Spanish"
-    ]
-  },
-  {
-    "id": "lily-chen",
-    "name": "Lily Chen",
-    "title": "Product Designer, Payments",
-    "company": "Bluecrest Bank",
-    "role": "design",
-    "categories": [
-      "banking"
-    ],
-    "location": "Hong Kong, HK",
-    "skills": [
-      "Trust UX",
+      "Interaction design",
+      "Usability testing",
       "Accessibility"
     ],
     "years": 6,
     "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/74.jpg",
+    "photo": "https://randomuser.me/api/portraits/women/35.jpg",
     "languages": [
       "English",
-      "Cantonese",
-      "Mandarin"
-    ]
+      "Bahasa Indonesia"
+    ],
+    "links": [
+      {
+        "platform": "dribbble",
+        "handle": "@sitirahmawati",
+        "href": "https://example.com/dribbble/sitirahmawati"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@sitirahmawati",
+        "href": "https://example.com/linkedin/sitirahmawati"
+      },
+      {
+        "platform": "instagram",
+        "handle": "@sitirahmawati",
+        "href": "https://example.com/instagram/sitirahmawati"
+      }
+    ],
+    "bio": "Designs the moments where people hesitate before sending money to a stranger. Believes risk should be stated, not softened."
   },
   {
-    "id": "ravi-menon",
-    "name": "Ravi Menon",
-    "title": "Risk Data Analyst",
-    "company": "Bluecrest Bank",
-    "role": "data",
-    "categories": [
-      "banking",
-      "finance"
-    ],
-    "location": "Mumbai, IN",
-    "skills": [
-      "Credit models",
-      "Python",
-      "dbt"
-    ],
-    "years": 9,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/66.jpg",
-    "languages": [
-      "English",
-      "Hindi",
-      "Tamil"
-    ]
-  },
-  {
-    "id": "sofia-ricci",
-    "name": "Sofia Ricci",
-    "title": "Compliance Product Manager",
-    "company": "Meridian Pay",
-    "role": "product",
-    "categories": [
-      "banking"
-    ],
-    "location": "Milan, IT",
-    "skills": [
-      "KYC",
-      "Regulatory",
-      "Discovery"
-    ],
-    "years": 8,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/women/81.jpg",
-    "languages": [
-      "English",
-      "Italian"
-    ]
-  },
-  {
-    "id": "kwame-boateng",
-    "name": "Kwame Boateng",
-    "title": "Security Engineer",
-    "company": "Bluecrest Bank",
-    "role": "infra",
-    "categories": [
-      "banking",
-      "security"
-    ],
-    "location": "Accra, GH",
-    "skills": [
-      "Threat modeling",
-      "IAM"
-    ],
-    "years": 7,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/73.jpg",
-    "languages": [
-      "English",
-      "Twi"
-    ]
-  },
-  {
-    "id": "julia-sorensen",
-    "name": "Julia Sørensen",
-    "title": "Quant Developer",
-    "company": "Ledgerworks",
+    "id": "nguyen-thi-mai-anh",
+    "name": "Nguyen Thi Mai Anh",
+    "title": "Staff Engineer, Core Rails",
+    "company": "Saigon Rails",
     "role": "engineering",
     "categories": [
       "finance"
     ],
-    "location": "Copenhagen, DK",
+    "location": "Ho Chi Minh City, VN",
     "skills": [
-      "C++",
-      "Low latency",
-      "Pricing"
-    ],
-    "years": 10,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/88.jpg",
-    "languages": [
-      "English",
-      "Danish"
-    ]
-  },
-  {
-    "id": "ethan-park",
-    "name": "Ethan Park",
-    "title": "Fintech Product Manager",
-    "company": "Ledgerworks",
-    "role": "product",
-    "categories": [
-      "finance"
-    ],
-    "location": "Seoul, KR",
-    "skills": [
-      "Investing UX",
-      "Compliance"
-    ],
-    "years": 7,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/80.jpg",
-    "languages": [
-      "English",
-      "Korean"
-    ]
-  },
-  {
-    "id": "nadia-haryanto",
-    "name": "Nadia Haryanto",
-    "title": "Data Scientist, Fraud",
-    "company": "Sigma Capital",
-    "role": "data",
-    "categories": [
-      "finance"
-    ],
-    "location": "Jakarta, ID",
-    "skills": [
-      "Anomaly detection",
-      "Graph ML"
-    ],
-    "years": 6,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/women/95.jpg",
-    "languages": [
-      "English",
-      "Bahasa Indonesia"
-    ]
-  },
-  {
-    "id": "oliver-grant",
-    "name": "Oliver Grant",
-    "title": "Brand Designer",
-    "company": "Sigma Capital",
-    "role": "design",
-    "categories": [
-      "finance"
-    ],
-    "location": "Toronto, CA",
-    "skills": [
-      "Identity",
-      "Motion",
-      "Editorial"
-    ],
-    "years": 9,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/87.jpg",
-    "languages": [
-      "English",
-      "French"
-    ]
-  },
-  {
-    "id": "zainab-okoye",
-    "name": "Zainab Okoye",
-    "title": "Growth Lead",
-    "company": "Sigma Capital",
-    "role": "growth",
-    "categories": [
-      "finance"
-    ],
-    "location": "Abuja, NG",
-    "skills": [
-      "Paid social",
-      "Attribution"
-    ],
-    "years": 5,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/2.jpg",
-    "languages": [
-      "English",
-      "Yoruba"
-    ]
-  },
-  {
-    "id": "hendrik-vos",
-    "name": "Hendrik Vos",
-    "title": "SAP Solution Architect",
-    "company": "Orbit ERP",
-    "role": "engineering",
-    "categories": [
-      "erp"
-    ],
-    "location": "Rotterdam, NL",
-    "skills": [
-      "S/4HANA",
-      "ABAP",
-      "Integrations"
-    ],
-    "years": 15,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/men/94.jpg",
-    "languages": [
-      "English",
-      "Dutch"
-    ]
-  },
-  {
-    "id": "ayu-kusuma",
-    "name": "Ayu Kusuma",
-    "title": "Business Analyst",
-    "company": "Orbit ERP",
-    "role": "product",
-    "categories": [
-      "erp"
-    ],
-    "location": "Surabaya, ID",
-    "skills": [
-      "Process mapping",
-      "Requirements"
-    ],
-    "years": 8,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/9.jpg",
-    "languages": [
-      "English",
-      "Bahasa Indonesia"
-    ]
-  },
-  {
-    "id": "tomasz-nowak",
-    "name": "Tomasz Nowak",
-    "title": "UX Designer, Enterprise",
-    "company": "Beltway Systems",
-    "role": "design",
-    "categories": [
-      "erp"
-    ],
-    "location": "Kraków, PL",
-    "skills": [
-      "Complex tables",
-      "Workflow UX"
-    ],
-    "years": 10,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/1.jpg",
-    "languages": [
-      "English",
-      "Polish"
-    ]
-  },
-  {
-    "id": "grace-mutua",
-    "name": "Grace Mutua",
-    "title": "QA Lead",
-    "company": "Beltway Systems",
-    "role": "quality",
-    "categories": [
-      "erp"
-    ],
-    "location": "Nairobi, KE",
-    "skills": [
-      "Test strategy",
-      "Selenium"
-    ],
-    "years": 9,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/women/16.jpg",
-    "languages": [
-      "English",
-      "Swahili"
-    ]
-  },
-  {
-    "id": "victor-almeida",
-    "name": "Victor Almeida",
-    "title": "Integration Engineer",
-    "company": "Beltway Systems",
-    "role": "infra",
-    "categories": [
-      "erp"
-    ],
-    "location": "São Paulo, BR",
-    "skills": [
-      "MuleSoft",
-      "APIs",
-      "ETL"
-    ],
-    "years": 7,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/8.jpg",
-    "languages": [
-      "English",
-      "Portuguese"
-    ]
-  },
-  {
-    "id": "ingvild-haugen",
-    "name": "Ingvild Haugen",
-    "title": "Industrial IoT Engineer",
-    "company": "Fjordline Energy",
-    "role": "engineering",
-    "categories": [
-      "energy"
-    ],
-    "location": "Stavanger, NO",
-    "skills": [
-      "Edge",
-      "SCADA",
-      "Python"
-    ],
-    "years": 12,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/women/23.jpg",
-    "languages": [
-      "English",
-      "Norwegian"
-    ]
-  },
-  {
-    "id": "omar-siddiqui",
-    "name": "Omar Siddiqui",
-    "title": "Reservoir Data Scientist",
-    "company": "Delta Petro",
-    "role": "data",
-    "categories": [
-      "energy"
-    ],
-    "location": "Doha, QA",
-    "skills": [
-      "Geostatistics",
-      "Simulation"
-    ],
-    "years": 11,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/15.jpg",
-    "languages": [
-      "English",
-      "Arabic"
-    ]
-  },
-  {
-    "id": "rosa-delgado",
-    "name": "Rosa Delgado",
-    "title": "HSE Product Manager",
-    "company": "Delta Petro",
-    "role": "product",
-    "categories": [
-      "energy"
-    ],
-    "location": "Houston, US",
-    "skills": [
-      "Field ops",
-      "Safety systems"
-    ],
-    "years": 9,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/30.jpg",
-    "languages": [
-      "English"
-    ]
-  },
-  {
-    "id": "arif-maulana",
-    "name": "Arif Maulana",
-    "title": "Field Systems Designer",
-    "company": "Fjordline Energy",
-    "role": "design",
-    "categories": [
-      "energy"
-    ],
-    "location": "Balikpapan, ID",
-    "skills": [
-      "Rugged UI",
-      "Offline-first"
-    ],
-    "years": 6,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/22.jpg",
-    "languages": [
-      "English",
-      "Bahasa Indonesia"
-    ]
-  },
-  {
-    "id": "peter-lindgren",
-    "name": "Peter Lindgren",
-    "title": "Site Reliability Engineer",
-    "company": "Delta Petro",
-    "role": "infra",
-    "categories": [
-      "energy"
-    ],
-    "location": "Aberdeen, UK",
-    "skills": [
-      "Observability",
-      "Incident response"
-    ],
-    "years": 8,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/men/29.jpg",
-    "languages": [
-      "English"
-    ]
-  },
-  {
-    "id": "sinta-wijaya",
-    "name": "Sinta Wijaya",
-    "title": "Product Designer, Rider",
-    "company": "Kargo Nusantara",
-    "role": "design",
-    "categories": [
-      "mobility"
-    ],
-    "location": "Jakarta, ID",
-    "skills": [
-      "Maps UX",
-      "Onboarding"
-    ],
-    "years": 5,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/37.jpg",
-    "languages": [
-      "English",
-      "Bahasa Indonesia"
-    ]
-  },
-  {
-    "id": "luca-bianchi",
-    "name": "Luca Bianchi",
-    "title": "Routing Engineer",
-    "company": "Transitly",
-    "role": "engineering",
-    "categories": [
-      "mobility"
-    ],
-    "location": "Turin, IT",
-    "skills": [
-      "Graph algorithms",
       "Go",
-      "Geo"
+      "Postgres",
+      "Event sourcing",
+      "Performance"
+    ],
+    "years": 10,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/women/40.jpg",
+    "languages": [
+      "English",
+      "Vietnamese"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@nguyenthimaianh",
+        "href": "https://example.com/github/nguyenthimaianh"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@nguyenthimaianh",
+        "href": "https://example.com/linkedin/nguyenthimaianh"
+      },
+      {
+        "platform": "website",
+        "handle": "nguyenthimaianh.dev",
+        "href": "https://example.com/nguyenthimaianh.dev"
+      }
+    ],
+    "bio": "Staff engineer on transfer rails. Will trade latency for correctness every time and can show you the backfill that explains why."
+  },
+  {
+    "id": "tran-quoc-bao",
+    "name": "Tran Quoc Bao",
+    "title": "Site Reliability Engineer",
+    "company": "Saigon Rails",
+    "role": "infra",
+    "categories": [
+      "finance",
+      "reliability"
+    ],
+    "location": "Ho Chi Minh City, VN",
+    "skills": [
+      "Kubernetes",
+      "Observability",
+      "Incident response",
+      "SRE"
     ],
     "years": 8,
     "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/36.jpg",
+    "photo": "https://randomuser.me/api/portraits/men/41.jpg",
     "languages": [
       "English",
-      "Italian"
-    ]
+      "Vietnamese"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@tranquocbao",
+        "href": "https://example.com/github/tranquocbao"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@tranquocbao",
+        "href": "https://example.com/linkedin/tranquocbao"
+      }
+    ],
+    "bio": "SRE who treats Tết as an annual exam. Prefers pre-scaling and load shedding to heroics."
   },
   {
-    "id": "mei-lin-tan",
-    "name": "Mei Lin Tan",
-    "title": "Operations Data Lead",
-    "company": "Transitly",
+    "id": "lim-mei-ling",
+    "name": "Lim Mei Ling",
+    "title": "Head of Risk Data",
+    "company": "Bank Sahabat",
     "role": "data",
     "categories": [
-      "mobility"
+      "banking",
+      "leadership"
     ],
-    "location": "Kuala Lumpur, MY",
+    "location": "Jakarta, ID",
     "skills": [
+      "SQL",
       "Forecasting",
-      "Pricing",
-      "SQL"
+      "Causal inference",
+      "Experiment design"
     ],
-    "years": 10,
+    "years": 14,
     "open": false,
     "photo": "https://randomuser.me/api/portraits/women/44.jpg",
     "languages": [
       "English",
-      "Bahasa Malaysia",
-      "Mandarin"
-    ]
+      "Bahasa Indonesia"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@limmeiling",
+        "href": "https://example.com/github/limmeiling"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@limmeiling",
+        "href": "https://example.com/linkedin/limmeiling"
+      },
+      {
+        "platform": "website",
+        "handle": "limmeiling.dev",
+        "href": "https://example.com/limmeiling.dev"
+      }
+    ],
+    "bio": "Leads risk data at a digital bank. Works on credit for people a bureau cannot see, and insists on a fairness review before launch."
   },
   {
-    "id": "daniel-osei",
-    "name": "Daniel Osei",
+    "id": "ahmad-faizal-hamzah",
+    "name": "Ahmad Faizal Hamzah",
+    "title": "Engineering Manager",
+    "company": "Selat Pay",
+    "role": "engineering",
+    "categories": [
+      "banking",
+      "leadership"
+    ],
+    "location": "Kuala Lumpur, MY",
+    "skills": [
+      "Java",
+      "API design",
+      "Distributed systems"
+    ],
+    "years": 12,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/men/47.jpg",
+    "languages": [
+      "English",
+      "Malay",
+      "Mandarin",
+      "Tamil"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@ahmadfaizalhamzah",
+        "href": "https://example.com/github/ahmadfaizalhamzah"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@ahmadfaizalhamzah",
+        "href": "https://example.com/linkedin/ahmadfaizalhamzah"
+      },
+      {
+        "platform": "website",
+        "handle": "ahmadfaizalhamzah.dev",
+        "href": "https://example.com/ahmadfaizalhamzah.dev"
+      }
+    ],
+    "bio": "Engineering manager on cross-border payments. Eleven engineers, two regulators, one corridor at a time."
+  },
+  {
+    "id": "priya-naidu",
+    "name": "Priya Naidu",
+    "title": "Compliance Product Manager",
+    "company": "Selat Pay",
+    "role": "product",
+    "categories": [
+      "banking"
+    ],
+    "location": "Kuala Lumpur, MY",
+    "skills": [
+      "Stakeholder management",
+      "Discovery",
+      "Roadmapping"
+    ],
+    "years": 9,
+    "open": false,
+    "photo": "https://randomuser.me/api/portraits/women/49.jpg",
+    "languages": [
+      "English",
+      "Malay",
+      "Mandarin",
+      "Tamil"
+    ],
+    "links": [
+      {
+        "platform": "linkedin",
+        "handle": "@priyanaidu",
+        "href": "https://example.com/linkedin/priyanaidu"
+      },
+      {
+        "platform": "x",
+        "handle": "@priyanaidu",
+        "href": "https://example.com/x/priyanaidu"
+      }
+    ],
+    "bio": "Compliance product manager who renamed a metric and found a broken control underneath it."
+  },
+  {
+    "id": "sok-dara",
+    "name": "Sok Dara",
     "title": "Mobile Engineer",
-    "company": "Kargo Nusantara",
+    "company": "Angkor Pay",
+    "role": "engineering",
+    "categories": [
+      "finance"
+    ],
+    "location": "Phnom Penh, KH",
+    "skills": [
+      "React Native",
+      "Performance",
+      "API design"
+    ],
+    "years": 6,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/men/51.jpg",
+    "languages": [
+      "English",
+      "Khmer"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@sokdara",
+        "href": "https://example.com/github/sokdara"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@sokdara",
+        "href": "https://example.com/linkedin/sokdara"
+      },
+      {
+        "platform": "website",
+        "handle": "sokdara.dev",
+        "href": "https://example.com/sokdara.dev"
+      }
+    ],
+    "bio": "Mobile engineer building a wallet for 1GB Android Go phones. Tests on real hardware every sprint, which is less common than it should be."
+  },
+  {
+    "id": "ratna-kusumawati",
+    "name": "Ratna Kusumawati",
+    "title": "Credit Data Scientist",
+    "company": "Padi Finance",
+    "role": "data",
+    "categories": [
+      "finance"
+    ],
+    "location": "Yogyakarta, ID",
+    "skills": [
+      "Python",
+      "SQL",
+      "Forecasting",
+      "Evaluation"
+    ],
+    "years": 7,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/women/54.jpg",
+    "languages": [
+      "English",
+      "Bahasa Indonesia"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@ratnakusumawati",
+        "href": "https://example.com/github/ratnakusumawati"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@ratnakusumawati",
+        "href": "https://example.com/linkedin/ratnakusumawati"
+      },
+      {
+        "platform": "website",
+        "handle": "ratnakusumawati.dev",
+        "href": "https://example.com/ratnakusumawati.dev"
+      }
+    ],
+    "bio": "Credit data scientist working on agri lending. Builds products that admit when the harvest forecast is wrong."
+  },
+  {
+    "id": "yoga-prasetyo",
+    "name": "Yoga Prasetyo",
+    "title": "Principal Engineer, Routing",
+    "company": "Jangkar Logistik",
     "role": "engineering",
     "categories": [
       "mobility"
     ],
-    "location": "Bali, ID",
+    "location": "Surabaya, ID",
     "skills": [
-      "React Native",
-      "Offline sync"
+      "Go",
+      "Distributed systems",
+      "Performance",
+      "API design"
     ],
-    "years": 6,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/43.jpg",
+    "years": 11,
+    "open": false,
+    "photo": "https://randomuser.me/api/portraits/men/56.jpg",
     "languages": [
       "English",
       "Bahasa Indonesia"
-    ]
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@yogaprasetyo",
+        "href": "https://example.com/github/yogaprasetyo"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@yogaprasetyo",
+        "href": "https://example.com/linkedin/yogaprasetyo"
+      },
+      {
+        "platform": "website",
+        "handle": "yogaprasetyo.dev",
+        "href": "https://example.com/yogaprasetyo.dev"
+      }
+    ],
+    "bio": "Principal engineer on freight routing across an archipelago, where the road is sometimes a ferry with a timetable."
   },
   {
-    "id": "elena-petrova",
-    "name": "Elena Petrova",
-    "title": "UX Researcher",
-    "company": "Transitly",
-    "role": "research",
+    "id": "dewi-larasati",
+    "name": "Dewi Larasati",
+    "title": "Product Designer, Driver",
+    "company": "Jangkar Logistik",
+    "role": "design",
     "categories": [
-      "mobility"
+      "mobility",
+      "accessibility"
     ],
-    "location": "Lisbon, PT",
+    "location": "Surabaya, ID",
     "skills": [
-      "Field studies",
-      "Diary studies"
+      "Interaction design",
+      "Usability testing",
+      "Motion"
     ],
-    "years": 7,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/51.jpg",
-    "languages": [
-      "English",
-      "Portuguese"
-    ]
-  },
-  {
-    "id": "aisha-karim",
-    "name": "Aisha Karim",
-    "title": "Clinical Product Manager",
-    "company": "Caretrail",
-    "role": "product",
-    "categories": [
-      "healthtech"
-    ],
-    "location": "Amsterdam, NL",
-    "skills": [
-      "HL7/FHIR",
-      "Care pathways"
-    ],
-    "years": 9,
+    "years": 6,
     "open": true,
     "photo": "https://randomuser.me/api/portraits/women/58.jpg",
     "languages": [
       "English",
-      "Dutch"
-    ]
-  },
-  {
-    "id": "jonas-weber",
-    "name": "Jonas Weber",
-    "title": "Full-stack Engineer",
-    "company": "Caretrail",
-    "role": "engineering",
-    "categories": [
-      "healthtech"
-    ],
-    "location": "Munich, DE",
-    "skills": [
-      "Next.js",
-      "Postgres",
-      "HIPAA"
-    ],
-    "years": 6,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/men/50.jpg",
-    "languages": [
-      "English",
-      "German"
-    ]
-  },
-  {
-    "id": "nurul-hidayah",
-    "name": "Nurul Hidayah",
-    "title": "Accessibility Designer",
-    "company": "Caretrail",
-    "role": "design",
-    "categories": [
-      "healthtech"
-    ],
-    "location": "Jakarta, ID",
-    "skills": [
-      "WCAG",
-      "Inclusive design"
-    ],
-    "years": 7,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/65.jpg",
-    "languages": [
-      "English",
       "Bahasa Indonesia"
-    ]
+    ],
+    "links": [
+      {
+        "platform": "dribbble",
+        "handle": "@dewilarasati",
+        "href": "https://example.com/dribbble/dewilarasati"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@dewilarasati",
+        "href": "https://example.com/linkedin/dewilarasati"
+      },
+      {
+        "platform": "instagram",
+        "handle": "@dewilarasati",
+        "href": "https://example.com/instagram/dewilarasati"
+      }
+    ],
+    "bio": "Designs for someone on a motorcycle in the rain wearing gloves. Rode along for two weeks before drawing anything."
   },
   {
-    "id": "kai-nakamura",
-    "name": "Kai Nakamura",
-    "title": "Gameplay Engineer",
-    "company": "Pixelburn",
-    "role": "engineering",
-    "categories": [
-      "gaming"
-    ],
-    "location": "Osaka, JP",
-    "skills": [
-      "Unity",
-      "C#",
-      "Netcode"
-    ],
-    "years": 8,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/57.jpg",
-    "languages": [
-      "English",
-      "Japanese"
-    ]
-  },
-  {
-    "id": "bella-rossi",
-    "name": "Bella Rossi",
-    "title": "Technical Artist",
-    "company": "Pixelburn",
-    "role": "design",
-    "categories": [
-      "gaming"
-    ],
-    "location": "Vancouver, CA",
-    "skills": [
-      "Shaders",
-      "Rigging",
-      "VFX"
-    ],
-    "years": 6,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/72.jpg",
-    "languages": [
-      "English",
-      "French"
-    ]
-  },
-  {
-    "id": "samuel-adeniyi",
-    "name": "Samuel Adeniyi",
-    "title": "Live Ops Analyst",
-    "company": "Pixelburn",
+    "id": "le-van-hung",
+    "name": "Le Van Hung",
+    "title": "Operations Data Lead",
+    "company": "Mekong Freight",
     "role": "data",
     "categories": [
-      "gaming"
+      "mobility"
     ],
-    "location": "Manchester, UK",
+    "location": "Can Tho, VN",
     "skills": [
-      "Cohorts",
-      "Economy design"
-    ],
-    "years": 5,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/men/64.jpg",
-    "languages": [
-      "English"
-    ]
-  },
-  {
-    "id": "freya-lund",
-    "name": "Freya Lund",
-    "title": "Carbon Data Engineer",
-    "company": "Terravolt",
-    "role": "data",
-    "categories": [
-      "climate"
-    ],
-    "location": "Reykjavík, IS",
-    "skills": [
-      "LCA",
-      "Airflow",
-      "Spark"
-    ],
-    "years": 7,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/79.jpg",
-    "languages": [
-      "English",
-      "Icelandic"
-    ]
-  },
-  {
-    "id": "miguel-santos",
-    "name": "Miguel Santos",
-    "title": "Hardware-Software Engineer",
-    "company": "Terravolt",
-    "role": "engineering",
-    "categories": [
-      "climate"
-    ],
-    "location": "Barcelona, ES",
-    "skills": [
-      "Embedded",
-      "MQTT",
-      "Rust"
+      "SQL",
+      "Forecasting",
+      "Analytics",
+      "dbt"
     ],
     "years": 9,
     "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/71.jpg",
+    "photo": "https://randomuser.me/api/portraits/men/61.jpg",
     "languages": [
       "English",
-      "Spanish"
-    ]
+      "Vietnamese"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@levanhung",
+        "href": "https://example.com/github/levanhung"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@levanhung",
+        "href": "https://example.com/linkedin/levanhung"
+      },
+      {
+        "platform": "website",
+        "handle": "levanhung.dev",
+        "href": "https://example.com/levanhung.dev"
+      }
+    ],
+    "bio": "Operations data lead in the Mekong Delta, working on the economics of cash on delivery."
   },
   {
-    "id": "hannah-fischer",
-    "name": "Hannah Fischer",
-    "title": "Application Security Engineer",
-    "company": "Ironvault",
-    "role": "infra",
+    "id": "maria-consuelo-reyes",
+    "name": "Maria Consuelo Reyes",
+    "title": "Chief Product Officer",
+    "company": "Kalesa",
+    "role": "product",
     "categories": [
-      "security"
+      "mobility",
+      "leadership"
     ],
-    "location": "Vienna, AT",
+    "location": "Manila, PH",
     "skills": [
-      "SAST",
-      "Threat modeling"
+      "Zero-to-one",
+      "Marketplaces",
+      "Product strategy"
     ],
-    "years": 8,
+    "years": 15,
     "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/86.jpg",
+    "photo": "https://randomuser.me/api/portraits/women/63.jpg",
     "languages": [
       "English",
-      "German"
-    ]
+      "Filipino"
+    ],
+    "links": [
+      {
+        "platform": "linkedin",
+        "handle": "@mariaconsueloreyes",
+        "href": "https://example.com/linkedin/mariaconsueloreyes"
+      },
+      {
+        "platform": "x",
+        "handle": "@mariaconsueloreyes",
+        "href": "https://example.com/x/mariaconsueloreyes"
+      }
+    ],
+    "bio": "Chief product officer who has stood up a mobility marketplace in a city where two platforms had already burned the supply side."
   },
   {
-    "id": "rizky-pratama",
-    "name": "Rizky Pratama",
-    "title": "Detection Engineer",
-    "company": "Ironvault",
+    "id": "jomar-dela-cruz",
+    "name": "Jomar Dela Cruz",
+    "title": "Android Engineer",
+    "company": "Kalesa",
     "role": "engineering",
     "categories": [
-      "security"
+      "mobility"
     ],
-    "location": "Jakarta, ID",
+    "location": "Cebu, PH",
     "skills": [
-      "SIEM",
-      "Sigma rules",
-      "Python"
+      "React Native",
+      "Performance",
+      "Offline sync"
     ],
-    "years": 6,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/men/78.jpg",
-    "languages": [
-      "English",
-      "Bahasa Indonesia"
-    ]
-  },
-  {
-    "id": "chloe-dubois",
-    "name": "Chloe Dubois",
-    "title": "Security Product Designer",
-    "company": "Ironvault",
-    "role": "design",
-    "categories": [
-      "security"
-    ],
-    "location": "Montreal, CA",
-    "skills": [
-      "Zero-trust UX",
-      "Alert design"
-    ],
-    "years": 5,
+    "years": 7,
     "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/93.jpg",
+    "photo": "https://randomuser.me/api/portraits/men/65.jpg",
     "languages": [
       "English",
-      "French"
-    ]
+      "Filipino"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@jomardelacruz",
+        "href": "https://example.com/github/jomardelacruz"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@jomardelacruz",
+        "href": "https://example.com/linkedin/jomardelacruz"
+      },
+      {
+        "platform": "website",
+        "handle": "jomardelacruz.dev",
+        "href": "https://example.com/jomardelacruz.dev"
+      }
+    ],
+    "bio": "Android engineer building dispatch that keeps working when the cell towers are down. Has field-tested that through two typhoons."
   },
   {
-    "id": "leo-fitriadi",
-    "name": "Leo Fitriadi",
-    "title": "QA Engineer, Mobile",
-    "company": "Kargo Nusantara",
+    "id": "aung-kyaw-moe",
+    "name": "Aung Kyaw Moe",
+    "title": "QA Engineer, Marketplace",
+    "company": "Yangon Commerce",
     "role": "quality",
     "categories": [
       "mobility"
     ],
-    "location": "Jakarta, ID",
+    "location": "Yangon, MM",
     "skills": [
-      "Appium",
-      "Device labs",
-      "Regression"
+      "Exploratory testing",
+      "Test strategy",
+      "Playwright"
     ],
-    "years": 6,
+    "years": 5,
     "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/87.jpg",
+    "photo": "https://randomuser.me/api/portraits/men/68.jpg",
     "languages": [
       "English",
-      "Bahasa Indonesia"
-    ]
+      "Burmese"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@aungkyawmoe",
+        "href": "https://example.com/github/aungkyawmoe"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@aungkyawmoe",
+        "href": "https://example.com/linkedin/aungkyawmoe"
+      }
+    ],
+    "bio": "QA engineer who found that half of Myanmar types Zawgyi and half types Unicode, and that the test suite could see neither."
   },
   {
-    "id": "marta-nowicka",
-    "name": "Marta Nowicka",
-    "title": "Test Architect",
-    "company": "Meridian Pay",
-    "role": "quality",
+    "id": "kwok-jia-hui",
+    "name": "Kwok Jia Hui",
+    "title": "ML Research Engineer",
+    "company": "Tanya AI",
+    "role": "data",
     "categories": [
-      "banking"
+      "ai"
     ],
-    "location": "Warsaw, PL",
+    "location": "Singapore, SG",
     "skills": [
-      "Contract testing",
-      "Pact",
-      "CI/CD"
+      "PyTorch",
+      "Evaluation",
+      "Python",
+      "MLOps"
     ],
-    "years": 12,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/women/88.jpg",
+    "years": 8,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/women/70.jpg",
     "languages": [
       "English",
-      "Polish"
-    ]
+      "Mandarin",
+      "Malay",
+      "Tamil"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@kwokjiahui",
+        "href": "https://example.com/github/kwokjiahui"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@kwokjiahui",
+        "href": "https://example.com/linkedin/kwokjiahui"
+      },
+      {
+        "platform": "website",
+        "handle": "kwokjiahui.dev",
+        "href": "https://example.com/kwokjiahui.dev"
+      }
+    ],
+    "bio": "ML research engineer on Southeast Asian language evaluation. Reports per-language, because the aggregate is where the failures hide."
   },
   {
-    "id": "ryan-cole",
-    "name": "Ryan Cole",
-    "title": "QA Lead, Live Services",
-    "company": "Pixelburn",
-    "role": "quality",
-    "categories": [
-      "gaming"
-    ],
-    "location": "Austin, US",
-    "skills": [
-      "Soak testing",
-      "Telemetry"
-    ],
-    "years": 9,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/94.jpg",
-    "languages": [
-      "English"
-    ]
-  },
-  {
-    "id": "dewi-anggraini",
-    "name": "Dewi Anggraini",
-    "title": "Growth Product Manager",
-    "company": "Verity Labs",
-    "role": "growth",
+    "id": "farhan-maulana",
+    "name": "Farhan Maulana",
+    "title": "Backend Engineer, Inference",
+    "company": "Tanya AI",
+    "role": "engineering",
     "categories": [
       "ai"
     ],
     "location": "Jakarta, ID",
     "skills": [
-      "Activation",
-      "Experimentation"
+      "Rust",
+      "Performance",
+      "Distributed systems"
     ],
-    "years": 7,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/95.jpg",
+    "years": 6,
+    "open": false,
+    "photo": "https://randomuser.me/api/portraits/men/72.jpg",
     "languages": [
       "English",
       "Bahasa Indonesia"
-    ]
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@farhanmaulana",
+        "href": "https://example.com/github/farhanmaulana"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@farhanmaulana",
+        "href": "https://example.com/linkedin/farhanmaulana"
+      },
+      {
+        "platform": "website",
+        "handle": "farhanmaulana.dev",
+        "href": "https://example.com/farhanmaulana.dev"
+      }
+    ],
+    "bio": "Backend engineer on inference serving, working on why the tokenizer makes Indonesian cost three times as much as English."
   },
   {
-    "id": "felix-braun",
-    "name": "Felix Braun",
-    "title": "Performance Marketing Lead",
-    "company": "Transitly",
+    "id": "intan-permatasari",
+    "name": "Intan Permatasari",
+    "title": "AI Product Designer",
+    "company": "Tanya AI",
+    "role": "design",
+    "categories": [
+      "ai"
+    ],
+    "location": "Jakarta, ID",
+    "skills": [
+      "Conversational design",
+      "Prototyping",
+      "Usability testing"
+    ],
+    "years": 5,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/women/74.jpg",
+    "languages": [
+      "English",
+      "Bahasa Indonesia"
+    ],
+    "links": [
+      {
+        "platform": "dribbble",
+        "handle": "@intanpermatasari",
+        "href": "https://example.com/dribbble/intanpermatasari"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@intanpermatasari",
+        "href": "https://example.com/linkedin/intanpermatasari"
+      },
+      {
+        "platform": "instagram",
+        "handle": "@intanpermatasari",
+        "href": "https://example.com/instagram/intanpermatasari"
+      }
+    ],
+    "bio": "AI product designer working on formality registers, where getting a pronoun wrong in Javanese is not a small mistake."
+  },
+  {
+    "id": "rajendran-kumar",
+    "name": "Rajendran Kumar",
+    "title": "AI Research Lead",
+    "company": "Tanya AI",
+    "role": "research",
+    "categories": [
+      "ai",
+      "leadership"
+    ],
+    "location": "Singapore, SG",
+    "skills": [
+      "Evaluation",
+      "Survey design",
+      "Synthesis"
+    ],
+    "years": 13,
+    "open": false,
+    "photo": "https://randomuser.me/api/portraits/men/76.jpg",
+    "languages": [
+      "English",
+      "Mandarin",
+      "Malay",
+      "Tamil"
+    ],
+    "links": [
+      {
+        "platform": "linkedin",
+        "handle": "@rajendrankumar",
+        "href": "https://example.com/linkedin/rajendrankumar"
+      },
+      {
+        "platform": "website",
+        "handle": "rajendrankumar.dev",
+        "href": "https://example.com/rajendrankumar.dev"
+      }
+    ],
+    "bio": "Research lead who published a Southeast Asian language benchmark that put his own team third."
+  },
+  {
+    "id": "putu-ariani",
+    "name": "Putu Ariani",
+    "title": "Clinical Product Manager",
+    "company": "Klinika",
+    "role": "product",
+    "categories": [
+      "healthtech"
+    ],
+    "location": "Denpasar, ID",
+    "skills": [
+      "Discovery",
+      "Stakeholder management",
+      "Service design"
+    ],
+    "years": 9,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/women/78.jpg",
+    "languages": [
+      "English",
+      "Bahasa Indonesia"
+    ],
+    "links": [
+      {
+        "platform": "linkedin",
+        "handle": "@putuariani",
+        "href": "https://example.com/linkedin/putuariani"
+      },
+      {
+        "platform": "x",
+        "handle": "@putuariani",
+        "href": "https://example.com/x/putuariani"
+      }
+    ],
+    "bio": "Clinical product manager on BPJS referral pathways. Thinks about the ferry ticket a wrong referral costs a family."
+  },
+  {
+    "id": "rizki-ramadhan",
+    "name": "Rizki Ramadhan",
+    "title": "Full-stack Engineer",
+    "company": "Klinika",
+    "role": "engineering",
+    "categories": [
+      "healthtech"
+    ],
+    "location": "Bandung, ID",
+    "skills": [
+      "TypeScript",
+      "Postgres",
+      "API design"
+    ],
+    "years": 6,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/men/80.jpg",
+    "languages": [
+      "English",
+      "Bahasa Indonesia"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@rizkiramadhan",
+        "href": "https://example.com/github/rizkiramadhan"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@rizkiramadhan",
+        "href": "https://example.com/linkedin/rizkiramadhan"
+      },
+      {
+        "platform": "website",
+        "handle": "rizkiramadhan.dev",
+        "href": "https://example.com/rizkiramadhan.dev"
+      }
+    ],
+    "bio": "Full-stack engineer making telehealth work at 64kbps, because video-first excluded the patients who needed it most."
+  },
+  {
+    "id": "nadia-roslan",
+    "name": "Nadia Roslan",
+    "title": "Accessibility Designer",
+    "company": "Teratai Health",
+    "role": "design",
+    "categories": [
+      "healthtech",
+      "accessibility"
+    ],
+    "location": "Kuala Lumpur, MY",
+    "skills": [
+      "Accessibility",
+      "Design systems",
+      "Usability testing"
+    ],
+    "years": 8,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/women/82.jpg",
+    "languages": [
+      "English",
+      "Malay",
+      "Mandarin",
+      "Tamil"
+    ],
+    "links": [
+      {
+        "platform": "dribbble",
+        "handle": "@nadiaroslan",
+        "href": "https://example.com/dribbble/nadiaroslan"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@nadiaroslan",
+        "href": "https://example.com/linkedin/nadiaroslan"
+      },
+      {
+        "platform": "instagram",
+        "handle": "@nadiaroslan",
+        "href": "https://example.com/instagram/nadiaroslan"
+      }
+    ],
+    "bio": "Accessibility designer on health insurance claims in three languages and two scripts, for a user base whose eyesight is not what it was."
+  },
+  {
+    "id": "jose-antonio-villanueva",
+    "name": "Jose Antonio Villanueva",
+    "title": "Health Data Engineer",
+    "company": "Barangay Health",
+    "role": "data",
+    "categories": [
+      "healthtech"
+    ],
+    "location": "Manila, PH",
+    "skills": [
+      "Python",
+      "Airflow",
+      "SQL",
+      "dbt"
+    ],
+    "years": 7,
+    "open": false,
+    "photo": "https://randomuser.me/api/portraits/men/84.jpg",
+    "languages": [
+      "English",
+      "Filipino"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@joseantoniovillanueva",
+        "href": "https://example.com/github/joseantoniovillanueva"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@joseantoniovillanueva",
+        "href": "https://example.com/linkedin/joseantoniovillanueva"
+      },
+      {
+        "platform": "website",
+        "handle": "joseantoniovillanueva.dev",
+        "href": "https://example.com/joseantoniovillanueva.dev"
+      }
+    ],
+    "bio": "Health data engineer running dengue surveillance over SMS, because a feature phone is the one thing every barangay station has."
+  },
+  {
+    "id": "hendra-simanjuntak",
+    "name": "Hendra Simanjuntak",
+    "title": "Industrial Data Scientist",
+    "company": "Sawit Analytics",
+    "role": "data",
+    "categories": [
+      "energy",
+      "climate"
+    ],
+    "location": "Medan, ID",
+    "skills": [
+      "Python",
+      "Forecasting",
+      "Spark",
+      "Evaluation"
+    ],
+    "years": 11,
+    "open": false,
+    "photo": "https://randomuser.me/api/portraits/men/86.jpg",
+    "languages": [
+      "English",
+      "Bahasa Indonesia"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@hendrasimanjuntak",
+        "href": "https://example.com/github/hendrasimanjuntak"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@hendrasimanjuntak",
+        "href": "https://example.com/linkedin/hendrasimanjuntak"
+      },
+      {
+        "platform": "website",
+        "handle": "hendrasimanjuntak.dev",
+        "href": "https://example.com/hendrasimanjuntak.dev"
+      }
+    ],
+    "bio": "Industrial data scientist on plantation traceability. Grades confidence rather than issuing a binary compliant flag."
+  },
+  {
+    "id": "wayan-sukerta",
+    "name": "Wayan Sukerta",
+    "title": "Field Systems Designer",
+    "company": "Ombak Bahari",
+    "role": "design",
+    "categories": [
+      "climate"
+    ],
+    "location": "Denpasar, ID",
+    "skills": [
+      "Service design",
+      "Contextual inquiry",
+      "Data visualisation"
+    ],
+    "years": 7,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/men/88.jpg",
+    "languages": [
+      "English",
+      "Bahasa Indonesia"
+    ],
+    "links": [
+      {
+        "platform": "dribbble",
+        "handle": "@wayansukerta",
+        "href": "https://example.com/dribbble/wayansukerta"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@wayansukerta",
+        "href": "https://example.com/linkedin/wayansukerta"
+      },
+      {
+        "platform": "instagram",
+        "handle": "@wayansukerta",
+        "href": "https://example.com/instagram/wayansukerta"
+      }
+    ],
+    "bio": "Field systems designer who learned that the best interface for a fishing boat was the one that stayed off the boat."
+  },
+  {
+    "id": "ni-luh-gede-savitri",
+    "name": "Ni Luh Gede Savitri",
+    "title": "Marine Research Lead",
+    "company": "Ombak Bahari",
+    "role": "research",
+    "categories": [
+      "climate"
+    ],
+    "location": "Denpasar, ID",
+    "skills": [
+      "Ethnography",
+      "Contextual inquiry",
+      "Synthesis"
+    ],
+    "years": 6,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/women/90.jpg",
+    "languages": [
+      "English",
+      "Bahasa Indonesia"
+    ],
+    "links": [
+      {
+        "platform": "linkedin",
+        "handle": "@niluhgedesavitri",
+        "href": "https://example.com/linkedin/niluhgedesavitri"
+      },
+      {
+        "platform": "website",
+        "handle": "niluhgedesavitri.dev",
+        "href": "https://example.com/niluhgedesavitri.dev"
+      }
+    ],
+    "bio": "Marine researcher across six coastal villages. Spent four months negotiating data terms with village councils and would do it again."
+  },
+  {
+    "id": "adi-kurniawan",
+    "name": "Adi Kurniawan",
+    "title": "Platform Engineer",
+    "company": "Nusantara Cloud",
+    "role": "infra",
+    "categories": [
+      "saas",
+      "devex"
+    ],
+    "location": "Jakarta, ID",
+    "skills": [
+      "Kubernetes",
+      "Terraform",
+      "Platform engineering",
+      "Observability"
+    ],
+    "years": 9,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/men/92.jpg",
+    "languages": [
+      "English",
+      "Bahasa Indonesia"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@adikurniawan",
+        "href": "https://example.com/github/adikurniawan"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@adikurniawan",
+        "href": "https://example.com/linkedin/adikurniawan"
+      }
+    ],
+    "bio": "Platform engineer on data residency across three jurisdictions, without three copies of everything."
+  },
+  {
+    "id": "chen-yu-xuan",
+    "name": "Chen Yu Xuan",
+    "title": "Staff Site Reliability Engineer",
+    "company": "Nusantara Cloud",
+    "role": "infra",
+    "categories": [
+      "reliability",
+      "saas"
+    ],
+    "location": "Singapore, SG",
+    "skills": [
+      "SRE",
+      "Observability",
+      "Incident response",
+      "Cost optimisation"
+    ],
+    "years": 12,
+    "open": false,
+    "photo": "https://randomuser.me/api/portraits/men/94.jpg",
+    "languages": [
+      "English",
+      "Mandarin",
+      "Malay",
+      "Tamil"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@chenyuxuan",
+        "href": "https://example.com/github/chenyuxuan"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@chenyuxuan",
+        "href": "https://example.com/linkedin/chenyuxuan"
+      }
+    ],
+    "bio": "Staff SRE who found $380k a year in cross-region traffic and deleted 140 of 190 alerts."
+  },
+  {
+    "id": "sharifah-nadhirah",
+    "name": "Sharifah Nadhirah",
+    "title": "Application Security Engineer",
+    "company": "Bakau Security",
+    "role": "infra",
+    "categories": [
+      "security"
+    ],
+    "location": "Singapore, SG",
+    "skills": [
+      "Security",
+      "CI/CD",
+      "Python"
+    ],
+    "years": 8,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/women/96.jpg",
+    "languages": [
+      "English",
+      "Mandarin",
+      "Malay",
+      "Tamil"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@sharifahnadhirah",
+        "href": "https://example.com/github/sharifahnadhirah"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@sharifahnadhirah",
+        "href": "https://example.com/linkedin/sharifahnadhirah"
+      }
+    ],
+    "bio": "Application security engineer. Spent six months making an inventory accurate before writing a single blocking policy."
+  },
+  {
+    "id": "pham-minh-tuan",
+    "name": "Pham Minh Tuan",
+    "title": "Developer Experience Lead",
+    "company": "Titian",
+    "role": "engineering",
+    "categories": [
+      "devex",
+      "leadership"
+    ],
+    "location": "Hanoi, VN",
+    "skills": [
+      "TypeScript",
+      "CI/CD",
+      "API design",
+      "Platform engineering"
+    ],
+    "years": 11,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/men/98.jpg",
+    "languages": [
+      "English",
+      "Vietnamese"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@phamminhtuan",
+        "href": "https://example.com/github/phamminhtuan"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@phamminhtuan",
+        "href": "https://example.com/linkedin/phamminhtuan"
+      },
+      {
+        "platform": "website",
+        "handle": "phamminhtuan.dev",
+        "href": "https://example.com/phamminhtuan.dev"
+      }
+    ],
+    "bio": "Developer experience lead for a team spread across five countries. Made CI run the setup script so it cannot rot quietly."
+  },
+  {
+    "id": "galih-wicaksono",
+    "name": "Galih Wicaksono",
+    "title": "QA Lead, Live Services",
+    "company": "Gunung Games",
+    "role": "quality",
+    "categories": [
+      "gaming",
+      "reliability"
+    ],
+    "location": "Bandung, ID",
+    "skills": [
+      "Test strategy",
+      "Automation architecture",
+      "Performance testing"
+    ],
+    "years": 8,
+    "open": false,
+    "photo": "https://randomuser.me/api/portraits/men/5.jpg",
+    "languages": [
+      "English",
+      "Bahasa Indonesia"
+    ],
+    "links": [
+      {
+        "platform": "github",
+        "handle": "@galihwicaksono",
+        "href": "https://example.com/github/galihwicaksono"
+      },
+      {
+        "platform": "linkedin",
+        "handle": "@galihwicaksono",
+        "href": "https://example.com/linkedin/galihwicaksono"
+      }
+    ],
+    "bio": "QA lead for live services, testing on the evening-peak mobile networks players actually have rather than on office fibre."
+  },
+  {
+    "id": "kanya-phuwanat",
+    "name": "Kanya Phuwanat",
+    "title": "Live Ops Analyst",
+    "company": "Gunung Games",
+    "role": "growth",
+    "categories": [
+      "gaming"
+    ],
+    "location": "Chiang Mai, TH",
+    "skills": [
+      "Analytics",
+      "Experimentation",
+      "Retention"
+    ],
+    "years": 5,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/women/7.jpg",
+    "languages": [
+      "English",
+      "Thai"
+    ],
+    "links": [
+      {
+        "platform": "linkedin",
+        "handle": "@kanyaphuwanat",
+        "href": "https://example.com/linkedin/kanyaphuwanat"
+      },
+      {
+        "platform": "x",
+        "handle": "@kanyaphuwanat",
+        "href": "https://example.com/x/kanyaphuwanat"
+      },
+      {
+        "platform": "instagram",
+        "handle": "@kanyaphuwanat",
+        "href": "https://example.com/instagram/kanyaphuwanat"
+      }
+    ],
+    "bio": "Live ops analyst who argued the team out of harder paywalls by changing the denominator from 30-day ARPU to two-year LTV."
+  },
+  {
+    "id": "farah-zulkifli",
+    "name": "Farah Zulkifli",
+    "title": "Head of Talent",
+    "company": "Sirkel",
+    "role": "product",
+    "categories": [
+      "hiring",
+      "leadership"
+    ],
+    "location": "Singapore, SG",
+    "skills": [
+      "Hiring",
+      "Stakeholder management",
+      "Discovery"
+    ],
+    "years": 13,
+    "open": true,
+    "photo": "https://randomuser.me/api/portraits/women/16.jpg",
+    "languages": [
+      "English",
+      "Mandarin",
+      "Malay",
+      "Tamil"
+    ],
+    "links": [
+      {
+        "platform": "linkedin",
+        "handle": "@farahzulkifli",
+        "href": "https://example.com/linkedin/farahzulkifli"
+      },
+      {
+        "platform": "x",
+        "handle": "@farahzulkifli",
+        "href": "https://example.com/x/farahzulkifli"
+      }
+    ],
+    "bio": "Head of talent who published salary bands across six countries and closed the gap upward."
+  },
+  {
+    "id": "do-thi-kim-ngan",
+    "name": "Do Thi Kim Ngan",
+    "title": "Growth Lead",
+    "company": "Mekong Freight",
     "role": "growth",
     "categories": [
       "mobility"
     ],
-    "location": "Hamburg, DE",
+    "location": "Ho Chi Minh City, VN",
     "skills": [
-      "CAC",
-      "Creative testing",
-      "SEO"
-    ],
-    "years": 10,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/men/8.jpg",
-    "languages": [
-      "English",
-      "German"
-    ]
-  },
-  {
-    "id": "aicha-bensalem",
-    "name": "Aicha Bensalem",
-    "title": "Community & Growth",
-    "company": "Terravolt",
-    "role": "growth",
-    "categories": [
-      "climate"
-    ],
-    "location": "Casablanca, MA",
-    "skills": [
-      "Community",
-      "Content",
-      "Partnerships"
-    ],
-    "years": 5,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/women/2.jpg",
-    "languages": [
-      "English",
-      "Arabic",
-      "French"
-    ]
-  },
-  {
-    "id": "tomas-ibarra",
-    "name": "Tomás Ibarra",
-    "title": "Senior UX Researcher",
-    "company": "Orbit ERP",
-    "role": "research",
-    "categories": [
-      "erp"
-    ],
-    "location": "Santiago, CL",
-    "skills": [
-      "Ethnography",
-      "Usability",
-      "Synthesis"
-    ],
-    "years": 11,
-    "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/15.jpg",
-    "languages": [
-      "English",
-      "Spanish"
-    ]
-  },
-  {
-    "id": "saoirse-byrne",
-    "name": "Saoirse Byrne",
-    "title": "Design Researcher",
-    "company": "Caretrail",
-    "role": "research",
-    "categories": [
-      "healthtech"
-    ],
-    "location": "Dublin, IE",
-    "skills": [
-      "Clinical research",
-      "Co-design"
+      "Paid acquisition",
+      "Attribution",
+      "Experimentation",
+      "Onboarding"
     ],
     "years": 8,
-    "open": false,
-    "photo": "https://randomuser.me/api/portraits/women/9.jpg",
-    "languages": [
-      "English",
-      "Irish"
-    ]
-  },
-  {
-    "id": "marco-lombardi",
-    "name": "Marco Lombardi",
-    "title": "Research Ops",
-    "company": "Ironvault",
-    "role": "research",
-    "categories": [
-      "security"
-    ],
-    "location": "Rome, IT",
-    "skills": [
-      "Panel management",
-      "Repository"
-    ],
-    "years": 6,
     "open": true,
-    "photo": "https://randomuser.me/api/portraits/men/22.jpg",
+    "photo": "https://randomuser.me/api/portraits/women/23.jpg",
     "languages": [
       "English",
-      "Italian"
-    ]
+      "Vietnamese"
+    ],
+    "links": [
+      {
+        "platform": "linkedin",
+        "handle": "@dothikimngan",
+        "href": "https://example.com/linkedin/dothikimngan"
+      },
+      {
+        "platform": "x",
+        "handle": "@dothikimngan",
+        "href": "https://example.com/x/dothikimngan"
+      },
+      {
+        "platform": "instagram",
+        "handle": "@dothikimngan",
+        "href": "https://example.com/instagram/dothikimngan"
+      }
+    ],
+    "bio": "Growth lead who rebuilt acquisition around Zalo after discovering the regional playbook assumed the wrong country."
   }
 ]

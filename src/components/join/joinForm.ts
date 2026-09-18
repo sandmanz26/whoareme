@@ -1,4 +1,5 @@
-import { CATEGORIES, ROLES, type CategoryId, type RoleId } from "@/data/taxonomy"
+import { CATEGORIES, LIVE_ROLES, type CategoryId, type RoleId } from "@/data/taxonomy"
+import { passwordProblem } from "@/lib/password"
 
 export interface JoinValues {
   name: string
@@ -10,6 +11,8 @@ export interface JoinValues {
   categories: CategoryId[]
   portfolio: string
   pitch: string
+  /** Asked for on the last step: it guards the way back in, not the signup. */
+  password: string
 }
 
 export const EMPTY_JOIN_VALUES: JoinValues = {
@@ -22,6 +25,7 @@ export const EMPTY_JOIN_VALUES: JoinValues = {
   categories: [],
   portfolio: "",
   pitch: "",
+  password: "",
 }
 
 export const STEPS = [
@@ -37,7 +41,9 @@ export type JoinErrors = Partial<Record<keyof JoinValues, string>>
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const URL_LIKE = /^(https?:\/\/)?[\w-]+(\.[\w-]+)+([/?#][^\s]*)?$/
 
-export const ROLE_OPTIONS = ROLES.map((role) => ({ id: role.id, label: role.label }))
+/** Only crafts that are open: signing up as a craft you cannot file work
+ *  under would be a dead end. */
+export const ROLE_OPTIONS = LIVE_ROLES.map((role) => ({ id: role.id, label: role.label }))
 export const CATEGORY_OPTIONS = CATEGORIES.map((category) => ({
   id: category.id,
   label: category.label,
@@ -73,6 +79,8 @@ export function validateStep(step: StepIndex, values: JoinValues): JoinErrors {
     else if (!URL_LIKE.test(values.portfolio.trim())) errors.portfolio = "That does not look like a URL."
     if (values.pitch.trim().length > 0 && values.pitch.trim().length < 20)
       errors.pitch = "Either say something real (20+ characters) or leave it blank."
+    const passwordIssue = passwordProblem(values.password)
+    if (passwordIssue) errors.password = passwordIssue
   }
 
   return errors

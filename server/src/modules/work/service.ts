@@ -4,7 +4,7 @@ import { users, works } from "../../db/collections.js"
 import { ApiError, QuotaError, conflict, forbidden, notFound } from "../../lib/errors.js"
 import { buildSearchBlob, uniqueSlug } from "../../lib/text.js"
 import { pageMeta, skipFor, type Pagination } from "../../lib/pagination.js"
-import { TOPIC_QUOTA, type UserDoc, type WorkDoc } from "../../types.js"
+import { EXPERIENCE_BANDS, LIVE_ROLES, TOPIC_QUOTA, type UserDoc, type WorkDoc } from "../../types.js"
 import { publishableSchema, type WorkInput } from "./schema.js"
 import {
   CARD_PROJECTION,
@@ -21,6 +21,10 @@ function authorSnapshot(user: UserDoc) {
     title: user.title,
     company: user.company,
     photoUrl: user.photoUrl,
+    // Not cosmetic: the entry grid filters on these two. `updateProfile` fans
+    // any change to them out across the author's entries.
+    years: user.years,
+    languages: user.languages ?? [],
   }
 }
 
@@ -59,13 +63,34 @@ export async function listWork(
       models: (result?.models ?? [])
         .filter((m: { _id: string | null }) => m._id)
         .map((m: { _id: string; n: number }) => ({ value: m._id, count: m.n })),
+      languages: (result?.languages ?? []).map((l: { _id: string; n: number }) => ({
+        value: l._id,
+        count: l.n,
+      })),
+      // $bucket keys each group by its lower boundary; map those back to the
+      // band ids the client filters with, so the response speaks one language.
+      experience: (result?.experience ?? [])
+        .filter((b: { _id: number | string }) => typeof b._id === "number")
+        .map((b: { _id: number; n: number }) => ({
+          value: EXPERIENCE_BANDS.find((band) => band.min === b._id)?.id ?? String(b._id),
+          count: b.n,
+        })),
     },
     meta: pageMeta(result?.total ?? 0, pagination),
   }
 }
 
+/**
+ * `role: { $in: LIVE_ROLES }` here as well as in the listing match.
+ *
+ * A detail page that resolved for a craft the index does not list would be a
+ * link nothing on the site produces, reachable only by guessing the slug, and
+ * it would make the launch scope look like a display trick rather than a
+ * scope. Draft and moderator paths read through `getMine` and the moderation
+ * service, neither of which is scoped, so nothing an author owns disappears.
+ */
 export async function getPublishedBySlug(slug: string) {
-  const work = await works().findOne({ slug, status: "published" })
+  const work = await works().findOne({ slug, status: "published", role: { $in: LIVE_ROLES } })
   if (!work) throw notFound("Case study")
   return work
 }
@@ -142,6 +167,24 @@ export async function updateDraft(author: UserDoc, id: ObjectId, input: WorkInpu
 export async function publish(author: UserDoc, id: ObjectId): Promise<WorkDoc> {
   const existing = await getMine(author._id, id)
   if (existing.status === "published") throw conflict("That entry is already published.")
+
+  /**
+   * Drafting is open; publishing needs a verified address.
+   *
+   * This is the anti-spam control that actually matters. Gating registration
+   * would cost real signups and stop nothing, because a spammer will confirm
+   * an address. Gating the thing that becomes publicly visible means the cost
+   * of polluting the directory is one verified mailbox per attempt, and it
+   * leaves someone mid-way through writing their first entry completely
+   * unblocked.
+   */
+  if (!author.emailVerifiedAt) {
+    throw new ApiError(
+      403,
+      "email_unverified",
+      "Confirm your email address before publishing. Drafts are unaffected.",
+    )
+  }
 
   // Publishing has a higher bar than saving a draft.
   const parsed = publishableSchema.safeParse(existing)
@@ -244,10 +287,13 @@ export async function remove(author: UserDoc, id: ObjectId) {
 }
 
 export async function listByAuthorSlug(slug: string, pagination: Pagination) {
-  const author = await users().findOne({ slug, status: "active" }, { projection: { _id: 1 } })
+  const author = await users().findOne(
+    { slug, status: "active", role: { $in: LIVE_ROLES } },
+    { projection: { _id: 1 } },
+  )
   if (!author) throw notFound("Person")
 
-  const filter = { authorId: author._id, status: "published" as const }
+  const filter = { authorId: author._id, status: "published" as const, role: { $in: LIVE_ROLES } }
   const [items, total] = await Promise.all([
     works()
       .aggregate([

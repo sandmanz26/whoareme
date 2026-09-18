@@ -14,6 +14,7 @@ import type { Author } from "@/lib/authors"
 import { skillFacets } from "@/lib/workFilter"
 import { navigate } from "@/lib/router"
 import { cn } from "@/lib/utils"
+import { useAdmin } from "@/hooks/useAdmin"
 
 type Sort = "recent" | "title" | "role"
 type Layout = "grid" | "list"
@@ -48,6 +49,7 @@ export function WorkIndexPage({
   onResetFilters,
   onJoin,
 }: WorkIndexPageProps) {
+  const { copy } = useAdmin()
   const [sort, setSort] = useState<Sort>("recent")
   const [layout, setLayout] = useState<Layout>("grid")
 
@@ -70,8 +72,7 @@ export function WorkIndexPage({
           Every case study <span className="text-muted">in the directory</span>
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted">
-          {totalCount} entries from people who build technology. Each one states a problem, the
-          decisions behind it, and what measurably changed.
+          {totalCount} entries from people who build technology. {copy("work.index.description")}
         </p>
       </Container>
 

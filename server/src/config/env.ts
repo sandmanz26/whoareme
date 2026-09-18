@@ -25,6 +25,15 @@ const schema = z.object({
     .transform((value) => value.split(",").map((o) => o.trim()).filter(Boolean)),
 
   MAX_THUMBNAIL_BYTES: z.coerce.number().int().positive().default(1_500_000),
+
+  /** Where the SPA is served, used to build links inside outbound mail. */
+  APP_BASE_URL: z.string().url().default("http://localhost:9800"),
+
+  /** See `lib/mail.ts`. `none` is development only; production refuses it. */
+  MAIL_TRANSPORT: z.enum(["none", "log", "http"]).default("none"),
+  MAIL_API_URL: z.string().default(""),
+  MAIL_API_KEY: z.string().default(""),
+  MAIL_FROM: z.string().default(""),
 })
 
 const parsed = schema.safeParse(process.env)
@@ -36,10 +45,24 @@ if (!parsed.success) {
 
 export const env = parsed.data
 
+if (env.MAIL_TRANSPORT === "http") {
+  for (const key of ["MAIL_API_URL", "MAIL_API_KEY", "MAIL_FROM"] as const) {
+    if (!env[key]) throw new Error(`MAIL_TRANSPORT=http needs ${key}.`)
+  }
+}
+
 if (env.NODE_ENV === "production") {
   for (const key of ["JWT_ACCESS_SECRET", "JWT_REFRESH_SECRET", "VIEWER_HASH_SALT"] as const) {
     if (env[key].startsWith("change-me")) {
       throw new Error(`${key} still holds its placeholder value. Refusing to start in production.`)
     }
+  }
+  // Without a transport the verification route hands the token to whoever
+  // asks for it. That is a development affordance, not a degraded mode, so
+  // production refuses to start rather than running with publishing ungated.
+  if (env.MAIL_TRANSPORT === "none") {
+    throw new Error(
+      "MAIL_TRANSPORT is 'none'. Email verification gates publishing, so production needs a real transport.",
+    )
   }
 }

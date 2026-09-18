@@ -4,6 +4,7 @@ import { users, works } from "../db/collections.js"
 import { ensureIndexes } from "../db/indexes.js"
 import { applyValidators } from "../db/schema.js"
 import { buildSearchBlob } from "../lib/text.js"
+import { languagesFor } from "../lib/languages.js"
 import { logger } from "../lib/logger.js"
 import type { RoleId, TopicId, UserDoc, WorkDoc, BusinessModelId } from "../types.js"
 
@@ -28,6 +29,8 @@ interface SeedPerson {
   years: number
   open: boolean
   photo: string
+  /** Present in the exported fixtures; derived from the country if not. */
+  languages?: string[]
 }
 
 interface SeedWork {
@@ -62,11 +65,14 @@ function userFrom(person: SeedPerson): UserDoc {
     email: null,
     passwordHash: null,
     emailVerifiedAt: null,
+    emailVerifyTokenHash: null,
+    emailVerifyExpiresAt: null,
     role: person.role as RoleId,
     title: person.title,
     company: person.company,
     location: person.location,
     years: person.years,
+    languages: person.languages ?? languagesFor(person.location),
     topics: person.categories as TopicId[],
     skills: person.skills,
     openToWork: person.open,
@@ -75,6 +81,9 @@ function userFrom(person: SeedPerson): UserDoc {
     pitch: "",
     seeded: true,
     status: "active",
+    // Everyone registers as a member. Promotion to moderator or admin is a
+    // deliberate act, never a side effect of signing up.
+    access: "member",
     counts: { publishedWorks: 0, topicUsage: {} },
     searchBlob: "",
     createdAt: now,
@@ -101,6 +110,9 @@ function workFrom(entry: SeedWork, author: UserDoc): WorkDoc {
       title: author.title,
       company: author.company,
       photoUrl: author.photoUrl,
+      // The entry grid filters on these, so they travel with the snapshot.
+      years: author.years,
+      languages: author.languages,
     },
     mode: entry.sections && entry.sections.length > 0 ? "custom" : "template",
     role: entry.role as RoleId,

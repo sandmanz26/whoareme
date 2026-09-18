@@ -1,0 +1,5 @@
+# Netlify / Cloudflare Pages: serve the app for any unknown path.
+# Path routing means /work/some-entry is a real URL the host has no file for.
+# Without this, a refresh or a shared link returns the host's own 404 and the
+# app never boots. 200 rather than 301: the URL is correct, not moved.
+/*  /index.html  200

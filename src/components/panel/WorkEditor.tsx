@@ -4,8 +4,15 @@ import { SchemaField, validateFields, type FieldErrors } from "./SchemaForm"
 import { SkillPicker } from "./SkillPicker"
 import { ThumbnailPicker } from "./ThumbnailPicker"
 import { LinkListEditor, MetricEditor, SectionEditor } from "./ListEditors"
+import { FigureEditor } from "./FigureEditor"
+import { PublishReadiness } from "./PublishReadiness"
+import { CraftExample } from "./CraftExample"
+import { isPublishable, readinessFor } from "@/lib/readiness"
+import { dataUrlBytes } from "@/lib/image"
+import { track } from "@/lib/analytics"
 import { WorkCard } from "@/components/work/WorkCard"
-import { COMMON_FIELDS, STORY_FIELDS, schemaFor } from "@/data/portfolioSchemas"
+import { COMMON_FIELDS, STORY_FIELDS } from "@/data/portfolioSchemas"
+import { fieldsForTemplate, templateHeadline, templatesFor } from "@/data/workTemplates"
 import { CATEGORIES, roleById } from "@/data/taxonomy"
 import type { CategoryId } from "@/data/taxonomy"
 import { TOPIC_QUOTA, topicUsage, type Account, type WorkDraft } from "@/data/account"
@@ -51,12 +58,38 @@ export function WorkEditor({
   const [errors, setErrors] = useState<FieldErrors>({})
   const [savedAt, setSavedAt] = useState<string | null>(null)
 
-  const schema = schemaFor(state.role)
+  const templateFields = fieldsForTemplate(state.role, state.template)
+  const template = templateHeadline(state.role, state.template)
   const guided = state.mode === "template"
   const preview = workFromDraft(state, account)
 
+  // Figures attach to chapters, and a free-form entry's chapters are whatever
+  // the author named them - so the options follow the entry, not a constant.
+  const figureSections = useMemo(
+    () =>
+      guided
+        ? [
+            { value: "problem", label: "The problem" },
+            { value: "approach", label: "What you did" },
+            { value: "outcome", label: "What changed" },
+          ]
+        : state.sections
+            .filter((section) => section.heading.trim())
+            .map((section) => ({ value: section.heading, label: section.heading })),
+    [guided, state.sections],
+  )
+
+  const otherBytes = useMemo(
+    () => (state.thumbnail ? dataUrlBytes(state.thumbnail) : 0),
+    [state.thumbnail],
+  )
+
   // Quota is per topic and counts published entries only - drafts are free.
   const usage = useMemo(() => topicUsage(siblings, state.id), [siblings, state.id])
+
+  // Computed from the same function the publish check runs, so the panel can
+  // never promise something publish then refuses.
+  const readiness = useMemo(() => readinessFor(state, usage), [state, usage])
 
   function patch(part: Partial<WorkDraft>) {
     setState((current) => ({ ...current, ...part }))
@@ -78,16 +111,22 @@ export function WorkEditor({
 
   function submit(publish: boolean) {
     if (publish) {
-      const specs = guided ? [...COMMON_FIELDS, ...STORY_FIELDS, ...schema.fields] : COMMON_FIELDS
+      const specs = guided ? [...COMMON_FIELDS, ...STORY_FIELDS, ...templateFields] : COMMON_FIELDS
       const found = validateFields(specs, state.values)
 
       if (state.topics.length === 0) found.topics = "Pick at least one topic so people can find it."
       const overQuota = state.topics.filter((topic) => (usage[topic] ?? 0) >= TOPIC_QUOTA)
       if (overQuota.length > 0) {
         const names = overQuota.map((t) => CATEGORIES.find((c) => c.id === t)?.label).join(", ")
-        found.topics = `You already have ${TOPIC_QUOTA} published entries in ${names}. Unpublish one, or choose another topic.`
+        found.topics = `You already have ${TOPIC_QUOTA} published entries in ${names}. Revert one to draft, or choose another topic.`
       }
       if (state.skills.length === 0) found.skills = "Add at least one skill - the home filter uses these."
+      const unfinished = (state.figures ?? []).filter(
+        (figure) => !figure.alt.trim() || !figure.caption.trim(),
+      ).length
+      if (unfinished > 0) {
+        found.figures = `${unfinished} ${unfinished === 1 ? "figure needs" : "figures need"} alt text and a caption. An uncaptioned image is decoration.`
+      }
       if (!guided && !state.sections.some((s) => s.heading.trim() && s.body.trim())) {
         found.sections = "Write at least one section with a heading and some body text."
       }
@@ -96,10 +135,14 @@ export function WorkEditor({
       if (Object.keys(active).length > 0) {
         setErrors(active)
         document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
+        // Counted because it is the interesting failure: people who tried to
+        // publish and were turned back are the ones the form is losing.
+        track("entry_publish_blocked")
         return
       }
     }
 
+    track(publish ? "entry_published" : "entry_saved_draft")
     onSave({ ...state, published: publish }, publish)
     setSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
   }
@@ -118,7 +161,7 @@ export function WorkEditor({
           <div className="min-w-0">
             <p className="eyebrow text-paper/50">This entry</p>
             <p className="mt-1 font-display text-base font-semibold">
-              {roleById(state.role).label} · {guided ? "guided template" : "your own structure"}
+              {roleById(state.role).label} · {guided ? template.label : "your own structure"}
             </p>
             {state.role !== account.role && (
               <p className="mt-1 text-xs text-paper/60">
@@ -126,13 +169,34 @@ export function WorkEditor({
               </p>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onRestart}
-            className="cursor-pointer rounded-pill border border-paper/25 px-4 py-2 font-display text-xs font-medium text-paper transition-colors duration-200 hover:bg-paper hover:text-ink"
-          >
-            Change craft or format
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {guided && (
+              <label className="sr-only" htmlFor="template-switch">
+                Template
+              </label>
+            )}
+            {guided && (
+              <select
+                id="template-switch"
+                value={state.template}
+                onChange={(event) => patch({ template: event.target.value })}
+                className="cursor-pointer rounded-pill border border-paper/25 bg-transparent px-4 py-2 font-display text-xs font-medium text-paper transition-colors duration-200 hover:bg-paper/10 focus:outline-none"
+              >
+                {templatesFor(state.role).map((option) => (
+                  <option key={option.id} value={option.id} className="text-ink">
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            )}
+            <button
+              type="button"
+              onClick={onRestart}
+              className="cursor-pointer rounded-pill border border-paper/25 px-4 py-2 font-display text-xs font-medium text-paper transition-colors duration-200 hover:bg-paper hover:text-ink"
+            >
+              Change craft or format
+            </button>
+          </div>
         </div>
 
         <Fieldset title="The work">
@@ -189,8 +253,13 @@ export function WorkEditor({
               ))}
             </Fieldset>
 
-            <Fieldset title={`Evidence · ${roleById(state.role).label}`} intro={schema.intro}>
-              {schema.fields.map((spec) => (
+            {/* Placed where the figure gets typed, not in the terms nobody
+                reads. This product asks for the one thing an NDA usually
+                covers, so the warning belongs at the moment of the decision. */}
+            <ConfidentialityNote />
+
+            <Fieldset title={`Evidence · ${template.label}`} intro={template.intro}>
+              {templateFields.map((spec) => (
                 <SchemaField
                   key={spec.name}
                   spec={spec}
@@ -215,11 +284,33 @@ export function WorkEditor({
               )}
             </Fieldset>
 
+            <ConfidentialityNote />
+
             <Fieldset title="Results">
               <MetricEditor value={state.metrics} onChange={(metrics) => patch({ metrics })} />
             </Fieldset>
           </>
         )}
+
+        <Fieldset
+          title="Figures"
+          intro="Optional. Screenshots, diagrams, before and after - each one sits under the chapter you assign it to, and the page picks the layout from the image itself. A wide screenshot and a phone screen do not get the same treatment."
+        >
+          <FigureEditor
+            figures={state.figures ?? []}
+            sections={
+              figureSections.length > 0
+                ? figureSections
+                : [{ value: "problem", label: "Add a section heading first" }]
+            }
+            otherBytes={otherBytes}
+            onChange={(figures) => {
+              patch({ figures })
+              setErrors((current) => (current.figures ? { ...current, figures: "" } : current))
+            }}
+            error={errors.figures}
+          />
+        </Fieldset>
 
         <Fieldset title="Links">
           <LinkListEditor value={state.links} onChange={(links) => patch({ links })} />
@@ -239,7 +330,7 @@ export function WorkEditor({
                 setSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
               }}
             >
-              Unpublish
+              Revert to draft
             </Button>
           )}
           {onDelete && (
@@ -264,7 +355,13 @@ export function WorkEditor({
       </form>
 
       {/* Live preview: people write better entries when they can see the card. */}
-      <aside className="min-w-0 xl:sticky xl:top-24 xl:self-start">
+      <aside className="flex min-w-0 flex-col gap-6 xl:sticky xl:top-24 xl:self-start">
+        <PublishReadiness items={readiness} published={state.published} />
+
+        {/* The reference only earns its space while the entry is still thin. */}
+        {!isPublishable(readiness) && <CraftExample role={state.role} templateLabel={template.label} />}
+
+        <div>
         <p className="eyebrow">Preview</p>
         <div className="mt-4 flex min-w-0">
           <WorkCard work={preview} author={author} index={0} />
@@ -273,6 +370,7 @@ export function WorkEditor({
           Without an upload the cover is drawn from your craft and headline result - so an entry
           under NDA is never penalised for having no screenshot.
         </p>
+        </div>
       </aside>
     </div>
   )
@@ -338,5 +436,41 @@ function TopicQuotaGroup({
         </p>
       )}
     </fieldset>
+  )
+}
+
+/**
+ * The confidentiality prompt, next to the evidence fields.
+ *
+ * Every other portfolio site asks for pictures. This one asks for the number
+ * that moved, which is frequently the precise thing an employment contract or
+ * a client NDA treats as confidential - and a metric is often more sensitive
+ * than a screenshot, not less.
+ *
+ * It offers the way out rather than only the risk: the shape of a result is
+ * usually publishable when the raw figure is not, and "four hours to under
+ * one" is still evidence.
+ */
+function ConfidentialityNote() {
+  return (
+    <div className="rounded-card border border-ink/15 bg-paper-2/70 p-4">
+      <p className="font-display text-sm font-semibold text-ink">
+        Is this figure yours to publish?
+      </p>
+      <p className="mt-2 text-sm leading-relaxed text-muted">
+        Results are the part an NDA or an employment contract usually covers. If you are not sure,
+        publish the shape instead of the raw number: <em>a four-hour job down to under one</em>{" "}
+        carries the same weight as the exact minutes and gives nothing away. Publishing something
+        you were not free to publish is a problem you would own, not us.
+      </p>
+      <p className="mt-2 text-sm">
+        <a
+          href="/terms"
+          className="font-display font-medium text-ink underline decoration-ink/25 underline-offset-4 transition-colors duration-200 hover:decoration-pop-pink"
+        >
+          What you warrant when you publish
+        </a>
+      </p>
+    </div>
   )
 }

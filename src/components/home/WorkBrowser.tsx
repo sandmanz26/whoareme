@@ -8,6 +8,7 @@ import { ArrowUpRight, Search } from "@/components/ui/Icon"
 import { navigate } from "@/lib/router"
 import type { Work } from "@/data/work"
 import type { Author } from "@/lib/authors"
+import { useAdmin } from "@/hooks/useAdmin"
 
 const PAGE_SIZE = 6
 
@@ -35,19 +36,23 @@ export function WorkBrowser({
   onResetFilters,
   onJoin,
 }: WorkBrowserProps) {
+  const { copy } = useAdmin()
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   // Every filter belongs in the signature. Leave one out and paging silently
   // keeps the old offset when that filter changes.
   const signature = [
-    filters.role ?? "",
-    filters.topic ?? "",
-    filters.model ?? "",
-    filters.experience ?? "",
-    filters.language ?? "",
-    filters.skills.join(","),
-    filters.query,
-  ].join("|")
+    filters.role,
+    filters.topic,
+    filters.practice,
+    filters.model,
+    filters.experience,
+    filters.language,
+    filters.skills,
+  ]
+    .map((values) => values.join(","))
+    .concat(filters.query)
+    .join("|")
   const [lastSignature, setLastSignature] = useState(signature)
   if (signature !== lastSignature) {
     setLastSignature(signature)
@@ -65,7 +70,7 @@ export function WorkBrowser({
               The work, <span className="text-muted">not the mockup</span>
             </>
           }
-          description="Every entry states the problem, the decisions, and what measurably changed. Narrow by craft, by where it shipped, or by the person who made it."
+          description={copy("home.work.description")}
           action={
             <Button variant="outline" onClick={() => navigate("/work")}>
               See all portfolios

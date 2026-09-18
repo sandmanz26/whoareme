@@ -5,7 +5,11 @@ import { env } from "../config/env.js"
 export interface AccessClaims {
   sub: string
   slug: string
+  /** The person's craft. Carries no permission meaning. */
   role: string
+  /** Access level. Absent on tokens issued before moderation existed, which
+   *  is why it is optional and treated as "member" when missing. */
+  access?: string
 }
 
 export function signAccessToken(claims: AccessClaims): string {

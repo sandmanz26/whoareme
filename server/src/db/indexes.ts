@@ -1,4 +1,6 @@
-import { sessions, trafficDaily, trafficEvents, users, works } from "./collections.js"
+import {
+  moderationActions, notices, reports, sessions, trafficDaily, trafficEvents, users, works,
+} from "./collections.js"
 import { logger } from "../lib/logger.js"
 
 const DAYS_400_IN_SECONDS = 400 * 24 * 60 * 60
@@ -22,6 +24,10 @@ export async function ensureIndexes(): Promise<void> {
     },
     { key: { status: 1, role: 1, topics: 1 }, name: "users_status_role_topics" },
     { key: { status: 1, skills: 1 }, name: "users_status_skills" },
+    // The two filter axes added after launch scope was drawn. `languages` is
+    // multikey, so it cannot share a compound key with `topics` or `skills`.
+    { key: { status: 1, languages: 1 }, name: "users_status_languages" },
+    { key: { status: 1, years: 1 }, name: "users_status_years" },
     { key: { status: 1, "counts.publishedWorks": -1, _id: 1 }, name: "users_status_rank" },
   ])
 
@@ -34,6 +40,10 @@ export async function ensureIndexes(): Promise<void> {
     { key: { status: 1, skills: 1 }, name: "works_status_skills" },
     { key: { authorId: 1, status: 1, publishedAt: -1 }, name: "works_author" },
     { key: { status: 1, "metrics.opens": -1 }, name: "works_status_popular" },
+    // Entry filters that are really author filters, answered from the
+    // denormalised snapshot so the listing still matches one document.
+    { key: { status: 1, "author.languages": 1 }, name: "works_status_author_languages" },
+    { key: { status: 1, "author.years": 1 }, name: "works_status_author_years" },
     {
       key: {
         title: "text", summary: "text", problem: "text",
@@ -64,6 +74,43 @@ export async function ensureIndexes(): Promise<void> {
 
   await trafficDaily().createIndexes([
     { key: { ownerId: 1, day: 1 }, unique: true, name: "traffic_daily_key" },
+  ])
+
+
+  await reports().createIndexes([
+    // The queue: open reports, newest first.
+    { key: { resolvedAt: 1, createdAt: -1 }, name: "reports_open_recent" },
+    // What is being complained about, for the count on an entry.
+    { key: { targetKind: 1, targetId: 1, resolvedAt: 1 }, name: "reports_target" },
+    // One person filing the same complaint about the same thing on the same
+    // day is one complaint. The hash rotates daily, so this cannot suppress a
+    // genuine second report tomorrow.
+    {
+      key: { reporterHash: 1, targetKind: 1, targetId: 1, reason: 1 },
+      unique: true,
+      name: "reports_dedupe",
+    },
+    // Raw reports are not kept forever; the decision in the audit log is.
+    { key: { createdAt: 1 }, expireAfterSeconds: DAYS_400_IN_SECONDS, name: "reports_ttl" },
+  ])
+
+  await moderationActions().createIndexes([
+    { key: { createdAt: -1 }, name: "moderation_recent" },
+    { key: { targetKind: 1, targetId: 1, createdAt: -1 }, name: "moderation_target" },
+    { key: { actorId: 1, createdAt: -1 }, name: "moderation_actor" },
+    // Deliberately no TTL. The log is the thing that has to outlive everything
+    // else it refers to.
+  ])
+
+  await notices().createIndexes([
+    // The author's own list: theirs, newest first.
+    { key: { userId: 1, createdAt: -1 }, name: "notices_user_recent" },
+    // The reviewer's queue: appeals nobody has answered yet.
+    { key: { "appeal.outcome": 1, "appeal.createdAt": 1 }, name: "notices_open_appeals" },
+    { key: { actionId: 1 }, name: "notices_action" },
+    // Deliberately no TTL, for the same reason the audit log has none: a
+    // notice is the author's copy of a record that has to outlive the thing
+    // it refers to.
   ])
 
   logger.info("indexes ensured")

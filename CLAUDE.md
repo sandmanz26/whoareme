@@ -10,11 +10,17 @@ The SPA still runs with no backend at all; the API is the production path.
 
 ## Read first
 
+- [`AGENTS.md`](AGENTS.md) — **orientation for an agent picking this up cold.**
+  Two minutes, then it routes you to the right deep doc.
+- [`CHANGELOG.md`](CHANGELOG.md) — what changed, when, and why it was decided
+  that way. Includes every bug found and the invariant it became.
 - [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) — **the complete
   handover.** Start here if you have no other context.
 - [`docs/ENGINEERING.md`](docs/ENGINEERING.md) — front-end architecture and the
   invariants that break non-obviously.
 - [`docs/BUSINESS.md`](docs/BUSINESS.md) — thesis, taxonomy, load-bearing rules.
+- [`docs/TEMPLATES_AND_MOTION.md`](docs/TEMPLATES_AND_MOTION.md) — the work
+  template system (archetypes × craft) and case-study motion.
 - [`docs/DATABASE.md`](docs/DATABASE.md) — collections, indexes, every query.
 - [`server/README.md`](server/README.md) — API surface and how to run it.
 
@@ -28,7 +34,7 @@ npm run export:fixtures    # regenerate server/fixtures/*.json from src/data
 cd server
 npm run dev                # API on :4000
 npm run db:setup && npm run db:seed
-npm run test:smoke         # 47 assertions against an ephemeral replica set
+npm run test:smoke         # 125 assertions against an ephemeral replica set
 ```
 
 ## Rules that are not negotiable without a stated reason

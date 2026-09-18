@@ -56,15 +56,21 @@ the repo; wiring the SPA to the API is the next piece of work (see §12).
 browser, people directory, join flow, a full authoring panel (profile,
 portfolio with role-specific forms, traffic), a full portfolio index, and case
 study detail pages with related work, profile pages, and standing About /
-Changelog / Privacy pages. 92 seeded case studies, 62 seeded people.
+Changelog / Privacy pages. 54 seeded case studies, 40 seeded people, all Southeast Asia.
 Verified in a real browser: no console errors and no horizontal overflow at
 360 / 390 / 768 / 1024 / 1440 on every route.
 
-**API** — auth (register, login, refresh with rotation, logout, profile),
-directory listing and facets, work CRUD, publish with atomic quota enforcement,
-similar-work scoring, traffic recording and summary, GridFS thumbnails.
-Verified by `npm run test:smoke`: **47 assertions, all passing**, against an
-ephemeral single-node MongoDB replica set.
+**API** — auth (register, login, refresh with rotation, logout, profile, email
+verification by mail), directory listing and facets, work CRUD, publish with
+atomic quota enforcement, similar-work scoring, the experience and language
+filters, the launch scope, traffic recording and summary, GridFS thumbnails and
+profile photos, reports, moderation with an audit log, notices to the people a
+decision was about, appeals a second moderator must review, site settings, the
+taxonomy, and funnel counters. Verified by `npm run test:smoke`: **125
+assertions, all passing**, against an ephemeral single-node MongoDB replica set.
+
+There is **nothing the SPA does that the API cannot answer.** What is missing
+is a provisioned database and the wiring between the two — see §12.
 
 ### Not yet done
 
@@ -161,8 +167,8 @@ as developer work, and the UI says so explicitly.
 
 ### Topic — where it shipped
 
-One axis, two **kinds**, distinguished by a `kind` field on each entry in
-`CATEGORIES` and grouped into `<optgroup>`s in the topic filter.
+One storage axis, two **kinds**, distinguished by a `kind` field on each entry
+in `CATEGORIES` and surfaced as two separate filter controls.
 
 **Industry** (`kind: "industry"`) — `saas` · `ai` · `banking` · `finance` ·
 `erp` · `energy` · `mobility` · `healthtech` · `gaming` · `climate` ·
@@ -175,10 +181,18 @@ and filing it under an industry would either flatter it with a business case it
 never had or bury it entirely.
 
 Everything except the first eight sits behind a "See more" control on the
-directory rail. Keeping both kinds on one axis rather than adding a fourth
-means `Work.topics` did not change shape and the two-per-topic quota keeps
-working unmodified — a person whose year was half ERP and half design ops can
-say exactly that.
+directory rail.
+
+**One storage axis, two controls.** `Work.topics` holds both kinds, so the
+two-per-topic quota keeps working unmodified and a person whose year was half
+ERP and half design ops can say exactly that. The filter bar splits them into
+**Industry** and **Practice**, because they answer different questions and
+picking one is not a vote against the other. `Filters.topic` and
+`Filters.practice` are AND-ed; 13 of the 92 seeded entries carry one of each.
+
+The directory rail stays a single row of chips over both kinds and routes by
+`isPracticeTopic()` in `HomePage`, so it remains single-select: picking a
+practice clears the industry and the other way round.
 
 **People inherit topics from their work.** `Person.categories` is hand-written
 in the fixtures and only ever holds industries, so `withDerivedTopics()` in
@@ -293,7 +307,8 @@ Vite 7, Tailwind v4 with tokens in `@theme` and **no `tailwind.config.js`**.
 
 **Runtime dependencies: `react` and `react-dom`. Nothing else.** Icons, the
 dialog, the focus trap, the router, the stepper and the image downscaler are
-hand-rolled. Total bundle ~160 kB gzipped, most of the growth being seed data rather than code. Do not add a UI library, an icon
+hand-rolled. Total bundle ~164 kB gzipped, most of the growth being seed data
+rather than code. Do not add a UI library, an icon
 package, a router or a state manager without a stated reason.
 
 ### Routing
@@ -326,9 +341,12 @@ working alongside real routes. `pageRootOf()` returns `"home" | "work" |
 
 ### State ownership
 
-- **Browse state** (`role`, `topic`, `model`, `experience`, `language`,
-  `skills`, `query`) lives in
-  `App.tsx` as one `Filters` object. Every surface reads it, so selecting a
+- **Browse state** (`role`, `topic`, `practice`, `model`, `experience`,
+  `language`, `skills`, `query`) lives in
+  `App.tsx` as one `Filters` object. **Every facet is an array**: empty means no
+  opinion, values inside one facet are OR-ed, and facets are AND-ed with each
+  other. `skills` is the exception and stays AND-ed within itself, because a
+  skill list is a spec rather than a shortlist. Every surface reads it, so selecting a
   craft in the role grid, the home dropdown or the index dropdown gives one
   consistent answer everywhere. **Do not add a second copy.**
 - **Account and entries** live in `useAccount` (React context over
@@ -583,7 +601,7 @@ docker compose up -d
 # 3. API
 npm install
 npm run db:setup     # validators + indexes, idempotent
-npm run db:seed      # 62 people, 92 case studies
+npm run db:seed      # 40 people, 54 case studies
 npm run dev          # http://localhost:4000
 ```
 
@@ -634,27 +652,47 @@ Ordered by what I would do next.
 already matches the API's shape. Replace the `localStorage` bodies with fetch
 calls; **no component needs to change.**
 
-Alongside it:
+Alongside it, and worth knowing before you start: **the API is no longer the
+lagging half.** Notices and appeals, funnel counters, the craft `live`/`soon`
+status, `languages`, and the experience and language filter parameters all
+exist server-side and are covered by the smoke suite. Four SPA features that
+previously had no API counterpart now have one, so wiring will not knock them
+out. `GET /api/taxonomy` returns the crafts, topic kinds, models, experience
+bands, languages and the topic quota — use it to check the SPA's own copy of
+the taxonomy has not drifted.
 
 - `SEED_WORK` / `PEOPLE` become fetched collections. The `Work` type stays as
   is — the API returns the same shape.
 - Filtering, faceting and pagination move server-side; `lib/filter.ts` and
   `lib/workFilter.ts` become dead code on the client.
-- Thumbnails move to `POST /uploads/work/:id/thumbnail`. Keep `lib/image.ts` as
-  the client-side pre-upload downscale.
+- Thumbnails move to `POST /uploads/work/:id/thumbnail` and the profile photo
+  to `POST /uploads/profile/photo`. Keep `lib/image.ts` as the client-side
+  pre-upload downscale.
+- `src/lib/analytics.ts` keeps its counters and gains a flush: `POST
+  /api/analytics/funnel` with `{ counts }`. The schema is strict on both
+  levels, so send counters and nothing else.
+- `src/hooks/useAdmin.tsx` moves onto `/api/moderation/*` and
+  `src/components/panel/NoticeList.tsx` onto `/api/notices`. Note that the
+  server refuses to let a moderator review an appeal against their own
+  decision; the SPA has no such check, and this is where it gets one.
 - The traffic disclosure copy in `TrafficPanel` comes out once numbers are real.
 - Decide the fallback: keep the offline/localStorage path as a demo mode, or
   drop it. Rule 2 in `CLAUDE.md` currently says keep it.
 
 ### 2. Before the API goes to production
 
-- Email verification and password reset — no mail transport is wired up.
+- **Provision a database.** The API is written against MongoDB and proven
+  against a real one by the smoke suite, which boots an ephemeral single-node
+  replica set. What does not exist is a *standing* instance: no Atlas cluster,
+  no `mongod` on this machine. Publish runs in a transaction, so it must be a
+  replica set, not a standalone. Then `npm run db:setup && npm run db:seed`.
+- **Password reset.** Email verification is wired up and mailed
+  (`MAIL_TRANSPORT`, see `server/lib/mail.ts`); reset is not.
 - Rate limits are in-process. Behind more than one instance, move to a Redis
   store or each replica gets its own budget.
 - `helmet` CSP tuned for whatever domain serves the SPA.
 - A real test suite. The smoke test covers happy paths and the main failure
   modes, not edge cases.
-- Structured audit log for moderation actions.
 - Topic quota is currently bypassable only by direct database access, which is
   acceptable — but it is a product rule, not a security control. Do not start
   treating it as one.

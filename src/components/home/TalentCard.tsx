@@ -24,7 +24,7 @@ export function TalentCard({ person, index, onView }: TalentCardProps) {
 
   return (
     <article
-      className="animate-fade-up group relative flex flex-col rounded-card border border-line bg-card p-5 transition-all duration-250 ease-pop hover:-translate-y-1 hover:border-ink/30 hover:shadow-[0_20px_50px_-28px_rgba(11,11,15,0.45)]"
+      className="animate-fade-up group relative flex w-full min-w-0 flex-col rounded-card border border-line bg-card p-5 transition-all duration-250 ease-pop hover:-translate-y-1 hover:border-ink/30 hover:shadow-[0_20px_50px_-28px_rgba(11,11,15,0.45)]"
       style={{ animationDelay: `${Math.min(index, 11) * 45}ms` } as CSSVars}
     >
       <div className="flex items-start gap-4">
@@ -39,7 +39,7 @@ export function TalentCard({ person, index, onView }: TalentCardProps) {
             {person.name}
           </h3>
           <p className="mt-0.5 truncate text-sm text-ink-2">{person.title}</p>
-          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted">
+          <p className="mt-1.5 flex min-w-0 items-center gap-1.5 text-xs text-muted">
             <Pin size={13} className="shrink-0" />
             <span className="truncate">
               {person.company} · {person.location}

@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/build-sitemap.mjs",
     "preview": "vite preview",
     "lint": "tsc -b --noEmit",
-    "export:fixtures": "node scripts/export-fixtures.mjs"
+    "export:fixtures": "node scripts/export-fixtures.mjs",
+    "check:templates": "node scripts/check-templates.mjs",
+    "sitemap": "node scripts/build-sitemap.mjs"
   },
   "dependencies": {
     "react": "^19.1.0",

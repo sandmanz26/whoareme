@@ -43,19 +43,20 @@ export function JoinCta({ onJoin }: { onJoin: () => void }) {
             <div>
               <p className="eyebrow text-paper/50">Join the directory</p>
               <h2 className="display mt-4 text-[clamp(2.25rem,6vw,4rem)]">
-                Stop sending
+                A portfolio
                 <br />
-                the same CV
+                that argues
                 <span className="text-pop-lime">.</span>
               </h2>
               <p className="mt-6 max-w-md text-base leading-relaxed text-paper/70">
-                One profile, segmented properly, in front of the teams already searching your
-                category. Free while we are in early access.
+                The form asks what your craft actually gets asked: the problem, the calls you made,
+                and what moved. Harder to fill in than a link list, which is the point. Free while
+                we are in early access.
               </p>
 
               <div className="mt-9 flex flex-wrap items-center gap-4">
                 <Button variant="pop" size="lg" onClick={onJoin}>
-                  Join now
+                  Publish your first entry
                   <ArrowRight size={18} />
                 </Button>
 

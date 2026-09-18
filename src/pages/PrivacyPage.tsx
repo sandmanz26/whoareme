@@ -3,11 +3,19 @@ import { PageIntro, Prose, Section } from "@/components/layout/PageIntro"
 const STORAGE_KEYS = [
   {
     key: "whoareyou:account",
-    holds: "Your name, title, location, years of experience, craft and topics - whatever you typed into the join form and the profile panel.",
+    holds: "Your name, title, location, years of experience, craft, topics, portrait and bio - whatever you typed into the sign-up form and the profile panel, plus a PBKDF2 hash of your password. The password itself is never stored.",
   },
   {
     key: "whoareyou:drafts",
     holds: "Every portfolio entry you have written, published or not, including any cover image you uploaded (downscaled to 960px and stored as text inside this key).",
+  },
+  {
+    key: "whoareyou:funnel",
+    holds: "Counters for named steps, such as how many times the entry form was opened and how many entries were published. No identifier, no timestamps, no paths. It records that a step happened, never who did it.",
+  },
+  {
+    key: "whoareyou:session",
+    holds: "A single flag saying whether you are signed in. Nothing else.",
   },
   {
     key: "whoareyou:traffic",
@@ -21,7 +29,7 @@ export function PrivacyPage() {
       <PageIntro
         eyebrow="Privacy"
         title="Where your data actually goes"
-        lede="In this build: nowhere. There is no account server, no analytics, and no request that carries anything you typed. That is a property of how it is built, not a promise we are asking you to take on trust."
+        lede="In this build: nowhere. There is no account server and no request that carries anything you typed. That is a property of how it is built, not a promise we are asking you to take on trust."
         meta="Last updated 12 September 2026 · describes this front-end build specifically"
       />
 
@@ -41,8 +49,10 @@ export function PrivacyPage() {
             ))}
           </dl>
           <p className="text-sm text-muted">
-            Signing out clears all three. There is no separate deletion request to make, because
-            there is nobody to make it to.
+            Signing out ends the session and leaves all three in place, so you can sign back in.
+            <strong className="font-semibold text-ink"> Delete profile</strong>, in the profile
+            panel, removes them. There is no separate deletion request to make, because there is
+            nobody to make it to.
           </p>
         </Section>
 
@@ -57,15 +67,24 @@ export function PrivacyPage() {
 
         <Section title="The one third-party request">
           <p>
-            Seeded profile portraits are loaded from <code>randomuser.me</code>, which means your
-            browser makes a request to that domain and it can see your IP address and user agent
-            the way any image host would. Nothing identifying you is attached to those requests.
-            If the images fail to load - offline, blocked, or an ad blocker - the interface falls
-            back to a tinted monogram and works normally.
+            <code>randomuser.me</code> serves the seeded profile portraits, so your browser makes a
+            request to that domain and it can see your IP address and user agent the way any image
+            host would. Nothing identifying you is attached. If those images fail to load -
+            offline, blocked, or an ad blocker - the interface falls back to a tinted monogram and
+            works normally.
+          </p>
+          <p>
+            The two typefaces used to come from the Google Fonts CDN, which meant every visitor's
+            IP address reached a third party before the page rendered. They are now served from
+            this site, so that request is gone.
           </p>
           <p>
             There are no analytics scripts, no tag managers, no advertising pixels and no cookies.
-            The site sets no cookie at all.
+            The site sets no cookie at all. We do count how often a few named steps happen - the
+            entry form opened, an entry published - because the one thing we need to know is
+            whether people can finish. Those are counters in your own browser, not a record of
+            your session: there is no identifier attached and no way to tell two people apart in
+            them.
           </p>
         </Section>
 

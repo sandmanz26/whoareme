@@ -24,7 +24,7 @@ export function WorkCard({ work, author, index, onSkillClick }: WorkCardProps) {
 
   return (
     <article
-      className="animate-fade-up group flex h-full w-full min-w-0 flex-col overflow-hidden rounded-card border border-line bg-card transition-all duration-250 ease-pop hover:-translate-y-1 hover:border-ink/30 hover:shadow-[0_24px_60px_-30px_rgba(11,11,15,0.5)]"
+      className="animate-fade-up group relative flex h-full w-full min-w-0 cursor-pointer flex-col overflow-hidden rounded-card border border-line bg-card transition-all duration-250 ease-pop hover:-translate-y-1 hover:border-ink/30 hover:shadow-[0_24px_60px_-30px_rgba(11,11,15,0.5)]"
       style={{ animationDelay: `${Math.min(index, 8) * 50}ms` } as CSSVars}
     >
       {work.thumbnail ? (
@@ -68,7 +68,7 @@ export function WorkCard({ work, author, index, onSkillClick }: WorkCardProps) {
         <p className="mt-2 text-sm leading-relaxed text-muted">{work.summary}</p>
 
         {work.skills.length > 0 && (
-          <ul className="mt-4 flex flex-wrap gap-1.5">
+          <ul className="relative z-10 mt-4 flex flex-wrap gap-1.5">
             {work.skills.slice(0, 4).map((skill) => (
               <li key={skill}>
                 <button
@@ -128,9 +128,14 @@ export function WorkCard({ work, author, index, onSkillClick }: WorkCardProps) {
               className={cn(
                 "inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-pill px-3 py-2",
                 "font-display text-xs font-semibold text-ink transition-colors duration-200",
-                "hover:bg-ink hover:text-paper",
+                "group-hover:bg-ink group-hover:text-paper",
               )}
             >
+              {/* Stretched hit area: the whole card opens the case study, while
+                  the accessible name stays on this one control rather than
+                  being spread across every scrap of text in the card. Skill
+                  chips opt back out with `relative z-10`. */}
+              <span className="absolute inset-0 rounded-card" />
               Case study
               <ArrowUpRight size={14} />
               <span className="sr-only">for {work.title}</span>

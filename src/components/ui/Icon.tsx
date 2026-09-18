@@ -129,3 +129,10 @@ export const Rows = (p: IconProps) => (
     <rect x="4" y="14" width="16" height="5" rx="2" />
   </Svg>
 )
+
+export const Globe = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M3 12h18M12 3c2.4 2.5 3.6 5.6 3.6 9s-1.2 6.5-3.6 9c-2.4-2.5-3.6-5.6-3.6-9S9.6 5.5 12 3Z" />
+  </Svg>
+)

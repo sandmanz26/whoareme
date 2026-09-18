@@ -59,18 +59,13 @@ export function SchemaField({ spec, value, error, onChange }: SchemaFieldProps) 
         spec.kind === "select" ? (
           <SelectInput
             id={id}
-            aria-describedby={describedBy}
+            describedBy={describedBy}
             invalid={invalid}
             value={value}
-            onChange={(event) => onChange(spec.name, event.target.value)}
-          >
-            <option value="">Select…</option>
-            {spec.options?.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </SelectInput>
+            placeholder="Select…"
+            options={spec.options ?? []}
+            onChange={(next) => onChange(spec.name, next)}
+          />
         ) : spec.kind === "textarea" ? (
           <TextArea
             id={id}

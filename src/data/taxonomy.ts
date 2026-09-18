@@ -6,18 +6,40 @@
  * Both are plain data so the whole app stays backend-free and testable.
  */
 
+/**
+ * Four crafts are open; four are announced.
+ *
+ * Launching narrow is a deliberate supply decision. A craft with nine entries
+ * reads as abandoned, and a reviewer who filters to it and finds three thin
+ * profiles learns the wrong thing about the whole directory. Better to open
+ * the crafts that have depth and say plainly when the rest arrive.
+ *
+ * `status: "soon"` is a roadmap signal, not a filter: the craft appears in the
+ * grid, labelled, and cannot be selected. The seeded entries for those crafts
+ * stay in `portfolios.ts` and in the API fixtures - the writing is done, so
+ * opening one is a one-word change here rather than a content project.
+ */
 export const ROLES = [
-  { id: "design", label: "Designer", blurb: "Product, brand, motion" },
-  { id: "engineering", label: "Developer", blurb: "Frontend, backend, mobile" },
-  { id: "product", label: "Product", blurb: "PM, owner, strategy" },
-  { id: "data", label: "Data & AI", blurb: "ML, analytics, research" },
-  { id: "infra", label: "DevOps", blurb: "Platform, SRE, cloud" },
-  { id: "quality", label: "QA", blurb: "Automation, reliability" },
-  { id: "growth", label: "Growth", blurb: "Marketing, lifecycle" },
-  { id: "research", label: "Research", blurb: "UXR, discovery" },
+  { id: "design", label: "Designer", blurb: "Product, brand, motion", status: "live" },
+  { id: "engineering", label: "Developer", blurb: "Frontend, backend, mobile", status: "live" },
+  { id: "product", label: "Product", blurb: "PM, owner, strategy", status: "live" },
+  { id: "infra", label: "DevOps", blurb: "Platform, SRE, cloud", status: "live" },
+  { id: "data", label: "Data & AI", blurb: "ML, analytics, research", status: "soon" },
+  { id: "quality", label: "QA", blurb: "Automation, reliability", status: "soon" },
+  { id: "growth", label: "Growth", blurb: "Marketing, lifecycle", status: "soon" },
+  { id: "research", label: "Research", blurb: "UXR, discovery", status: "soon" },
 ] as const
 
 export type RoleId = (typeof ROLES)[number]["id"]
+export type RoleStatus = (typeof ROLES)[number]["status"]
+
+/** The crafts you can file work under, filter by, or sign up as. */
+export const LIVE_ROLES = ROLES.filter((role) => role.status === "live")
+export const SOON_ROLES = ROLES.filter((role) => role.status === "soon")
+
+export function isRoleLive(id: RoleId): boolean {
+  return ROLES.find((role) => role.id === id)?.status === "live"
+}
 
 /**
  * Topics come in two kinds, and the distinction is the point.
@@ -28,9 +50,11 @@ export type RoleId = (typeof ROLES)[number]["id"]
  * has no revenue line to point at, so filing it under an industry either
  * flatters it with a business case it never had or buries it entirely.
  *
- * Keeping both on one axis (rather than adding a fourth) means `Work.topics`
- * does not change shape, the two-per-topic quota keeps working unmodified, and
- * a person whose year was half ERP and half design ops can say exactly that.
+ * They share one storage axis - `Work.topics` holds both - so the two-per-topic
+ * quota keeps working unmodified and a person whose year was half ERP and half
+ * design ops can say exactly that. They are two separate *controls* though,
+ * because an industry and a practice answer different questions and a reader
+ * picking one is not choosing against the other.
  */
 export const CATEGORIES = [
   { id: "saas", label: "SaaS", tint: "bg-pop-lime", kind: "industry" },
@@ -62,20 +86,6 @@ export const EXTRA_CATEGORIES = CATEGORIES.filter((c) => "extra" in c && c.extra
 
 export const INDUSTRY_CATEGORIES = CATEGORIES.filter((c) => c.kind === "industry")
 export const PRACTICE_CATEGORIES = CATEGORIES.filter((c) => c.kind === "practice")
-
-/** Dropdown groups, so a practice topic is never mistaken for a market. */
-export const CATEGORY_GROUPS = [
-  {
-    label: "Industry",
-    hint: "The market it shipped into",
-    options: INDUSTRY_CATEGORIES,
-  },
-  {
-    label: "Practice",
-    hint: "Discipline work that has no revenue line of its own",
-    options: PRACTICE_CATEGORIES,
-  },
-] as const
 
 export function categoryById(id: CategoryId) {
   return CATEGORIES.find((category) => category.id === id)!

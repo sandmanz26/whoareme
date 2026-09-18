@@ -14,6 +14,8 @@ export interface PanelNavItem {
 interface PanelShellProps {
   items: PanelNavItem[]
   activeId: string
+  /** The shell also serves the moderation console, which is not "your" panel. */
+  eyebrow?: string
   title: string
   description?: string
   action?: ReactNode
@@ -23,6 +25,7 @@ interface PanelShellProps {
 export function PanelShell({
   items,
   activeId,
+  eyebrow = "Your panel",
   title,
   description,
   action,
@@ -31,7 +34,7 @@ export function PanelShell({
   return (
     <Container className="grid gap-10 py-10 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-14 lg:py-14">
       <nav aria-label="Panel" className="lg:sticky lg:top-24 lg:self-start">
-        <p className="eyebrow">Your panel</p>
+        <p className="eyebrow">{eyebrow}</p>
         <ul className="no-scrollbar mt-4 flex gap-2 overflow-x-auto lg:mt-5 lg:flex-col lg:gap-1 lg:overflow-visible">
           {items.map((item) => {
             const active = item.id === activeId

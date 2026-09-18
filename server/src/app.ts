@@ -12,6 +12,14 @@ import { userRouter } from "./modules/users/routes.js"
 import { authorWorkRouter, workRouter } from "./modules/work/routes.js"
 import { trafficRouter } from "./modules/traffic/routes.js"
 import { uploadRouter } from "./modules/uploads/routes.js"
+import {
+  moderationRouter,
+  noticeRouter,
+  reportRouter,
+  settingsRouter,
+} from "./modules/moderation/routes.js"
+import { analyticsRouter } from "./modules/analytics/routes.js"
+import { taxonomyRouter } from "./modules/taxonomy/routes.js"
 
 export function createApp() {
   const app = express()
@@ -47,6 +55,16 @@ export function createApp() {
   app.use("/api/work", workRouter)
   app.use("/api/traffic", trafficRouter)
   app.use("/api/uploads", uploadRouter)
+  // Public: anyone may file a report, read the site settings, read the
+  // taxonomy, or contribute a funnel counter.
+  app.use("/api/reports", reportRouter)
+  app.use("/api/settings", settingsRouter)
+  app.use("/api/taxonomy", taxonomyRouter)
+  app.use("/api/analytics", analyticsRouter)
+  // Signed in: the author's own end of a moderation decision.
+  app.use("/api/notices", noticeRouter)
+  // Gated: requireAuth + requireModerator, applied inside the router.
+  app.use("/api/moderation", moderationRouter)
 
   app.use(notFoundHandler)
   app.use(errorHandler)

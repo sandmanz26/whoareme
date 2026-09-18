@@ -20,13 +20,24 @@ be a replica set — Atlas is one by default, and `docker-compose.yml` in
 | `trafficEvents` | Append-only raw views and opens | Fast, TTL 400 days |
 | `trafficDaily` | Per-owner per-day rollup, read by the panel | Slow |
 | `thumbnails.*` | GridFS bucket for uploaded covers | Medium |
+| `reports` | What readers flagged, TTL 400 days | Slow |
+| `moderationActions` | The audit log. Append-only, never expires | Slow |
+| `notices` | The same decisions, addressed to the people they were about, with their appeals | Slow |
+| `siteSettings` | One document, `_id: "site"` | Static |
+| `funnelDaily` | One document per day of funnel counters. No identifiers | One row a day |
 
-Two deliberate denormalisations, both justified below:
+Three deliberate denormalisations, all justified below:
 
 - `works.author` — a snapshot of the author's card fields, so listing 24 cards
-  is one query instead of a `$lookup` per page.
+  is one query instead of a `$lookup` per page. It carries `years` and
+  `languages` as well as the display fields, because the entry grid filters on
+  those two and every listing matches on the work document alone.
 - `users.counts.topicUsage` — published entries per topic, so the two-per-topic
   quota is an O(1) guarded update instead of a count-then-write race.
+- `works.authorSuspended` — mirrors the author's suspension. The listings match
+  on the work document alone, so without this a suspended profile would 404
+  while its case studies stayed on the grid. Fanned out on suspend and
+  reinstate, the same way the author snapshot is fanned out on a profile edit.
 
 ---
 
@@ -48,6 +59,8 @@ Two deliberate denormalisations, both justified below:
   company:    "Notionary",
   location:   "Jakarta, ID",
   years:      7,
+  languages:  ["English", "Bahasa Indonesia"],  // filter axis; seeded from the
+                                       // country on register, editable after
   topics:     ["saas"],                // industries / tracks
   skills:     ["Design systems", "Figma", "Prototyping"],
   openToWork: true,
@@ -57,6 +70,10 @@ Two deliberate denormalisations, both justified below:
 
   seeded:     true,                    // fixture row, not a real signup
   status:     "active",                // active | suspended | deleted
+  // Access level, separate from `role`. `role` is the person's craft and
+  // carries no permission meaning; conflating the two would make every
+  // designer a moderator of designers.
+  access:     "member",                // member | moderator | admin
 
   counts: {
     publishedWorks: 2,
@@ -126,6 +143,75 @@ author name and company. It exists so a multi-word query can be AND-ed as
 substrings, which is how the UI behaves. See §6 for the trade-off and the
 Atlas Search upgrade path.
 
+### `reports`
+
+Filed by readers, signed in or not. A report is a *request for review*, so it
+carries no decision of its own: `resolvedAt` says a human looked, and what they
+decided lives in `moderationActions`.
+
+```js
+{
+  _id:        ObjectId("..."),
+  targetKind: "work",                  // work | user
+  targetId:   ObjectId("..."),
+  reason:     "false-claim",           // false-claim | not-their-work |
+                                       // confidential | spam | offensive | other
+  note:       "The headline figure is not in the outcome.",
+  // Salted daily hash of IP + UA, the same construction traffic uses. It
+  // identifies nobody and rotates daily; it exists only so one person cannot
+  // file the same complaint fifty times.
+  reporterHash: "9f2c...",
+  resolvedAt: null,                    // set when a moderator closes it
+  resolvedBy: null,                    // ObjectId of the moderator
+  createdAt:  ISODate("...")
+}
+```
+
+### `moderationActions`
+
+The audit log, and the only record that has to outlive everything it refers to.
+**Append-only by contract:** nothing in the API updates or deletes a row here,
+and there is no TTL index. A moderation record that can be edited is not a
+record.
+
+```js
+{
+  _id:         ObjectId("..."),
+  action:      "unpublish",   // unpublish | republish | suspend | reinstate |
+                              // dismiss | settings
+  targetKind:  "work",        // null for settings changes
+  targetId:    ObjectId("..."),
+  // Denormalised so the log still reads correctly if the entry it names is
+  // later removed.
+  targetLabel: "Ordering that survives a dead signal",
+  // Required at the schema level, minimum 12 characters at the API edge. An
+  // audit log full of empty reasons is the same as no audit log.
+  reason:      "Reported: headline figure unsupported by the outcome.",
+  actorId:     ObjectId("..."),
+  actorSlug:   "rangga-mahendra",
+  createdAt:   ISODate("...")
+}
+```
+
+### `siteSettings`
+
+A single document. Settings are read on nearly every render, so splitting them
+across rows would buy nothing and cost a join.
+
+```js
+{
+  _id:      "site",
+  contact:  { email: "hello@...", location: "Jakarta, ID", responseTime: "..." },
+  copy:     { "footer.blurb": "..." },   // overrides, keyed by the SPA's slot ids
+  disabledRoles: ["quality"],            // crafts withdrawn from the browse
+                                         // controls. NOT a content filter:
+                                         // entries keep their craft and stay
+                                         // readable.
+  updatedAt: ISODate("..."),
+  updatedBy: ObjectId("...")
+}
+```
+
 ### `sessions`, `trafficEvents`, `trafficDaily`
 
 ```js
@@ -168,6 +254,7 @@ db.runCommand({
         topics: { bsonType: "array", maxItems: 12, items: { bsonType: "string" } },
         skills: { bsonType: "array", maxItems: 24, items: { bsonType: "string" } },
         status: { enum: ["active", "suspended", "deleted"] },
+        access: { enum: ["member", "moderator", "admin"] },
         counts: {
           bsonType: "object",
           properties: {
@@ -245,6 +332,8 @@ db.users.createIndex({ slug: 1 }, { unique: true })
 db.users.createIndex({ email: 1 }, { unique: true, partialFilterExpression: { email: { $type: "string" } } })
 db.users.createIndex({ status: 1, role: 1, topics: 1 })      // directory filter
 db.users.createIndex({ status: 1, skills: 1 })               // skill refinement
+db.users.createIndex({ status: 1, languages: 1 })            // language filter (multikey)
+db.users.createIndex({ status: 1, years: 1 })                // experience bands
 db.users.createIndex({ status: 1, "counts.publishedWorks": -1, _id: 1 }) // default sort + stable tiebreak
 
 // ── works ───────────────────────────────────────────────────────────
@@ -256,6 +345,8 @@ db.works.createIndex({ status: 1, model: 1, publishedAt: -1 })         // + busi
 db.works.createIndex({ status: 1, skills: 1 })                         // skill facet + filter (multikey)
 db.works.createIndex({ authorId: 1, status: 1, publishedAt: -1 })      // "more from this person"
 db.works.createIndex({ status: 1, "metrics.opens": -1 })               // popularity sort
+db.works.createIndex({ status: 1, "author.languages": 1 })             // language filter on entries (multikey)
+db.works.createIndex({ status: 1, "author.years": 1 })                 // experience bands on entries
 
 // One text index per collection is the hard limit — spend it on works.
 db.works.createIndex(
@@ -290,6 +381,38 @@ use one index and filter the rest in memory — acceptable at this cardinality,
 and the point at which Atlas Search becomes the right answer.
 
 ---
+
+### Moderation
+
+```js
+db.reports.createIndexes([
+  // The queue: open reports, newest first.
+  { key: { resolvedAt: 1, createdAt: -1 }, name: "reports_open_recent" },
+  // How many open reports point at one entry.
+  { key: { targetKind: 1, targetId: 1, resolvedAt: 1 }, name: "reports_target" },
+  // One person filing the same complaint about the same thing on the same day
+  // is one complaint. The hash rotates daily, so this cannot suppress a
+  // genuine second report tomorrow.
+  { key: { reporterHash: 1, targetKind: 1, targetId: 1, reason: 1 },
+    unique: true, name: "reports_dedupe" },
+  { key: { createdAt: 1 }, expireAfterSeconds: 400 * 24 * 60 * 60, name: "reports_ttl" },
+])
+
+db.moderationActions.createIndexes([
+  { key: { createdAt: -1 }, name: "moderation_recent" },
+  { key: { targetKind: 1, targetId: 1, createdAt: -1 }, name: "moderation_target" },
+  { key: { actorId: 1, createdAt: -1 }, name: "moderation_actor" },
+  // Deliberately no TTL. Raw reports expire; the decisions do not.
+])
+```
+
+`siteSettings` has one document and needs no index beyond `_id`.
+
+**`works.authorSuspended` is not indexed.** It is matched as `{ $ne: true }`,
+which is not selective enough to earn its own key, and the listing indexes
+already lead with `status`. Mongo walks those and filters the flag in memory.
+Revisit if suspensions ever become common enough to matter, which would be its
+own problem.
 
 ## 5. Write queries
 
@@ -353,6 +476,48 @@ db.works.updateMany(
       updatedAt: new Date()
   }}
 )
+```
+
+### Moderation: unpublish, and release the topic slots
+
+Moderation does not add a second "hidden" flag. `works.status` already decides
+what the listings return, so a withheld entry is withheld by the same mechanism
+an author's own unpublish uses: one code path, and no chance of two flags
+drifting apart. Releasing the counters matters because leaving them would cost
+the author a topic slot they are no longer using.
+
+```js
+const session = client.startSession()
+await session.withTransaction(async () => {
+  const work = await db.works.findOne({ _id: workId }, { session })
+  await db.works.updateOne(
+    { _id: workId },
+    { $set: { status: "draft", publishedAt: null, updatedAt: new Date() } },
+    { session },
+  )
+  await db.users.updateOne(
+    { _id: work.authorId },
+    { $inc: {
+        "counts.publishedWorks": -1,
+        ...Object.fromEntries(work.topics.map(t => [`counts.topicUsage.${t}`, -1])),
+    } },
+    { session },
+  )
+  await db.moderationActions.insertOne({ /* action, target, reason, actor */ }, { session })
+})
+```
+
+### Moderation: suspend a person, and withhold their work with them
+
+The entries keep `status: "published"`, so reinstating restores exactly what was
+there rather than guessing which ones to bring back.
+
+```js
+await db.users.updateOne(
+  { _id: userId },
+  { $set: { status: "suspended", updatedAt: new Date() } },
+)
+await db.works.updateMany({ authorId: userId }, { $set: { authorSuspended: true } })
 ```
 
 ### Upsert a seeded fixture (idempotent re-seed)
@@ -599,6 +764,15 @@ Days with no traffic have no document. The API fills the gaps so the chart has
 
 ## 8. Operational notes
 
+### Moderation retention
+
+Raw reports expire after 400 days; `moderationActions` never does. That
+asymmetry is deliberate: the complaint is transient evidence, the decision is
+the accountable record, and a log that quietly deletes itself cannot answer the
+question it exists for. If a jurisdiction ever requires erasure of a specific
+action, that is a targeted, logged operation, not a TTL.
+
+
 - **Backfill `searchBlob`** after changing which fields feed it:
   ```js
   db.works.updateMany({}, [{ $set: { searchBlob: { $toLower: {
@@ -622,3 +796,102 @@ Days with no traffic have no document. The API fills the gaps so the chart has
   predicate lost the index.
 - **Retention:** `trafficEvents` self-prune at 400 days via TTL. `trafficDaily`
   is kept indefinitely — it is tiny and it is the only long-range history.
+
+
+---
+
+## 9. What was added after the filter bar grew
+
+Three things landed in the database after the first pass, each because the SPA
+had grown a capability the API could not answer. They are grouped here because
+they share one lesson: **every axis the interface filters on has to exist in
+the query, or the filter silently returns the wrong set.**
+
+### `users.languages`, and `works.author.years` / `works.author.languages`
+
+The filter bar gained an experience band and a language. Both are properties of
+a *person*, and the entry grid matches on the work document alone — so both are
+carried on the author snapshot and fanned out by `updateProfile`, exactly as
+`authorSuspended` is fanned out on suspension.
+
+Both filters are OR-ed within themselves and AND-ed against everything else.
+`skills` remains the deliberate exception, AND-ed within itself, because "React
+and Go" means somebody who has both.
+
+```js
+// Experience: an OR of half-open ranges, so the bands tile with no overlap.
+{ $or: [
+  { "author.years": { $gte: 5,  $lt: 10 } },
+  { "author.years": { $gte: 10, $lt: 15 } },
+]}
+```
+
+A database seeded before these fields existed is not invalid — the validators
+run at `validationLevel: "moderate"` — it is simply invisible to those two
+filters, which is the worst kind of wrong: nothing errors and results are
+quietly missing. `npm run db:backfill` repairs it and is idempotent.
+
+### `notices`
+
+The audit log answers "what did we do". A notice is the same decision read from
+the other end: "what was done to me, and why". Only the second discharges the
+obligation, because a reason filed where the author cannot read it is
+bookkeeping.
+
+```js
+{
+  _id:        ObjectId("..."),
+  userId:     ObjectId("..."),   // addressed to
+  actionId:   ObjectId("..."),   // the audit row this restates
+  action:     "unpublish",
+  targetKind: "work",
+  targetId:   ObjectId("..."),
+  targetLabel:"Cutting cold-start on a serverless API",
+  reason:     "The headline figure is not supported by the outcome.",
+  actorId:    ObjectId("..."),   // kept so an appeal can refuse this reviewer
+  createdAt:  ISODate("..."),
+  readAt:     null,
+  appeal: {
+    text:          "The figure is in the details block, labelled Performance.",
+    createdAt:     ISODate("..."),
+    outcome:       "overturned",   // or "upheld", or null while open
+    outcomeReason: "The figure is where the author says it is.",
+    decidedAt:     ISODate("..."),
+    decidedBy:     ObjectId("..."),
+  },
+}
+```
+
+The notice is written in the same transaction as the action, never as a
+follow-up. The appeal is embedded rather than a collection of its own: it is
+only ever read with its notice, there is at most one, and it is bounded.
+
+```js
+db.notices.createIndex({ userId: 1, createdAt: -1 })                  // the author's list
+db.notices.createIndex({ "appeal.outcome": 1, "appeal.createdAt": 1 }) // the reviewer's queue
+db.notices.createIndex({ actionId: 1 })
+// No TTL, for the same reason the audit log has none.
+```
+
+Two rules are enforced in the service, not the interface, because the interface
+is not the thing that has to hold:
+
+1. An appeal is reviewed by somebody **other than** whoever took the decision.
+2. `overturned` performs the actual reversal — republish or reinstate — before
+   the outcome is recorded. An appeal marked upheld with nothing undone would
+   be worse than no appeal, because it would look like recourse.
+
+### `funnelDaily`
+
+One document per day, `$inc` only, so concurrent writers never race and there
+is nothing to merge.
+
+```js
+{ _id: "2026-09-18", counts: { signup_opened: 42, signup_completed: 11 }, updatedAt: ISODate("...") }
+```
+
+The validator sets `additionalProperties: false` on both levels. That is the
+point: this collection *could not* hold a visitor id, a path or a referrer even
+if a later version of the client started sending one. It answers "do people
+finish", which needs counters, not "did this person finish", which would need a
+behavioural record.

@@ -105,14 +105,17 @@ export function Navbar({ onJoin }: { onJoin: () => void }) {
             </>
           ) : (
             <>
+              {/* Two different destinations, which they were not before: the
+                  left one is for people who already have a profile in this
+                  browser, the right one creates one. */}
               <span className="hidden sm:block">
-                <Button variant="ghost" size="sm" onClick={onJoin}>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/signin")}>
                   Sign in
                 </Button>
               </span>
               <Button size="sm" onClick={onJoin}>
                 <span className="whitespace-nowrap">
-                  Join<span className="hidden sm:inline"> the list</span>
+                  Sign<span className="hidden sm:inline"> up</span>
                 </span>
               </Button>
             </>

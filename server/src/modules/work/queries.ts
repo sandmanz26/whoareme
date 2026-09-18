@@ -1,6 +1,7 @@
 import type { Document, Filter, ObjectId } from "mongodb"
-import type { WorkDoc } from "../../types.js"
+import { LIVE_ROLES, type WorkDoc } from "../../types.js"
 import { escapeRegex } from "../../lib/text.js"
+import { experienceCondition, languageCondition } from "../../lib/facets.js"
 
 /** Fields a card needs. Bodies of text are left out of list responses. */
 export const CARD_PROJECTION: Document = {
@@ -24,24 +25,49 @@ export interface ListFilters {
   topic?: string
   model?: string
   skills: string[]
+  /** Experience band ids, OR-ed. Matched against the author snapshot. */
+  experience: string[]
+  /** Languages, OR-ed. Matched against the author snapshot. */
+  language: string[]
   tokens: string[]
 }
 
+/**
+ * The public listing match.
+ *
+ * `role: { $in: LIVE_ROLES }` is the launch scope, and it is applied here
+ * rather than at the edge so every public read goes through it - a route that
+ * forgot would otherwise show entries from a craft the rest of the site says
+ * is not open yet. Entries in a craft that is still `soon` keep their rows and
+ * their ids; they simply are not served until the craft goes live.
+ */
 export function buildWorkMatch(filters: ListFilters): Filter<WorkDoc> {
-  const match: Record<string, unknown> = { status: "published" }
+  const match: Record<string, unknown> = {
+    status: "published",
+    authorSuspended: { $ne: true },
+    role: { $in: LIVE_ROLES },
+  }
+  const and: Document[] = []
 
-  if (filters.role) match.role = filters.role
+  // An explicit craft narrows within the live set; asking for one that is not
+  // live returns nothing, which is the same answer the SPA gives.
+  if (filters.role) and.push({ role: filters.role })
   if (filters.topic) match.topics = filters.topic
   if (filters.model) match.model = filters.model
   if (filters.skills.length > 0) match.skills = { $all: filters.skills }
 
+  const experience = experienceCondition(filters.experience, "author.years")
+  if (experience) and.push(experience)
+  const language = languageCondition(filters.language, "author.languages")
+  if (language) and.push(language)
+
   // AND-ed substrings, so extra words narrow. See DATABASE.md §6 for why this
   // is a regex on a denormalised blob rather than $text.
-  if (filters.tokens.length > 0) {
-    match.$and = filters.tokens.map((token) => ({
-      searchBlob: { $regex: escapeRegex(token) },
-    }))
+  for (const token of filters.tokens) {
+    and.push({ searchBlob: { $regex: escapeRegex(token) } })
   }
+
+  if (and.length > 0) match.$and = and
 
   return match as Filter<WorkDoc>
 }
@@ -76,6 +102,25 @@ export function listWorkPipeline(
           { $limit: 14 },
         ],
         models: [{ $group: { _id: "$model", n: { $sum: 1 } } }, { $sort: { n: -1 } }],
+        // Counted from the filtered set, like the others, so the filter bar
+        // never offers a language or a band that would return nothing.
+        languages: [
+          { $unwind: "$author.languages" },
+          { $group: { _id: "$author.languages", n: { $sum: 1 } } },
+          { $sort: { n: -1, _id: 1 } },
+        ],
+        experience: [
+          {
+            $bucket: {
+              groupBy: { $ifNull: ["$author.years", 0] },
+              // Boundaries are the band minimums; `default` catches nothing,
+              // because 0 is the first boundary and years cannot be negative.
+              boundaries: [0, 5, 10, 15, Number.MAX_SAFE_INTEGER],
+              default: "unknown",
+              output: { n: { $sum: 1 } },
+            },
+          },
+        ],
       },
     },
     { $addFields: { total: { $ifNull: [{ $first: "$total.value" }, 0] } } },
@@ -98,6 +143,8 @@ export function similarWorkPipeline(target: WorkDoc, limit = 3): Document[] {
     {
       $match: {
         status: "published",
+        authorSuspended: { $ne: true },
+        role: { $in: LIVE_ROLES },
         _id: { $ne: target._id },
         authorId: { $ne: target.authorId },
         // Index-selected candidates only — without this every published entry
@@ -143,7 +190,15 @@ export function similarWorkPipeline(target: WorkDoc, limit = 3): Document[] {
 
 export function moreFromAuthorPipeline(authorId: ObjectId, excludeId: ObjectId, limit = 3): Document[] {
   return [
-    { $match: { authorId, _id: { $ne: excludeId }, status: "published" } },
+    {
+      $match: {
+        authorId,
+        _id: { $ne: excludeId },
+        status: "published",
+        authorSuspended: { $ne: true },
+        role: { $in: LIVE_ROLES },
+      },
+    },
     { $sort: { publishedAt: -1 } },
     { $limit: limit },
     { $project: CARD_PROJECTION },

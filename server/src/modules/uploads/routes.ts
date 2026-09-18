@@ -3,7 +3,7 @@ import multer from "multer"
 import { GridFSBucket, ObjectId } from "mongodb"
 import { getDb } from "../../db/client.js"
 import { THUMBNAIL_BUCKET } from "../../db/collections.js"
-import { works } from "../../db/collections.js"
+import { users, works } from "../../db/collections.js"
 import { env } from "../../config/env.js"
 import { badRequest, forbidden, notFound } from "../../lib/errors.js"
 import { asyncHandler } from "../../lib/http.js"
@@ -105,5 +105,67 @@ uploadRouter.get(
     res.setHeader("Content-Type", file.contentType ?? "application/octet-stream")
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable")
     bucket().openDownloadStream(fileId).pipe(res)
+  }),
+)
+
+/**
+ * The profile photo.
+ *
+ * Same bucket and same limits as a thumbnail, because it is the same problem:
+ * an image the author owns, replaced in place, with the old one deleted so a
+ * mailbox of orphaned blobs does not accumulate.
+ *
+ * The write fans out to `works.author.photoUrl` for the same reason the rest
+ * of the author snapshot does - every card reads the snapshot, so a photo that
+ * changed only on the profile would leave the old face on all of that
+ * person's entries until something else touched them.
+ */
+uploadRouter.post(
+  "/profile/photo",
+  requireAuth,
+  writeLimiter,
+  upload.single("file"),
+  asyncHandler(async (req, res) => {
+    if (!req.file) throw badRequest("No file uploaded. Send it as `file`.")
+
+    const user = await users().findOne({ _id: req.user!.id })
+    if (!user) throw notFound("Account")
+
+    const stream = bucket().openUploadStream(`${user.slug}-avatar-${Date.now()}`, {
+      contentType: req.file.mimetype,
+      metadata: { ownerId: user._id, kind: "avatar" },
+    })
+    stream.end(req.file.buffer)
+    await new Promise<void>((resolve, reject) => {
+      stream.on("finish", () => resolve())
+      stream.on("error", reject)
+    })
+
+    const url = `/api/uploads/thumbnails/${stream.id.toHexString()}`
+    await users().updateOne({ _id: user._id }, { $set: { photoUrl: url, updatedAt: new Date() } })
+    await works().updateMany({ authorId: user._id }, { $set: { "author.photoUrl": url } })
+
+    // Only a photo this route stored is ours to delete. One typed in by hand,
+    // or seeded, is somebody else's URL.
+    const previous = user.photoUrl?.match(/^\/api\/uploads\/thumbnails\/([a-f0-9]{24})$/i)?.[1]
+    if (previous) await bucket().delete(new ObjectId(previous)).catch(() => {})
+
+    res.status(201).json({ photoUrl: url })
+  }),
+)
+
+uploadRouter.delete(
+  "/profile/photo",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const user = await users().findOne({ _id: req.user!.id })
+    if (!user) throw notFound("Account")
+
+    const stored = user.photoUrl?.match(/^\/api\/uploads\/thumbnails\/([a-f0-9]{24})$/i)?.[1]
+    if (stored) await bucket().delete(new ObjectId(stored)).catch(() => {})
+
+    await users().updateOne({ _id: user._id }, { $set: { photoUrl: "", updatedAt: new Date() } })
+    await works().updateMany({ authorId: user._id }, { $set: { "author.photoUrl": "" } })
+    res.status(204).end()
   }),
 )

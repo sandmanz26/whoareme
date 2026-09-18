@@ -2,15 +2,21 @@ import { useMemo, useState } from "react"
 import { PanelShell, type PanelNavItem } from "@/components/panel/PanelShell"
 import { WorkStarter } from "@/components/panel/WorkStarter"
 import { TrafficPanel } from "@/components/panel/TrafficPanel"
+import { OnboardingChecklist, type OnboardingStep } from "@/components/panel/OnboardingChecklist"
+import { useOnboarding } from "@/hooks/useOnboarding"
 import { WorkEditor } from "@/components/panel/WorkEditor"
 import { WorkCover } from "@/components/work/WorkCover"
+import { opensByWork } from "@/data/traffic"
+import { AvatarPicker } from "@/components/panel/AvatarPicker"
+import { NoticeList } from "@/components/panel/NoticeList"
 import { Button } from "@/components/ui/Button"
 import { Badge } from "@/components/ui/Badge"
 import { Avatar } from "@/components/ui/Avatar"
 import { ChipGroup, Field, SelectInput, TextArea, TextInput } from "@/components/ui/Field"
 import { ArrowUpRight, Check, Plus } from "@/components/ui/Icon"
+import { defaultTemplateId } from "@/data/workTemplates"
 import { emptyDraft, TOPIC_QUOTA, topicUsage, type Account, type WorkDraft, type WorkMode } from "@/data/account"
-import { CATEGORIES, ROLES, roleById, type CategoryId, type RoleId } from "@/data/taxonomy"
+import { CATEGORIES, LIVE_ROLES, roleById, type CategoryId, type RoleId } from "@/data/taxonomy"
 import { draftCompleteness } from "@/lib/workMapper"
 import { totalProfileViews, totalWorkOpens } from "@/data/traffic"
 import { useAccount } from "@/hooks/useAccount"
@@ -27,7 +33,9 @@ interface PanelPageProps {
 }
 
 export function PanelPage({ route, author, onJoin }: PanelPageProps) {
-  const { account, drafts, traffic, saveDraft, deleteDraft, updateProfile } = useAccount()
+  const { account, drafts, traffic, saveDraft, deleteDraft, updateProfile, deleteAccount } =
+    useAccount()
+  const onboarding = useOnboarding()
 
   if (!account) return <SignedOut onJoin={onJoin} />
 
@@ -49,7 +57,7 @@ export function PanelPage({ route, author, onJoin }: PanelPageProps) {
   if (section === "profile") {
     return (
       <PanelShell items={items} activeId="profile" title="Profile" description="How you appear in the directory.">
-        <ProfileForm account={account} onSave={updateProfile} />
+        <ProfileForm account={account} onSave={updateProfile} onDelete={deleteAccount} />
       </PanelShell>
     )
   }
@@ -76,6 +84,7 @@ export function PanelPage({ route, author, onJoin }: PanelPageProps) {
         author={author}
         drafts={drafts}
         onSave={saveDraft}
+        opens={opensByWork(traffic)}
         onDelete={deleteDraft}
       />
     )
@@ -94,12 +103,18 @@ export function PanelPage({ route, author, onJoin }: PanelPageProps) {
         </Button>
       }
     >
+      {/* First thing on the panel, before your own numbers: if something was
+          taken down, that is the most important thing on this screen. */}
+      <NoticeList personId={account.id} />
+
       <Overview
         account={account}
         drafts={drafts}
         author={author}
         profileViews={totalProfileViews(traffic)}
         workOpens={totalWorkOpens(traffic)}
+        onboardingHidden={onboarding.hidden}
+        onHideOnboarding={onboarding.hide}
       />
     </PanelShell>
   )
@@ -139,19 +154,68 @@ function Overview({
   author,
   profileViews,
   workOpens,
+  onboardingHidden,
+  onHideOnboarding,
 }: {
   account: Account
   drafts: WorkDraft[]
   author: Author
   profileViews: number
   workOpens: number
+  onboardingHidden: boolean
+  onHideOnboarding: () => void
 }) {
   const done = PROFILE_CHECKS.filter((check) => check.test(account))
   const percent = Math.round((done.length / PROFILE_CHECKS.length) * 100)
-  const published = drafts.filter((d) => d.published)
+  const published = drafts.filter((draft) => draft.published)
+  const firstDraft = drafts[0]
+
+  // Signup is step one and it is already done - a checklist that opens at zero
+  // reads as a pile of work, one that opens part-done reads as momentum.
+  const steps: OnboardingStep[] = [
+    {
+      id: "account",
+      label: "Create your profile",
+      payoff: "Done at signup.",
+      done: true,
+    },
+    {
+      id: "profile",
+      label: "Fill in your profile",
+      payoff: "Craft, topics and a link are what the directory filters on. Without them you are unfindable.",
+      done: percent === 100,
+      action: { label: "Finish profile", href: "/panel/profile" },
+    },
+    {
+      id: "draft",
+      label: "Start your first entry",
+      payoff: "Pick a craft and a format. You can save a draft and come back - nothing is lost.",
+      done: drafts.length > 0,
+      action: { label: "Add work", href: "/panel/portfolio/new" },
+    },
+    {
+      id: "publish",
+      label: "Publish it",
+      payoff: "A published entry is what teams actually browse. One is worth more than a complete profile.",
+      done: published.length > 0,
+      action: {
+        label: "Finish entry",
+        href: firstDraft ? `/panel/portfolio/${firstDraft.id}` : "/panel/portfolio/new",
+      },
+    },
+  ]
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div className="flex flex-col gap-6">
+      {!onboardingHidden && (
+        <OnboardingChecklist
+          steps={steps}
+          onDismiss={onHideOnboarding}
+          firstName={account.name.split(" ")[0] ?? "there"}
+        />
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="flex flex-col gap-6">
         <section className="rounded-card border border-line bg-card p-6">
           <div className="flex items-center justify-between gap-4">
@@ -272,6 +336,7 @@ function Overview({
           Signed in as {account.email}
         </div>
       </aside>
+      </div>
     </div>
   )
 }
@@ -279,9 +344,11 @@ function Overview({
 function ProfileForm({
   account,
   onSave,
+  onDelete,
 }: {
   account: Account
   onSave: (patch: Partial<Account>) => void
+  onDelete: () => void
 }) {
   const [values, setValues] = useState<Account>(account)
   const [saved, setSaved] = useState(false)
@@ -300,6 +367,12 @@ function ProfileForm({
         setSaved(true)
       }}
     >
+      <AvatarPicker
+        value={values.photo ?? ""}
+        name={values.name}
+        onChange={(photo) => set("photo", photo)}
+      />
+
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Full name" required>
           {({ id, invalid }) => (
@@ -323,13 +396,14 @@ function ProfileForm({
         </Field>
         <Field label="Craft">
           {({ id, invalid }) => (
-            <SelectInput id={id} invalid={invalid} value={values.role} onChange={(e) => set("role", e.target.value as RoleId)}>
-              {ROLES.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.label}
-                </option>
-              ))}
-            </SelectInput>
+            <SelectInput
+              id={id}
+              invalid={invalid}
+              value={values.role}
+              placeholder="Select a craft…"
+              options={LIVE_ROLES.map((role) => ({ value: role.id, label: role.label }))}
+              onChange={(next) => set("role", next as RoleId)}
+            />
           )}
         </Field>
         <Field label="Current title">
@@ -360,9 +434,19 @@ function ProfileForm({
         )}
       </Field>
 
-      <Field label="One line about your work">
+      <Field
+        label="Bio"
+        hint="A sentence or two in your own voice. It heads your profile and sits under your name on a card."
+      >
         {({ id, invalid }) => (
-          <TextArea id={id} invalid={invalid} rows={3} value={values.pitch} onChange={(e) => set("pitch", e.target.value)} />
+          <TextArea
+            id={id}
+            invalid={invalid}
+            rows={4}
+            value={values.pitch}
+            placeholder="I turn messy internal tooling into something a team will actually open."
+            onChange={(e) => set("pitch", e.target.value)}
+          />
         )}
       </Field>
 
@@ -375,7 +459,51 @@ function ProfileForm({
           </p>
         )}
       </div>
+
+      {/* Signing out no longer wipes anything, so removal needs its own door.
+          Confirmed in two steps because there is no undo and no server copy. */}
+      <DeleteProfile onDelete={onDelete} />
     </form>
+  )
+}
+
+function DeleteProfile({ onDelete }: { onDelete: () => void }) {
+  const [armed, setArmed] = useState(false)
+
+  return (
+    <div className="mt-2 border-t border-line pt-6">
+      <p className="font-display text-sm font-semibold text-ink">Delete profile</p>
+      <p className="mt-2 max-w-lg text-sm leading-relaxed text-muted">
+        Removes your profile, every entry and your traffic history from this browser. Nothing is
+        kept on a server, so there is no copy to restore from and no undo.
+      </p>
+
+      {armed ? (
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => {
+              onDelete()
+              navigate("/")
+            }}
+          >
+            Yes, delete everything
+          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={() => setArmed(false)}>
+            Keep it
+          </Button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setArmed(true)}
+          className="mt-4 cursor-pointer font-display text-sm font-medium text-muted underline decoration-transparent underline-offset-4 transition-colors duration-200 hover:text-pop-pink hover:decoration-pop-pink"
+        >
+          Delete my profile
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -387,6 +515,7 @@ function PortfolioSection({
   drafts,
   onSave,
   onDelete,
+  opens,
 }: {
   route: Route
   items: PanelNavItem[]
@@ -395,12 +524,15 @@ function PortfolioSection({
   drafts: WorkDraft[]
   onSave: (draft: WorkDraft) => void
   onDelete: (id: string) => void
+  /** Opens per entry. The author's own numbers; nobody else sees them. */
+  opens: Record<string, number>
 }) {
   const target = route.segments[2]
   const existing = useMemo(() => drafts.find((d) => d.id === target), [drafts, target])
 
   // Format and craft for a brand-new entry, before a draft object exists.
   const [mode, setMode] = useState<WorkMode>("template")
+  const [pendingRole, setPendingRole] = useState<RoleId | null>(null)
   const [newDraft, setNewDraft] = useState<WorkDraft | null>(null)
 
   // This component stays mounted across /new -> /:id, so an unreset draft
@@ -411,6 +543,7 @@ function PortfolioSection({
     if (target === "new") {
       setNewDraft(null)
       setMode("template")
+      setPendingRole(null)
     }
   }
 
@@ -423,7 +556,7 @@ function PortfolioSection({
         description={
           newDraft
             ? "Fill in what you can - you can save a draft and come back."
-            : "Two choices before you start writing."
+            : "Three choices, then you write."
         }
       >
         {newDraft ? (
@@ -432,7 +565,10 @@ function PortfolioSection({
             account={account}
             author={author}
             siblings={drafts}
-            onRestart={() => setNewDraft(null)}
+            onRestart={() => {
+              setNewDraft(null)
+              setPendingRole(null)
+            }}
             onSave={(next) => {
               onSave(next)
               navigate(`/panel/portfolio/${next.id}`)
@@ -442,10 +578,23 @@ function PortfolioSection({
           <>
             <WorkStarter
               mode={mode}
-              role={null}
+              role={pendingRole}
               profileRole={account.role}
-              onModeChange={setMode}
-              onRoleSelect={(role) => setNewDraft(emptyDraft(role, mode))}
+              onModeChange={(next) => {
+                setMode(next)
+                // Free-form has no templates, so choosing it finishes the flow
+                // as soon as a craft is picked.
+                if (next === "custom" && pendingRole) {
+                  setNewDraft(emptyDraft(pendingRole, "custom", defaultTemplateId(pendingRole)))
+                }
+              }}
+              onRoleSelect={(role) => {
+                setPendingRole(role)
+                if (mode === "custom") setNewDraft(emptyDraft(role, "custom", defaultTemplateId(role)))
+              }}
+              onTemplateSelect={(role, template) =>
+                setNewDraft(emptyDraft(role, mode, template))
+              }
             />
             <Button variant="ghost" className="mt-8" onClick={() => navigate("/panel/portfolio")}>
               Cancel
@@ -522,12 +671,8 @@ function PortfolioSection({
           {drafts.map((draft) => {
             const percent = Math.round(draftCompleteness(draft) * 100)
             return (
-              <li key={draft.id}>
-                <button
-                  type="button"
-                  onClick={() => navigate(`/panel/portfolio/${draft.id}`)}
-                  className="group flex w-full cursor-pointer flex-col gap-3 rounded-card border border-line bg-card p-5 text-left transition-all duration-250 ease-pop hover:-translate-y-0.5 hover:border-ink/30 sm:flex-row sm:items-center sm:justify-between"
-                >
+              <li key={draft.id} className="relative">
+                <div className="group flex w-full cursor-pointer flex-col gap-3 rounded-card border border-line bg-card p-5 text-left transition-all duration-250 ease-pop hover:-translate-y-0.5 hover:border-ink/30 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 items-center gap-4">
                     {draft.thumbnail ? (
                       <img
@@ -576,12 +721,46 @@ function PortfolioSection({
                       <p className="mt-1.5 font-display text-[0.6875rem] text-muted">
                         {percent}% complete
                       </p>
+                      {draft.published && (
+                        <p className="mt-1 font-display text-[0.6875rem] text-muted">
+                          {opens[draft.id] ?? 0} {(opens[draft.id] ?? 0) === 1 ? "open" : "opens"}
+                        </p>
+                      )}
                     </div>
+
+                    {/* Only the reverse direction is offered here. Publishing
+                        has to clear validation and the topic quota, both of
+                        which live in the editor; a one-click publish from the
+                        list would be a way around a load-bearing rule. Sitting
+                        above the stretched link, so the rest of the row still
+                        opens the editor. */}
+                    {draft.published && (
+                      <button
+                        type="button"
+                        onClick={() => onSave({ ...draft, published: false })}
+                        className="relative z-10 cursor-pointer rounded-pill border border-ink/15 bg-card px-3 py-2 font-display text-xs font-medium text-ink-2 transition-colors duration-200 hover:border-ink hover:text-ink"
+                      >
+                        Revert to draft
+                        <span className="sr-only">
+                          {" "}
+                          - {draft.values.title || "Untitled entry"}
+                        </span>
+                      </button>
+                    )}
+
                     <ArrowUpRight
                       size={18}
                       className="text-muted transition-colors duration-200 group-hover:text-ink"
                     />
                   </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => navigate(`/panel/portfolio/${draft.id}`)}
+                  className="absolute inset-0 cursor-pointer rounded-card"
+                >
+                  <span className="sr-only">Edit {draft.values.title || "Untitled entry"}</span>
                 </button>
               </li>
             )

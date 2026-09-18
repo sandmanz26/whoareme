@@ -38,9 +38,10 @@ npm run lint     # types only
 ```
 
 Icons, the dialog, the focus trap, the router, the stepper and the image
-downscaler are all hand-rolled. **Do not add a UI library, an icon package, a
+downscaler, and the combobox are all hand-rolled. **Do not add a UI library, an icon package, a
 router or a state manager** without a stated reason — the zero-dependency
-surface is deliberate and currently costs ~127 kB gzipped in total.
+surface is deliberate and currently costs ~164 kB gzipped in total, most of
+the growth since the first build being seed data rather than code.
 
 ## 3. Directory map
 
@@ -132,6 +133,13 @@ Each craft proves itself differently, so the evidence half of the form is
 generated from `ROLE_SCHEMAS` in `data/portfolioSchemas.ts`. One renderer
 (`SchemaField`) and one validator (`validateFields`) serve all eight roles.
 
+**Templates sit above the schemas.** A role picks the vocabulary; a *template*
+picks the shape of the work (shipped, system, craft, discovery, rescue,
+leadership) and therefore which evidence questions are asked. Four per role, in
+`src/data/workTemplates.ts`; `fieldsForTemplate(role, templateId)` is the single
+resolver the editor, the readiness check and the mapper all call. Full writeup
+in [`TEMPLATES_AND_MOTION.md`](TEMPLATES_AND_MOTION.md).
+
 **To add a field to a craft:** add a `FieldSpec` to that role's `fields`. Done —
 no component, no validator change, no migration. Mark it `proof: true` only if
 it is a metric worth putting on the card.
@@ -199,42 +207,85 @@ component.**
 1. **Grid items need `min-w-0`.** A no-wrap badge row widens the grid track and
    clips card content on narrow screens. Cards are `w-full min-w-0`; list items
    wrapping them are `flex min-w-0`.
-2. **`<Avatar>` renders a `<span>`,** never a `<div>` — it appears inside `<p>`
+2. **An `.sr-only` span needs a positioned ancestor inside any `overflow`
+   container.** `.sr-only` is `position: absolute`, so without one its
+   containing block is the page: inside a horizontal scroller it lands at its
+   off-screen static position and widens the document past the scroller's
+   clipping. The figure slider carries `relative` on each slide for this
+   reason. It presents as page-level horizontal scroll with a clean
+   `body.scrollWidth`, which is a confusing signature to debug.
+3. **A `position: fixed` popover must be portalled out of the React tree.**
+   Our entrance animations use `animation-fill-mode: both`, so an element that
+   has finished animating still carries its final `transform` - `scale(1)` and
+   `translateY(0)` are identity transforms and still make that element the
+   containing block for fixed descendants. A popover placed in viewport
+   coordinates inside one lands hundreds of pixels off. `Combobox` renders its
+   list into `document.body` for this reason, and tracks outside-clicks against
+   both the wrapper and the portalled popup.
+4. **Escape must be scoped to the topmost layer.** `Modal` listens for Escape
+   on `document`, so any nested dismissible thing has to call
+   `stopPropagation()` or closing a dropdown also closes the dialog and throws
+   away a half-filled form.
+5. **`<Avatar>` renders a `<span>`,** never a `<div>` — it appears inside `<p>`
    in places, and a div there is invalid HTML that React warns about.
-3. **Keys must tolerate duplicates.** Links and stack entries can repeat, so key
+6. **Keys must tolerate duplicates.** Links and stack entries can repeat, so key
    them by `${value}-${index}`, not by value.
-4. **`PanelPage`'s portfolio section stays mounted across `/new → /:id`.** New
+7. **`PanelPage`'s portfolio section stays mounted across `/new → /:id`.** New
    entry state is reset by comparing the route target against the previous one
    during render. Remove that and "Add work" reopens the last draft.
-5. **`Button` sets its own `display`.** Wrap it in a span to hide it
+8. **`Button` sets its own `display`.** Wrap it in a span to hide it
    responsively; `className="hidden sm:inline-flex"` on the button itself loses
    the specificity battle.
-6. **Topic quota** (`TOPIC_QUOTA = 2`) counts *published* entries per topic and
+9. **Topic quota** (`TOPIC_QUOTA = 2`) counts *published* entries per topic and
    excludes the entry being edited, or re-publishing trips its own quota.
-7. **Thumbnails must go through `lib/image.ts`** (960 px, JPEG q0.72). A raw
+10. **Thumbnails must go through `lib/image.ts`** (960 px, JPEG q0.72). A raw
    camera JPEG will blow the ~5 MB localStorage budget.
 8. All storage access goes through `lib/storage.ts`, which swallows private-mode
    and quota errors.
-9. **In-page `<a href="#...">` anchors are a routing hazard.** The router reads
-   `location.hash`, so a jump link inside a page route (`#topic-erp` on a
-   profile) navigates away from that route entirely. Scroll imperatively with
-   `scrollIntoView` instead; only the home page's anchors are safe, and only
-   because they fall through to `HomePage` by design.
-10. **House style: no em dashes in anything a reader sees.** Headlines,
+11. **Routing is `history.pushState` over `location.pathname`, not a hash.**
+    It was a hash router until the SEO consequence was measured: a fragment is
+    never sent to the server and search engines collapse every `#/work/slug`
+    into one URL, so no case study could be indexed. Two consequences: the host
+    **must** serve `index.html` for unknown paths (`public/_redirects`,
+    `vercel.json`), and in-page anchors are safe again because the router no
+    longer reads the fragment.
+12. **House style: no em dashes in anything a reader sees.** Headlines,
     labels, buttons, body copy, seed prose, alt text. Use a spaced hyphen or
     restructure the sentence. `grep -r "\u2014" src` must return nothing.
-11. **Eyebrows are rationed to roughly one per three sections.** The small
+13. **Eyebrows are rationed to roughly one per three sections.** The small
     uppercase label above a heading is what makes a page read as templated
     when every section carries one. `SectionHeading`'s `eyebrow` prop is
     optional for this reason.
-12. **A pagination signature must cover every filter.** Leave one out and the
+14. **A pagination signature must cover every filter.** Leave one out and the
     list keeps its old offset when that filter changes. `Directory` derives its
     signature from the result set rather than from the filter props, because it
     is narrowed by facets it is never passed.
-13. **A person's topics are derived, not just declared.** `Person.categories`
+15. **Dropdowns are `Combobox`, never a native `<select>`.** The native menu
+    cannot be styled, filtered or grouped legibly, and half our lists are past
+    the point where scrolling them is the whole interaction. `Combobox` shows
+    an in-popover filter above `searchThreshold` options (default 6) and is
+    positioned `fixed` from the trigger, because an absolutely positioned
+    popover is clipped by any scrolling ancestor - which is exactly what the
+    join modal is.
+16. **A person's topics are derived, not just declared.** `Person.categories`
     holds industries only; `withDerivedTopics()` unions in the topics of their
     published work. Filter or count people without it and every practice topic
     reports zero people while showing case studies.
+17. **Moderation is an overlay, never an edit.** The seeded fixtures are
+    read-only. `useAdmin` records decisions and `App.tsx` applies them at render
+    time, which is why every action is reversible and why the audit log is the
+    source of truth rather than a side effect. Suspending a person withholds
+    their work too: a profile that 404s while its case studies stay on the grid
+    is a broken link, not a suspension.
+18. **The console reads `rawWork` / `rawPeople`; the public site reads the
+    filtered lists.** Run the flag rules against the filtered corpus and hiding
+    an entry silently clears its own flag.
+19. **A dialog's focus-on-open effect depends on `open` and nothing else.**
+    Add a handler to its dependency array and any caller that builds that
+    handler inline re-runs the effect on every render, sending focus back to
+    the first focusable element. The symptom is being able to type exactly one
+    character into a field. Keep the keydown listener in its own effect, where
+    re-subscribing is harmless.
 
 ## 12. How this is verified
 

@@ -26,7 +26,15 @@ workRouter.get(
   asyncHandler(async (req, res) => {
     const q = query(req, listWorkQuerySchema)
     const result = await service.listWork(
-      { role: q.role, topic: q.topic, model: q.model, skills: q.skills, tokens: tokenize(q.q) },
+      {
+        role: q.role,
+        topic: q.topic,
+        model: q.model,
+        skills: q.skills,
+        experience: q.experience,
+        language: q.language,
+        tokens: tokenize(q.q),
+      },
       q.sort,
       { page: q.page, limit: q.limit },
     )

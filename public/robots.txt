@@ -1,0 +1,10 @@
+# The panel and the moderation console hold one person's own data and have
+# nothing to offer a search result. Everything else is meant to be found.
+User-agent: *
+Disallow: /panel
+Disallow: /admin
+Disallow: /signin
+Disallow: /reset
+Allow: /
+
+Sitemap: https://whoareyou.directory/sitemap.xml

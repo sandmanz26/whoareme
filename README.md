@@ -1,5 +1,8 @@
 # whoareyou
 
+> **Working on this with an AI agent?** Point it at [`AGENTS.md`](AGENTS.md)
+> first - it orients in two minutes and routes to the deeper docs.
+
 A front-end-only SaaS directory for people who build technology. One profile,
 segmented by the craft and the industry someone actually works in — plus real
 case studies rather than screenshots.
@@ -15,9 +18,11 @@ AI — starting with no context. It is self-contained and covers the whole syste
 
 | Doc | Covers |
 |---|---|
+| [`CHANGELOG.md`](CHANGELOG.md) | What changed, when, and why. Every bug found and the invariant it became. |
 | [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) | **Complete handover.** Product, front end, back end, database, invariants, gaps. |
 | [`docs/ENGINEERING.md`](docs/ENGINEERING.md) | Front-end deep dive and the invariants that break non-obviously. |
 | [`docs/BUSINESS.md`](docs/BUSINESS.md) | Thesis, taxonomy, load-bearing rules, metrics, non-goals. |
+| [`docs/TEMPLATES_AND_MOTION.md`](docs/TEMPLATES_AND_MOTION.md) | Work templates (archetypes × craft) and case-study motion. |
 | [`docs/DATABASE.md`](docs/DATABASE.md) | Collections, validators, indexes and every query the API runs. |
 | [`server/README.md`](server/README.md) | API surface, decisions, how to run it. |
 | [`CLAUDE.md`](CLAUDE.md) | The short version plus non-negotiable rules. |

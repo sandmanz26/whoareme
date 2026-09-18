@@ -1,6 +1,7 @@
 import { Container } from "./Container"
 import { Wordmark } from "./Wordmark"
 import { ArrowUpRight } from "@/components/ui/Icon"
+import { useAdmin } from "@/hooks/useAdmin"
 
 /**
  * `href` is a real route where one exists. Everything else is deliberately
@@ -40,26 +41,47 @@ const COLUMNS = [
     links: [
       { label: "About", href: "/about" },
       { label: "Changelog", href: "/changelog" },
-      { label: "Privacy", href: "/privacy" },
       { label: "Contact" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { label: "Terms", href: "/terms" },
+      { label: "Privacy", href: "/privacy" },
+      { label: "Content policy", href: "/content-policy" },
+      { label: "Accessibility", href: "/accessibility" },
     ],
   },
 ]
 
 export function Footer() {
+  const { copy, state } = useAdmin()
+
   return (
     <footer className="border-t border-line bg-paper">
       <Container className="py-16">
         <div className="grid gap-12 lg:grid-cols-[1.4fr_2fr]">
           <div className="max-w-sm">
             <Wordmark />
-            <p className="mt-5 text-sm leading-relaxed text-muted">
-              A segmented directory for people who build technology. One profile, sorted by the
-              work you actually do - not by the job title you happened to get.
-            </p>
+            <p className="mt-5 text-sm leading-relaxed text-muted">{copy("footer.blurb")}</p>
+
+            {/* Contact is editable from the moderation console, so the address
+                on the page and the address someone actually reads cannot drift
+                apart through a deploy nobody scheduled. */}
+            <address className="mt-6 flex flex-col gap-1 text-sm not-italic text-muted">
+              <a
+                href={`mailto:${state.contact.email}`}
+                className="w-fit font-display font-medium text-ink underline decoration-ink/25 underline-offset-4 transition-colors duration-200 hover:decoration-pop-pink"
+              >
+                {state.contact.email}
+              </a>
+              <span>{state.contact.location}</span>
+              <span className="text-xs">{state.contact.responseTime}</span>
+            </address>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">
             {COLUMNS.map((column) => (
               <div key={column.title}>
                 <h3 className="eyebrow">{column.title}</h3>
@@ -68,7 +90,7 @@ export function Footer() {
                     link.href ? (
                       <li key={link.label}>
                         <a
-                          href={`#${link.href}`}
+                          href={link.href}
                           className="group inline-flex min-h-8 items-center gap-1 text-sm text-ink-2 transition-colors duration-200 hover:text-ink"
                         >
                           {link.label}

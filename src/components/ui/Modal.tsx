@@ -45,11 +45,31 @@ export function Modal({ open, onClose, title, description, children }: ModalProp
     }
   }, [])
 
+  /**
+   * Move focus into the dialog once, when it opens.
+   *
+   * This must depend on `open` and nothing else. It previously also depended
+   * on `onClose` and `trapFocus`; callers that build `onClose` inline get a
+   * new function identity on every render, so the effect re-ran on every
+   * keystroke and sent focus back to the first focusable element - the close
+   * button. The visible symptom was being able to type exactly one character
+   * into any field in a dialog.
+   */
   useEffect(() => {
     if (!open) return
 
     restoreFocusTo.current = document.activeElement as HTMLElement | null
     panelRef.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus()
+
+    return () => {
+      restoreFocusTo.current?.focus()
+    }
+  }, [open])
+
+  // Re-subscribing this one when a handler identity changes is harmless: it
+  // adds and removes a listener and touches nothing the reader can see.
+  useEffect(() => {
+    if (!open) return
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose()
@@ -57,10 +77,7 @@ export function Modal({ open, onClose, title, description, children }: ModalProp
     }
 
     document.addEventListener("keydown", onKeyDown)
-    return () => {
-      document.removeEventListener("keydown", onKeyDown)
-      restoreFocusTo.current?.focus()
-    }
+    return () => document.removeEventListener("keydown", onKeyDown)
   }, [open, onClose, trapFocus])
 
   if (!open) return null

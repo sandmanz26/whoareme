@@ -1,8 +1,9 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Modal } from "@/components/ui/Modal"
 import { Button } from "@/components/ui/Button"
 import { ChipGroup, Field, SelectInput, TextArea, TextInput } from "@/components/ui/Field"
 import { ArrowRight, Check } from "@/components/ui/Icon"
+import { track } from "@/lib/analytics"
 import { cn, initialsOf } from "@/lib/utils"
 import {
   CATEGORY_OPTIONS,
@@ -32,6 +33,17 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
   const [values, setValues] = useState<JoinValues>(EMPTY_JOIN_VALUES)
   const [errors, setErrors] = useState<JoinErrors>({})
   const [submitted, setSubmitted] = useState(false)
+  const [working, setWorking] = useState(false)
+
+  // One counter per step reached, so the drop-off between them is visible.
+  useEffect(() => {
+    if (open) track("signup_opened")
+  }, [open])
+  useEffect(() => {
+    if (!open) return
+    if (step === 1) track("signup_step_2")
+    if (step === 2) track("signup_step_3")
+  }, [open, step])
 
   function update<K extends keyof JoinValues>(key: K, value: JoinValues[K]) {
     setValues((current) => ({ ...current, [key]: value }))
@@ -46,7 +58,7 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
     update("categories", next)
   }
 
-  function goNext() {
+  async function goNext() {
     const found = validateStep(step, values)
     if (Object.keys(found).length > 0) {
       setErrors(found)
@@ -54,7 +66,10 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
     }
     if (step === LAST_STEP) {
       // Front-end only: no request goes out, the account lands in localStorage.
-      register({
+      // Hashing is async, so the button is disabled while it runs - PBKDF2 at
+      // 150k iterations is deliberately not instant.
+      setWorking(true)
+      await register({
         name: values.name.trim(),
         email: values.email.trim(),
         location: values.location.trim(),
@@ -64,7 +79,12 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
         topics: values.categories,
         portfolio: values.portfolio.trim(),
         pitch: values.pitch.trim(),
-      })
+        // Added from the panel, not the join flow: three steps is already the
+        // most a signup can ask before people give up.
+        photo: "",
+      }, values.password)
+      setWorking(false)
+      track("signup_completed")
       setSubmitted(true)
       return
     }
@@ -137,8 +157,12 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
               {step === 0 ? "Cancel" : "Back"}
             </Button>
 
-            <Button type="submit">
-              {step === LAST_STEP ? "Publish profile" : "Continue"}
+            <Button type="submit" disabled={working}>
+              {working
+                ? "Creating your profile…"
+                : step === LAST_STEP
+                  ? "Publish profile"
+                  : "Continue"}
               <ArrowRight size={17} />
             </Button>
           </div>
@@ -246,18 +270,13 @@ function CraftStep({
           {({ id, describedBy, invalid }) => (
             <SelectInput
               id={id}
-              aria-describedby={describedBy}
+              describedBy={describedBy}
               invalid={invalid}
               value={values.role}
-              onChange={(event) => update("role", event.target.value as RoleId)}
-            >
-              <option value="">Select a craft…</option>
-              {ROLE_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </SelectInput>
+              placeholder="Select a craft…"
+              options={ROLE_OPTIONS.map((option) => ({ value: option.id, label: option.label }))}
+              onChange={(next) => update("role", next as RoleId)}
+            />
           )}
         </Field>
 
@@ -322,6 +341,26 @@ function WorkStep({ values, errors, update }: StepProps) {
             value={values.portfolio}
             placeholder="https://"
             onChange={(event) => update("portfolio", event.target.value)}
+          />
+        )}
+      </Field>
+
+      <Field
+        label="Password"
+        required
+        error={errors.password}
+        hint="Guards the way back into this profile. Stored hashed, in this browser only."
+      >
+        {({ id, describedBy, invalid }) => (
+          <TextInput
+            id={id}
+            type="password"
+            autoComplete="new-password"
+            aria-describedby={describedBy}
+            invalid={invalid}
+            value={values.password}
+            placeholder="At least 8 characters"
+            onChange={(event) => update("password", event.target.value)}
           />
         )}
       </Field>

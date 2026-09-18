@@ -1,15 +1,18 @@
 import { useMemo } from "react"
 import { Container } from "@/components/layout/Container"
 import { Avatar } from "@/components/ui/Avatar"
+import { SocialLinks } from "@/components/ui/SocialLinks"
 import { Badge } from "@/components/ui/Badge"
 import { Button } from "@/components/ui/Button"
-import { ArrowRight, Pin } from "@/components/ui/Icon"
+import { ArrowRight, Globe, Pin } from "@/components/ui/Icon"
 import { WorkCard } from "@/components/work/WorkCard"
 import { proofOf, type Work } from "@/data/work"
 import type { Person } from "@/data/people"
 import { CATEGORIES, roleById, type CategoryId } from "@/data/taxonomy"
 import type { Author } from "@/lib/authors"
 import { navigate } from "@/lib/router"
+import type { Target } from "@/data/admin"
+import { ReportButton } from "@/components/admin/ReportModal"
 import { cn } from "@/lib/utils"
 
 interface ProfilePageProps {
@@ -20,6 +23,8 @@ interface ProfilePageProps {
   /** Reported so a person can see their own profile views in the panel. */
   onProfileView: (personId: string) => void
   onSkillClick: (skill: string) => void
+  /** Opens the report dialog for this profile. */
+  onReport: (target: Target, label: string) => void
 }
 
 interface TopicGroup {
@@ -69,6 +74,7 @@ export function ProfilePage({
   authors,
   onProfileView,
   onSkillClick,
+  onReport,
 }: ProfilePageProps) {
   const groups = useMemo(() => groupByTopic(work), [work])
 
@@ -131,6 +137,24 @@ export function ProfilePage({
               <Pin size={14} className="shrink-0" />
               {person.location}
             </p>
+
+            {person.bio && (
+              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-2">{person.bio}</p>
+            )}
+
+            {person.languages.length > 0 && (
+              <p className="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted">
+                <Globe size={13} className="shrink-0" />
+                <span>Works in {person.languages.join(", ")}</span>
+              </p>
+            )}
+
+            <SocialLinks
+              links={person.links}
+              size="full"
+              ownerName={person.name}
+              className="mt-5"
+            />
 
             <ul className="mt-5 flex flex-wrap gap-1.5">
               <li>
@@ -226,11 +250,16 @@ export function ProfilePage({
       {/* ── Footer action ────────────────────────────────────────────── */}
       <Container className="mt-16">
         <div className="flex flex-col items-start gap-4 rounded-card border border-line bg-paper-2/60 p-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-ink-2">
-            Every number on this page is{" "}
-            <span className="font-display font-semibold text-ink">claimed by the author</span>, not
-            verified by us.
-          </p>
+          <div className="text-sm text-ink-2">
+            <p>
+              Every number on this page is{" "}
+              <span className="font-display font-semibold text-ink">claimed by the author</span>,
+              not verified by us.
+            </p>
+            <p className="mt-2">
+              <ReportButton onClick={() => onReport({ kind: "person", id: person.id }, person.name)} />
+            </p>
+          </div>
           <Button
             variant="outline"
             onClick={() => {

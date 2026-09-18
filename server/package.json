@@ -14,7 +14,8 @@
     "db:setup": "tsx src/scripts/setup.ts",
     "db:seed": "tsx src/scripts/seed.ts",
     "db:reconcile": "tsx src/scripts/reconcile-counts.ts",
-    "test:smoke": "tsx src/scripts/smoke.ts"
+    "test:smoke": "tsx src/scripts/smoke.ts",
+    "db:backfill": "tsx src/scripts/backfill.ts"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",

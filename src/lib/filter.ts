@@ -18,10 +18,15 @@ function matchesQuery(person: Person, query: string): boolean {
 export function filterPeople(people: readonly Person[], filters: Filters): Person[] {
   return people.filter(
     (person) =>
-      (filters.topic === null || person.categories.includes(filters.topic)) &&
-      (filters.role === null || person.role === filters.role) &&
-      withinBand(person.years, filters.experience) &&
-      (filters.language === null || person.languages.includes(filters.language)) &&
+      (filters.topic.length === 0 ||
+        filters.topic.some((topic) => person.categories.includes(topic))) &&
+      (filters.practice.length === 0 ||
+        filters.practice.some((practice) => person.categories.includes(practice))) &&
+      (filters.role.length === 0 || filters.role.includes(person.role)) &&
+      (filters.experience.length === 0 ||
+        filters.experience.some((band) => withinBand(person.years, band))) &&
+      (filters.language.length === 0 ||
+        filters.language.some((language) => person.languages.includes(language))) &&
       filters.skills.every((skill) =>
         person.skills.some((owned) => owned.toLowerCase() === skill.toLowerCase()),
       ) &&

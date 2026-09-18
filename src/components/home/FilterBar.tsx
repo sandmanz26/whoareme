@@ -1,21 +1,43 @@
-import { ChevronDown, Close, Search } from "@/components/ui/Icon"
-import { CATEGORY_GROUPS, categoryById, roleById, ROLES } from "@/data/taxonomy"
+import { Close, Search } from "@/components/ui/Icon"
+import { Combobox } from "@/components/ui/Combobox"
+import {
+  categoryById,
+  INDUSTRY_CATEGORIES,
+  PRACTICE_CATEGORIES,
+  roleById,
+  LIVE_ROLES,
+} from "@/data/taxonomy"
 import type { CategoryId, RoleId } from "@/data/taxonomy"
 import { BUSINESS_MODELS, businessModelById, type BusinessModelId } from "@/data/businessModels"
 import { EXPERIENCE_BANDS, experienceBandById, type ExperienceBandId } from "@/data/experience"
 import { LANGUAGES } from "@/data/people"
 import { cn } from "@/lib/utils"
+import { useAdmin } from "@/hooks/useAdmin"
+import { track } from "@/lib/analytics"
 
+/**
+ * Every facet is a list, and an empty list means "no opinion".
+ *
+ * Within one facet the values are OR-ed: picking Designer and Developer asks
+ * for either, because they are alternatives a reader is weighing, not
+ * requirements they are stacking. Across facets everything is AND-ed, so each
+ * additional facet narrows. That is the standard faceted-search contract and
+ * the only one where adding a second value cannot return fewer results than
+ * the first did.
+ */
 export interface Filters {
-  role: RoleId | null
-  topic: CategoryId | null
-  /** Third axis, surfaced as a control only on the full index. */
-  model: BusinessModelId | null
+  role: RoleId[]
+  /** Where it shipped. Industries only; practices are their own control. */
+  topic: CategoryId[]
+  /** Discipline work with no revenue line of its own. Stored in the same
+   *  `topics` array as an industry, filtered independently of it. */
+  practice: CategoryId[]
+  model: BusinessModelId[]
   /** Facets of the person, not the work. Applied to a case study through its
    *  author, so one bar narrows both surfaces the same way. */
-  experience: ExperienceBandId | null
-  language: string | null
-  /** Refinement under the two primary axes - AND-ed, so each one narrows. */
+  experience: ExperienceBandId[]
+  language: string[]
+  /** AND-ed rather than OR-ed: a skill list is a spec, not a shortlist. */
   skills: string[]
   query: string
 }
@@ -41,33 +63,32 @@ interface Option {
   label: string
 }
 
+/** Module-level so a re-render does not start a second timer. */
+let queryTimer = 0
+
 /**
- * Labelled select.
+ * Labelled control.
  *
- * The label is visible, not `sr-only`. With five controls in a row, a bar of
+ * The label is visible, not `sr-only`. With six controls in a grid, a bar of
  * identical pills whose only clue is their current value is unreadable: you
- * cannot tell that "Designer" is the craft filter and "ERP" is the topic
+ * cannot tell that "Designer" is the craft filter and "ERP" is the industry
  * filter until you open both. The label costs one line and removes the guess.
  */
 function Field({
   label,
-  value,
+  values,
   onChange,
   options,
-  groups,
   allLabel,
 }: {
   label: string
-  value: string
-  onChange: (value: string) => void
-  options?: ReadonlyArray<Option>
-  /** Rendered as `<optgroup>`s, for lists that mix kinds a reader would
-   *  otherwise conflate: industries and practices. */
-  groups?: ReadonlyArray<{ label: string; options: ReadonlyArray<Option> }>
+  values: readonly string[]
+  onChange: (values: string[]) => void
+  options: ReadonlyArray<Option>
   allLabel: string
 }) {
   const id = `filter-${label.toLowerCase().replace(/\s+/g, "-")}`
-  const active = value !== ""
+  const active = values.length > 0
 
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
@@ -77,39 +98,18 @@ function Field({
       >
         {label}
       </label>
-      <div className="relative">
-        <select
-          id={id}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className={cn(
-            "h-11 w-full cursor-pointer appearance-none rounded-pill border bg-card pr-9 pl-4",
-            "font-display text-sm font-medium text-ink transition-colors duration-200",
-            "focus:border-ink focus:outline-none",
-            active ? "border-ink/70 bg-paper-2" : "border-ink/12 hover:border-ink/40",
-          )}
-        >
-          <option value="">{allLabel}</option>
-          {options?.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.label}
-            </option>
-          ))}
-          {groups?.map((group) => (
-            <optgroup key={group.label} label={group.label}>
-              {group.options.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-        <ChevronDown
-          size={15}
-          className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
-        />
-      </div>
+      <Combobox
+        multiple
+        id={id}
+        values={values}
+        onChange={onChange}
+        emptyLabel={allLabel}
+        options={options.map((option) => ({ value: option.id, label: option.label }))}
+        className={cn(
+          "h-11 rounded-pill border bg-card pr-3 pl-4",
+          active ? "border-ink/70 bg-paper-2" : "border-ink/12 hover:border-ink/40",
+        )}
+      />
     </div>
   )
 }
@@ -158,58 +158,78 @@ export function FilterBar({
   skillOptions = [],
   showAll = false,
 }: FilterBarProps) {
-  const active: Array<{ key: string; label: string; value: string; clear: () => void }> = []
+  const { isRoleDisabled } = useAdmin()
+  // A craft withdrawn in the console stops being offered here too, or the two
+  // browse surfaces would disagree about what exists.
+  // Live crafts, minus anything a moderator has withdrawn.
+  const offeredRoles = LIVE_ROLES.filter((role) => !isRoleDisabled(role.id))
 
-  if (filters.role) {
-    active.push({
-      key: "role",
-      label: "Craft",
-      value: roleById(filters.role).label,
-      clear: () => onChange({ role: null }),
-    })
+  function changeFacet(patch: Partial<Filters>) {
+    track("filter_used")
+    onChange(patch)
   }
-  if (filters.topic) {
-    active.push({
+
+  // One chip per selected value, built from a table so a new facet cannot be
+  // added to the bar and forgotten here.
+  const facets: Array<{
+    key: keyof Filters
+    label: string
+    values: readonly string[]
+    display: (value: string) => string
+  }> = [
+    { key: "role", label: "Craft", values: filters.role, display: (v) => roleById(v as RoleId).label },
+    {
       key: "topic",
-      label: "Topic",
-      value: categoryById(filters.topic).label,
-      clear: () => onChange({ topic: null }),
-    })
-  }
-  if (filters.model) {
-    active.push({
+      label: "Industry",
+      values: filters.topic,
+      display: (v) => categoryById(v as CategoryId).label,
+    },
+    {
+      key: "practice",
+      label: "Practice",
+      values: filters.practice,
+      display: (v) => categoryById(v as CategoryId).label,
+    },
+    {
       key: "model",
       label: "Model",
-      value: businessModelById(filters.model)?.label ?? filters.model,
-      clear: () => onChange({ model: null }),
-    })
-  }
-  if (filters.experience) {
-    active.push({
+      values: filters.model,
+      display: (v) => businessModelById(v as BusinessModelId)?.label ?? v,
+    },
+    {
       key: "experience",
       label: "Experience",
-      value: experienceBandById(filters.experience)?.label ?? filters.experience,
-      clear: () => onChange({ experience: null }),
-    })
-  }
-  if (filters.language) {
-    active.push({
-      key: "language",
-      label: "Language",
-      value: filters.language,
-      clear: () => onChange({ language: null }),
-    })
-  }
-  for (const skill of filters.skills) {
-    active.push({
-      key: `skill-${skill}`,
-      label: "Skill",
-      value: skill,
-      clear: () => onChange({ skills: filters.skills.filter((item) => item !== skill) }),
-    })
-  }
+      values: filters.experience,
+      display: (v) => experienceBandById(v as ExperienceBandId)?.label ?? v,
+    },
+    { key: "language", label: "Language", values: filters.language, display: (v) => v },
+    { key: "skills", label: "Skill", values: filters.skills, display: (v) => v },
+  ]
+
+  const active = facets.flatMap((facet) =>
+    facet.values.map((value) => ({
+      key: `${facet.key}-${value}`,
+      label: facet.label,
+      value: facet.display(value),
+      clear: () =>
+        onChange({ [facet.key]: facet.values.filter((item) => item !== value) } as Partial<Filters>),
+    })),
+  )
 
   const dirty = active.length > 0 || filters.query.trim() !== ""
+
+  /**
+   * Counted once per burst, not per keystroke.
+   *
+   * A counter that ticks on every character answers "how fast do people type",
+   * which nobody asked. Three seconds of quiet is close enough to "they
+   * searched for something".
+   */
+  function onQueryChange(value: string) {
+    onChange({ query: value })
+    window.clearTimeout(queryTimer)
+    if (value.trim()) queryTimer = window.setTimeout(() => track("search_used"), 3000)
+  }
 
   function toggleSkill(skill: string) {
     onChange({
@@ -231,7 +251,7 @@ export function FilterBar({
         <input
           type="search"
           value={filters.query}
-          onChange={(event) => onChange({ query: event.target.value })}
+          onChange={(event) => onQueryChange(event.target.value)}
           placeholder="Search work, skills, people, cities"
           aria-label="Search work, skills, people or cities"
           className="h-12 w-full rounded-pill border border-ink/15 bg-card pr-4 pl-11 text-sm text-ink transition-colors duration-200 placeholder:text-muted focus:border-ink focus:outline-none"
@@ -239,27 +259,28 @@ export function FilterBar({
       </div>
 
       <div
-        className={cn("mt-4 grid gap-3", showAll ? "sm:grid-cols-2 lg:grid-cols-5" : "sm:grid-cols-2")}
+        className={cn("mt-4 grid gap-3", showAll ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2")}
       >
         <Field
           label="Craft"
           allLabel="Any craft"
-          value={filters.role ?? ""}
-          onChange={(value) => onChange({ role: (value || null) as RoleId | null })}
-          options={ROLES.map((role) => ({ id: role.id, label: role.label }))}
+          values={filters.role}
+          onChange={(next) => changeFacet({ role: next as RoleId[] })}
+          options={offeredRoles.map((role) => ({ id: role.id, label: role.label }))}
         />
         <Field
-          label="Topic"
-          allLabel="Any topic"
-          value={filters.topic ?? ""}
-          onChange={(value) => onChange({ topic: (value || null) as CategoryId | null })}
-          groups={CATEGORY_GROUPS.map((group) => ({
-            label: group.label,
-            options: group.options.map((category) => ({
-              id: category.id,
-              label: category.label,
-            })),
-          }))}
+          label="Industry"
+          allLabel="Any industry"
+          values={filters.topic}
+          onChange={(next) => changeFacet({ topic: next as CategoryId[] })}
+          options={INDUSTRY_CATEGORIES.map((c) => ({ id: c.id, label: c.label }))}
+        />
+        <Field
+          label="Practice"
+          allLabel="Any practice"
+          values={filters.practice}
+          onChange={(next) => changeFacet({ practice: next as CategoryId[] })}
+          options={PRACTICE_CATEGORIES.map((c) => ({ id: c.id, label: c.label }))}
         />
 
         {showAll && (
@@ -267,25 +288,23 @@ export function FilterBar({
             <Field
               label="Business model"
               allLabel="Any model"
-              value={filters.model ?? ""}
-              onChange={(value) => onChange({ model: (value || null) as BusinessModelId | null })}
-              options={BUSINESS_MODELS.map((model) => ({ id: model.id, label: model.label }))}
+              values={filters.model}
+              onChange={(next) => changeFacet({ model: next as BusinessModelId[] })}
+              options={BUSINESS_MODELS.map((m) => ({ id: m.id, label: m.label }))}
             />
             <Field
               label="Experience"
               allLabel="Any experience"
-              value={filters.experience ?? ""}
-              onChange={(value) =>
-                onChange({ experience: (value || null) as ExperienceBandId | null })
-              }
-              options={EXPERIENCE_BANDS.map((band) => ({ id: band.id, label: band.label }))}
+              values={filters.experience}
+              onChange={(next) => changeFacet({ experience: next as ExperienceBandId[] })}
+              options={EXPERIENCE_BANDS.map((b) => ({ id: b.id, label: b.label }))}
             />
             <Field
               label="Language"
               allLabel="Any language"
-              value={filters.language ?? ""}
-              onChange={(value) => onChange({ language: value || null })}
-              options={LANGUAGES.map((language) => ({ id: language, label: language }))}
+              values={filters.language}
+              onChange={(next) => changeFacet({ language: next })}
+              options={LANGUAGES.map((l) => ({ id: l, label: l }))}
             />
           </>
         )}

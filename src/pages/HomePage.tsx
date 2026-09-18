@@ -7,6 +7,7 @@ import { JoinCta } from "@/components/home/JoinCta"
 import type { Filters } from "@/components/home/FilterBar"
 import type { Person } from "@/data/people"
 import type { Work } from "@/data/work"
+import { isPracticeTopic } from "@/data/taxonomy"
 import type { CategoryId, RoleId } from "@/data/taxonomy"
 import type { Author } from "@/lib/authors"
 
@@ -54,7 +55,7 @@ export function HomePage({
 
       <Marquee />
 
-      <RoleGrid counts={roleCounts} activeRole={filters.role} onSelect={onRoleSelect} />
+      <RoleGrid counts={roleCounts} activeRoles={filters.role} onSelect={onRoleSelect} />
 
       <WorkBrowser
         work={work}
@@ -70,10 +71,22 @@ export function HomePage({
         people={people}
         counts={categoryCounts}
         totalCount={totalPeople}
-        activeCategory={filters.topic}
-        activeRole={filters.role}
+        activeCategories={[...filters.topic, ...filters.practice]}
+        activeRoles={filters.role}
         query={filters.query}
-        onCategoryChange={(topic) => onFilterChange({ topic })}
+        // One row of chips over two axes, so it routes by kind and toggles
+        // membership - the same behaviour as the two dropdowns that show the
+        // same values. The first chip clears both.
+        onCategoryChange={(id) => {
+          if (id === null) return onFilterChange({ topic: [], practice: [] })
+          const key = isPracticeTopic(id) ? "practice" : "topic"
+          const current = filters[key]
+          onFilterChange({
+            [key]: current.includes(id)
+              ? current.filter((item) => item !== id)
+              : [...current, id],
+          } as Partial<Filters>)
+        }}
         onResetFilters={onResetFilters}
         onProfileView={onProfileView}
         onJoin={onJoin}

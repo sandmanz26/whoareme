@@ -1,5 +1,5 @@
 import type { CategoryId, RoleId } from "./taxonomy"
-import type { WorkLink, WorkSection } from "./work"
+import type { WorkFigure, WorkLink, WorkSection } from "./work"
 
 export interface Account {
   id: string
@@ -11,7 +11,16 @@ export interface Account {
   years: string
   topics: CategoryId[]
   portfolio: string
+  /** Shown as the bio on the profile page and as the pitch on the card. */
   pitch: string
+  /** Downscaled data URL, or "" for the tinted monogram fallback. */
+  photo: string
+  /**
+   * PBKDF2 hash, `pbkdf2$iterations$salt$hash`. Empty on profiles created
+   * before passwords existed, which the sign-in screen treats as "let them in
+   * and ask them to set one" rather than locking them out of their own data.
+   */
+  passwordHash: string
   createdAt: string
 }
 
@@ -26,6 +35,11 @@ export type WorkMode = "template" | "custom"
 export interface WorkDraft {
   id: string
   role: RoleId
+  /**
+   * Which of the role's four templates this entry uses. Decides the evidence
+   * questions; `mode: "custom"` ignores it.
+   */
+  template: string
   mode: WorkMode
   topics: CategoryId[]
   skills: string[]
@@ -36,6 +50,8 @@ export interface WorkDraft {
   /** Only used in custom mode - the author's own metric rows. */
   metrics: Array<{ label: string; value: string }>
   thumbnail?: string
+  /** Evidence images, each assigned to a chapter. */
+  figures: WorkFigure[]
   updatedAt: string
   published: boolean
 }
@@ -43,10 +59,11 @@ export interface WorkDraft {
 /** Two published entries per topic, per person. */
 export const TOPIC_QUOTA = 2
 
-export function emptyDraft(role: RoleId, mode: WorkMode): WorkDraft {
+export function emptyDraft(role: RoleId, mode: WorkMode, template: string): WorkDraft {
   return {
     id: `w-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
     role,
+    template,
     mode,
     topics: [],
     skills: [],
@@ -61,6 +78,7 @@ export function emptyDraft(role: RoleId, mode: WorkMode): WorkDraft {
           ]
         : [],
     metrics: mode === "custom" ? [{ label: "", value: "" }] : [],
+    figures: [],
     updatedAt: new Date().toISOString(),
     published: false,
   }

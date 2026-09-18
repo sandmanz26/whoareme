@@ -1,16 +1,27 @@
 import { Container } from "@/components/layout/Container"
 import { Avatar } from "@/components/ui/Avatar"
+import { SocialLinks } from "@/components/ui/SocialLinks"
 import { Badge } from "@/components/ui/Badge"
 import { Button } from "@/components/ui/Button"
 import { ArrowRight, ArrowUpRight, Pin } from "@/components/ui/Icon"
 import { WorkCover } from "@/components/work/WorkCover"
+import { WorkFigures } from "@/components/work/WorkFigures"
+import { Reveal } from "@/components/work/Reveal"
+import { useReadingProgress } from "@/hooks/useReveal"
+import { templateById } from "@/data/workTemplates"
 import { WorkCard } from "@/components/work/WorkCard"
-import { headlineProof, proofOf, type Work } from "@/data/work"
+import { headlineProof, proofOf, type Work, type WorkFigure } from "@/data/work"
+import { figuresFor, orphanFigures } from "@/lib/figures"
 import { categoryById, roleById } from "@/data/taxonomy"
 import type { Author } from "@/lib/authors"
 import { navigate } from "@/lib/router"
 import { businessModelById } from "@/data/businessModels"
 import type { SimilarWork } from "@/lib/similar"
+import type { Target } from "@/data/admin"
+import { ReportButton } from "@/components/admin/ReportModal"
+import { useAccount } from "@/hooks/useAccount"
+import { opensByWork } from "@/data/traffic"
+import { Chart } from "@/components/ui/Icon"
 
 interface WorkPageProps {
   work: Work | undefined
@@ -21,6 +32,8 @@ interface WorkPageProps {
   similar: SimilarWork[]
   /** Clicking a skill filters the index rather than doing nothing. */
   onSkillClick: (skill: string) => void
+  /** Opens the report dialog for this entry. */
+  onReport: (target: Target, label: string) => void
 }
 
 /**
@@ -29,17 +42,42 @@ interface WorkPageProps {
  * flat, templated rhythm where the reader could not tell the argument from the
  * metadata.
  */
-function Chapter({ title, body }: { title: string; body: string }) {
-  if (!body.trim()) return null
+function Chapter({
+  title,
+  body,
+  figures = [],
+  delay = 0,
+}: {
+  title: string
+  body: string
+  figures?: readonly WorkFigure[]
+  delay?: number
+}) {
+  // A chapter with figures but no prose is still worth rendering - the caption
+  // carries the argument. A chapter with neither is not.
+  if (!body.trim() && figures.length === 0) return null
   return (
-    <section>
-      <h2 className="display text-[clamp(1.25rem,2.4vw,1.625rem)]">{title}</h2>
-      <p className="mt-4 text-base leading-[1.75] text-ink-2">{body}</p>
-    </section>
+    <Reveal delay={delay}>
+      <section>
+        <h2 className="display text-[clamp(1.25rem,2.4vw,1.625rem)]">{title}</h2>
+        {body.trim() && <p className="mt-4 text-base leading-[1.75] text-ink-2">{body}</p>}
+        <WorkFigures figures={figures} />
+      </section>
+    </Reveal>
   )
 }
 
-export function WorkPage({ work, authors, moreByAuthor, similar, onSkillClick }: WorkPageProps) {
+export function WorkPage({
+  work,
+  authors,
+  moreByAuthor,
+  similar,
+  onSkillClick,
+  onReport,
+}: WorkPageProps) {
+  const { ref: progressRef, progress } = useReadingProgress<HTMLElement>()
+  const { account, traffic } = useAccount()
+
   if (!work) {
     return (
       <Container className="flex min-h-[60vh] flex-col items-center justify-center py-24 text-center">
@@ -55,12 +93,36 @@ export function WorkPage({ work, authors, moreByAuthor, similar, onSkillClick }:
   }
 
   const author = authors.get(work.authorId)
+  // Traffic is the author's own data. There is no view of anyone else's, here
+  // or in the API, and no public count on the card: a popularity number is the
+  // ranking signal this directory deliberately does not have.
+  const isMine = account?.id === work.authorId
+  const opens = isMine ? (opensByWork(traffic)[work.id] ?? 0) : null
   const headline = headlineProof(work)
   const proof = proofOf(work)
   const context = work.details.filter((detail) => !detail.proof)
+  const chapterNames =
+    work.sections && work.sections.length > 0
+      ? work.sections.map((section) => section.heading)
+      : ["problem", "approach", "outcome"]
+  const orphans = orphanFigures(work, chapterNames)
+  const template = templateById(work.template)
 
   return (
-    <article className="pb-24">
+    <article ref={progressRef} className="pb-24">
+      {/* A case study runs long on purpose. The bar is the cheapest way to say
+          how much is left, and it is the only motion on the page that is not
+          an entrance. */}
+      <div
+        aria-hidden="true"
+        className="sticky top-16 z-30 h-0.5 w-full bg-transparent sm:top-18"
+      >
+        <div
+          className="h-full origin-left bg-ink transition-transform duration-150 ease-linear"
+          style={{ transform: `scaleX(${progress})` }}
+        />
+      </div>
+
       {/* Two ways back, because a reader arrives here by two routes: from a
           grid of everyone's work, or from one person's profile. Offering only
           "all portfolios" loses the reader who was halfway through reading a
@@ -119,10 +181,11 @@ export function WorkPage({ work, authors, moreByAuthor, similar, onSkillClick }:
       </Container>
 
       <Container className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-16">
-        <div className="flex flex-col gap-10">
+        <div className="flex min-w-0 flex-col gap-10">
           <header>
             <div className="flex flex-wrap items-center gap-2">
               <Badge className="border-ink/20 bg-paper-2">{roleById(work.role).label}</Badge>
+              {template && <Badge className="border-dashed">{template.label}</Badge>}
               {work.topics.map((topic) => (
                 <Badge key={topic}>{categoryById(topic).label}</Badge>
               ))}
@@ -150,15 +213,43 @@ export function WorkPage({ work, authors, moreByAuthor, similar, onSkillClick }:
           {/* Guided entries get the three fixed chapters; free-form entries
               bring their own headings in their own order. */}
           {work.sections && work.sections.length > 0 ? (
-            work.sections.map((section) => (
-              <Chapter key={section.heading} title={section.heading} body={section.body} />
+            work.sections.map((section, index) => (
+              <Chapter
+                key={section.heading}
+                title={section.heading}
+                body={section.body}
+                figures={figuresFor(work, section.heading)}
+                delay={Math.min(index, 3) * 60}
+              />
             ))
           ) : (
             <>
-              <Chapter title="The problem" body={work.problem} />
-              <Chapter title="What they did" body={work.approach} />
-              <Chapter title="What changed" body={work.outcome} />
+              <Chapter
+                title="The problem"
+                body={work.problem}
+                figures={figuresFor(work, "problem")}
+              />
+              <Chapter
+                title="What they did"
+                body={work.approach}
+                figures={figuresFor(work, "approach")}
+                delay={60}
+              />
+              <Chapter
+                title="What changed"
+                body={work.outcome}
+                figures={figuresFor(work, "outcome")}
+                delay={120}
+              />
             </>
+          )}
+
+          {/* A figure whose chapter was renamed would otherwise vanish. */}
+          {orphans.length > 0 && (
+            <section>
+              <h2 className="display text-[clamp(1.25rem,2.4vw,1.625rem)]">More evidence</h2>
+              <WorkFigures figures={orphans} />
+            </section>
           )}
 
           {context.length > 0 && (
@@ -210,6 +301,14 @@ export function WorkPage({ work, authors, moreByAuthor, similar, onSkillClick }:
                   className="ml-auto shrink-0 text-muted opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                 />
               </button>
+              {author.links.length > 0 && (
+                <SocialLinks
+                  links={author.links}
+                  ownerName={author.name}
+                  className="mt-4 border-t border-line pt-4"
+                />
+              )}
+
               <p className="mt-3 text-xs text-muted">
                 See the rest of their portfolio, grouped by topic.
               </p>
@@ -294,6 +393,30 @@ export function WorkPage({ work, authors, moreByAuthor, similar, onSkillClick }:
               </>
             )}
           </div>
+          {opens !== null && (
+            <div className="rounded-card border border-line bg-paper-2/60 p-5">
+              <h2 className="eyebrow">Your numbers</h2>
+              <p className="mt-3 flex items-baseline gap-2">
+                <span className="display text-3xl leading-none">{opens}</span>
+                <span className="font-display text-sm text-muted">
+                  {opens === 1 ? "open" : "opens"}
+                </span>
+              </p>
+              <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-muted">
+                <Chart size={14} className="mt-0.5 shrink-0" />
+                <span>
+                  Only you see this. The history was generated when you signed up, and real opens
+                  in this browser are counted on top of it.
+                </span>
+              </p>
+            </div>
+          )}
+
+          <p className="text-center">
+            <ReportButton
+              onClick={() => onReport({ kind: "work", id: work.id }, work.title)}
+            />
+          </p>
         </aside>
       </Container>
 

@@ -1,5 +1,6 @@
 import type { Account, WorkDraft } from "@/data/account"
-import { COMMON_FIELDS, STORY_FIELDS, schemaFor } from "@/data/portfolioSchemas"
+import { COMMON_FIELDS, STORY_FIELDS } from "@/data/portfolioSchemas"
+import { defaultTemplateId, fieldsForTemplate } from "@/data/workTemplates"
 import type { Work, WorkDetail, WorkLink } from "@/data/work"
 import type { BusinessModelId } from "@/data/businessModels"
 
@@ -40,7 +41,7 @@ export function workFromDraft(draft: WorkDraft, account: Account): Work {
   const stack: string[] = []
 
   if (draft.mode === "template") {
-    for (const field of schemaFor(draft.role).fields) {
+    for (const field of fieldsForTemplate(draft.role, draft.template)) {
       const raw = value(field.name)
       if (!raw) continue
 
@@ -64,6 +65,7 @@ export function workFromDraft(draft: WorkDraft, account: Account): Work {
     id: draft.id,
     authorId: account.id,
     role: draft.role,
+    template: draft.template ?? defaultTemplateId(draft.role),
     topics: draft.topics,
     model: (value("model") || undefined) as BusinessModelId | undefined,
     skills: draft.skills,
@@ -79,6 +81,9 @@ export function workFromDraft(draft: WorkDraft, account: Account): Work {
     links,
     details,
     thumbnail: draft.thumbnail,
+    // Only figures that are actually finished reach the page; a figure with no
+    // caption is decoration, and the editor says so before publish.
+    figures: (draft.figures ?? []).filter((figure) => figure.alt.trim() && figure.caption.trim()),
     sections,
   }
 }
@@ -86,7 +91,7 @@ export function workFromDraft(draft: WorkDraft, account: Account): Work {
 /** Every field the editor validates, in the order it renders them. */
 export function requiredFieldsFor(draft: WorkDraft) {
   return draft.mode === "template"
-    ? [...COMMON_FIELDS, ...STORY_FIELDS, ...schemaFor(draft.role).fields]
+    ? [...COMMON_FIELDS, ...STORY_FIELDS, ...fieldsForTemplate(draft.role, draft.template)]
     : COMMON_FIELDS
 }
 
