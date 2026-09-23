@@ -5,7 +5,7 @@ import { WorkCover } from "./WorkCover"
 import { headlineProof, proofOf, type Work } from "@/data/work"
 import { categoryById, roleById } from "@/data/taxonomy"
 import type { Author } from "@/lib/authors"
-import { navigate } from "@/lib/router"
+import { useNavigate } from "react-router-dom"
 import type { CSSVars } from "@/lib/css"
 import { cn } from "@/lib/utils"
 
@@ -19,6 +19,7 @@ interface WorkCardProps {
 }
 
 export function WorkCard({ work, author, index, onSkillClick }: WorkCardProps) {
+  const navigate = useNavigate()
   const headline = headlineProof(work)
   const supporting = proofOf(work).slice(1, 3)
 

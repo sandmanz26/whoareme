@@ -1,20 +1,23 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { Container } from "@/components/layout/Container"
-import { FilterBar, type Filters } from "@/components/home/FilterBar"
+import { FilterBar } from "@/components/home/FilterBar"
 import { WorkCard } from "@/components/work/WorkCard"
 import { WorkCover } from "@/components/work/WorkCover"
 import { Button } from "@/components/ui/Button"
 import { Badge } from "@/components/ui/Badge"
 import { Avatar } from "@/components/ui/Avatar"
 import { ArrowUpRight, Grid, Rows, Search } from "@/components/ui/Icon"
-import { headlineProof, type Work } from "@/data/work"
+import { headlineProof } from "@/data/work"
 import { categoryById, roleById } from "@/data/taxonomy"
 import { businessModelById } from "@/data/businessModels"
-import type { Author } from "@/lib/authors"
 import { skillFacets } from "@/lib/workFilter"
-import { navigate } from "@/lib/router"
 import { cn } from "@/lib/utils"
 import { useAdmin } from "@/hooks/useAdmin"
+import { useBrowse } from "@/context/BrowseContext"
+import { applyMeta } from "@/lib/head"
+import type { Work } from "@/data/work"
+import type { Author } from "@/lib/authors"
 
 type Sort = "recent" | "title" | "role"
 type Layout = "grid" | "list"
@@ -25,33 +28,19 @@ const SORTS: Array<{ id: Sort; label: string }> = [
   { id: "role", label: "By craft" },
 ]
 
-interface WorkIndexPageProps {
-  work: Work[]
-  totalCount: number
-  authors: Map<string, Author>
-  filters: Filters
-  onFilterChange: (patch: Partial<Filters>) => void
-  onResetFilters: () => void
-  onJoin: () => void
-}
-
-/**
- * Every portfolio in one place. The home section is a curated slice; this is
- * the full index, with a denser list view for people who are scanning rather
- * than browsing.
- */
-export function WorkIndexPage({
-  work,
-  totalCount,
-  authors,
-  filters,
-  onFilterChange,
-  onResetFilters,
-  onJoin,
-}: WorkIndexPageProps) {
+export function WorkIndexPage() {
   const { copy } = useAdmin()
+  const { work, allWork, authors, filters, patchFilters, resetFilters, openJoin } = useBrowse()
   const [sort, setSort] = useState<Sort>("recent")
   const [layout, setLayout] = useState<Layout>("grid")
+
+  useEffect(() => {
+    return applyMeta({
+      title: "Every case study in the directory",
+      description:
+        "Real work from designers, developers, product people and DevOps. Each entry states a problem, the decisions behind it, and what measurably changed.",
+    })
+  }, [])
 
   const facets = useMemo(() => skillFacets(work), [work])
   const sorted = useMemo(() => {
@@ -72,15 +61,15 @@ export function WorkIndexPage({
           Every case study <span className="text-muted">in the directory</span>
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted">
-          {totalCount} entries from people who build technology. {copy("work.index.description")}
+          {allWork.length} entries from people who build technology. {copy("work.index.description")}
         </p>
       </Container>
 
       <Container>
         <FilterBar
           filters={filters}
-          onChange={onFilterChange}
-          onReset={onResetFilters}
+          onChange={patchFilters}
+          onReset={resetFilters}
           resultCount={work.length}
           resultNoun={work.length === 1 ? "case study" : "case studies"}
           skillOptions={facets}
@@ -141,10 +130,10 @@ export function WorkIndexPage({
               of the directory.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Button variant="outline" onClick={onResetFilters}>
+              <Button variant="outline" onClick={resetFilters}>
                 Clear filters
               </Button>
-              <Button onClick={onJoin}>Publish your work</Button>
+              <Button onClick={openJoin}>Publish your work</Button>
             </div>
           </div>
         ) : layout === "grid" ? (
@@ -156,7 +145,7 @@ export function WorkIndexPage({
                   author={authors.get(item.authorId)}
                   index={index}
                   onSkillClick={(skill) =>
-                    onFilterChange({
+                    patchFilters({
                       skills: filters.skills.includes(skill)
                         ? filters.skills
                         : [...filters.skills, skill],
@@ -181,6 +170,7 @@ export function WorkIndexPage({
 }
 
 function WorkRow({ work, author }: { work: Work; author?: Author }) {
+  const navigate = useNavigate()
   const headline = headlineProof(work)
 
   return (

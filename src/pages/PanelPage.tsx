@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import { PanelShell, type PanelNavItem } from "@/components/panel/PanelShell"
 import { WorkStarter } from "@/components/panel/WorkStarter"
 import { TrafficPanel } from "@/components/panel/TrafficPanel"
@@ -20,26 +21,33 @@ import { CATEGORIES, LIVE_ROLES, roleById, type CategoryId, type RoleId } from "
 import { draftCompleteness } from "@/lib/workMapper"
 import { totalProfileViews, totalWorkOpens } from "@/data/traffic"
 import { useAccount } from "@/hooks/useAccount"
-import type { Author } from "@/lib/authors"
-import { navigate, type Route } from "@/lib/router"
+import { useBrowse } from "@/context/BrowseContext"
 import { cn, initialsOf } from "@/lib/utils"
+import { applyMeta } from "@/lib/head"
+import { track } from "@/lib/analytics"
 
 const CATEGORY_OPTIONS = CATEGORIES.map((c) => ({ id: c.id, label: c.label }))
 
-interface PanelPageProps {
-  route: Route
-  author: Author
-  onJoin: () => void
-}
-
-export function PanelPage({ route, author, onJoin }: PanelPageProps) {
+export function PanelPage() {
+  const { section = "overview", entry } = useParams<{ section?: string; entry?: string }>()
+  const navigate = useNavigate()
   const { account, drafts, traffic, saveDraft, deleteDraft, updateProfile, deleteAccount } =
     useAccount()
+  const { viewerAuthor } = useBrowse()
   const onboarding = useOnboarding()
 
-  if (!account) return <SignedOut onJoin={onJoin} />
+  useEffect(() => {
+    return applyMeta({ title: "Your panel", description: "Your profile, your entries and your traffic.", noindex: true })
+  }, [])
 
-  const section = route.segments[1] ?? "overview"
+  useEffect(() => {
+    if (section === "portfolio" && entry === "new") {
+      track("entry_opened")
+    }
+  }, [section, entry])
+
+  if (!account) return <SignedOut onJoin={() => navigate("/signup")} />
+
   const published = drafts.filter((d) => d.published).length
 
   const items: PanelNavItem[] = [
@@ -78,10 +86,10 @@ export function PanelPage({ route, author, onJoin }: PanelPageProps) {
   if (section === "portfolio") {
     return (
       <PortfolioSection
-        route={route}
+        entryId={entry}
         items={items}
         account={account}
-        author={author}
+        author={viewerAuthor}
         drafts={drafts}
         onSave={saveDraft}
         opens={opensByWork(traffic)}
@@ -103,14 +111,12 @@ export function PanelPage({ route, author, onJoin }: PanelPageProps) {
         </Button>
       }
     >
-      {/* First thing on the panel, before your own numbers: if something was
-          taken down, that is the most important thing on this screen. */}
       <NoticeList personId={account.id} />
 
       <Overview
         account={account}
         drafts={drafts}
-        author={author}
+        author={viewerAuthor}
         profileViews={totalProfileViews(traffic)}
         workOpens={totalWorkOpens(traffic)}
         onboardingHidden={onboarding.hidden}
@@ -120,9 +126,8 @@ export function PanelPage({ route, author, onJoin }: PanelPageProps) {
   )
 }
 
-/* ------------------------------------------------------------------ */
-
 function SignedOut({ onJoin }: { onJoin: () => void }) {
+  const navigate = useNavigate()
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-5 text-center">
       <h1 className="display text-3xl">No profile in this browser</h1>
@@ -159,19 +164,18 @@ function Overview({
 }: {
   account: Account
   drafts: WorkDraft[]
-  author: Author
+  author: ReturnType<typeof useBrowse>["viewerAuthor"]
   profileViews: number
   workOpens: number
   onboardingHidden: boolean
   onHideOnboarding: () => void
 }) {
+  const navigate = useNavigate()
   const done = PROFILE_CHECKS.filter((check) => check.test(account))
   const percent = Math.round((done.length / PROFILE_CHECKS.length) * 100)
   const published = drafts.filter((draft) => draft.published)
   const firstDraft = drafts[0]
 
-  // Signup is step one and it is already done - a checklist that opens at zero
-  // reads as a pile of work, one that opens part-done reads as momentum.
   const steps: OnboardingStep[] = [
     {
       id: "account",
@@ -299,7 +303,6 @@ function Overview({
         </section>
       </div>
 
-      {/* The card as other people will see it - the thing all of this produces. */}
       <aside className="lg:sticky lg:top-24 lg:self-start">
         <p className="eyebrow">Your directory card</p>
         <article className="mt-4 rounded-card border border-line bg-card p-5">
@@ -327,12 +330,12 @@ function Overview({
           </ul>
           {account.pitch.trim() && (
             <p className="mt-4 border-t border-line pt-4 text-sm leading-relaxed text-ink-2">
-              “{account.pitch.trim()}”
+              "{account.pitch.trim()}"
             </p>
           )}
         </article>
         <div className="mt-3 flex items-center gap-2 text-xs text-muted">
-          <Avatar src={author.photo} name={author.name} className="size-5 rounded-full text-[0.5rem]" />
+          <Avatar src={"photo" in author ? author.photo : undefined} name={author.name} className="size-5 rounded-full text-[0.5rem]" />
           Signed in as {account.email}
         </div>
       </aside>
@@ -460,14 +463,13 @@ function ProfileForm({
         )}
       </div>
 
-      {/* Signing out no longer wipes anything, so removal needs its own door.
-          Confirmed in two steps because there is no undo and no server copy. */}
       <DeleteProfile onDelete={onDelete} />
     </form>
   )
 }
 
 function DeleteProfile({ onDelete }: { onDelete: () => void }) {
+  const navigate = useNavigate()
   const [armed, setArmed] = useState(false)
 
   return (
@@ -508,7 +510,7 @@ function DeleteProfile({ onDelete }: { onDelete: () => void }) {
 }
 
 function PortfolioSection({
-  route,
+  entryId,
   items,
   account,
   author,
@@ -517,26 +519,23 @@ function PortfolioSection({
   onDelete,
   opens,
 }: {
-  route: Route
+  entryId: string | undefined
   items: PanelNavItem[]
   account: Account
-  author: Author
+  author: ReturnType<typeof useBrowse>["viewerAuthor"]
   drafts: WorkDraft[]
   onSave: (draft: WorkDraft) => void
   onDelete: (id: string) => void
-  /** Opens per entry. The author's own numbers; nobody else sees them. */
   opens: Record<string, number>
 }) {
-  const target = route.segments[2]
+  const navigate = useNavigate()
+  const target = entryId
   const existing = useMemo(() => drafts.find((d) => d.id === target), [drafts, target])
 
-  // Format and craft for a brand-new entry, before a draft object exists.
   const [mode, setMode] = useState<WorkMode>("template")
   const [pendingRole, setPendingRole] = useState<RoleId | null>(null)
   const [newDraft, setNewDraft] = useState<WorkDraft | null>(null)
 
-  // This component stays mounted across /new -> /:id, so an unreset draft
-  // would reopen the previous entry the next time someone taps "Add work".
   const [lastTarget, setLastTarget] = useState(target)
   if (target !== lastTarget) {
     setLastTarget(target)
@@ -582,8 +581,6 @@ function PortfolioSection({
               profileRole={account.role}
               onModeChange={(next) => {
                 setMode(next)
-                // Free-form has no templates, so choosing it finishes the flow
-                // as soon as a craft is picked.
                 if (next === "custom" && pendingRole) {
                   setNewDraft(emptyDraft(pendingRole, "custom", defaultTemplateId(pendingRole)))
                 }
@@ -728,12 +725,6 @@ function PortfolioSection({
                       )}
                     </div>
 
-                    {/* Only the reverse direction is offered here. Publishing
-                        has to clear validation and the topic quota, both of
-                        which live in the editor; a one-click publish from the
-                        list would be a way around a load-bearing rule. Sitting
-                        above the stretched link, so the rest of the row still
-                        opens the editor. */}
                     {draft.published && (
                       <button
                         type="button"

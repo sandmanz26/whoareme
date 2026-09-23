@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import { PanelShell } from "@/components/panel/PanelShell"
 import { Badge } from "@/components/ui/Badge"
 import { Button } from "@/components/ui/Button"
@@ -24,15 +25,9 @@ import {
   resetFunnel,
   type FunnelCounts,
 } from "@/lib/analytics"
-import { navigate, type Route } from "@/lib/router"
 import { cn } from "@/lib/utils"
-
-interface AdminPageProps {
-  route: Route
-  /** The unfiltered fixtures. The console must see what it has hidden. */
-  allWork: Work[]
-  allPeople: Person[]
-}
+import { useBrowse } from "@/context/BrowseContext"
+import { applyMeta } from "@/lib/head"
 
 const SEVERITY_TINT: Record<Severity, string> = {
   high: "border-ink/20 bg-pop-pink",
@@ -40,11 +35,6 @@ const SEVERITY_TINT: Record<Severity, string> = {
   low: "border-ink/20 bg-paper-2",
 }
 
-/**
- * A moderation decision needs a reason, so the control that takes the decision
- * is the control that asks for one. Making the reason a separate optional field
- * somewhere else is how audit logs end up full of blank strings.
- */
 function ActionForm({
   label,
   placeholder,
@@ -135,14 +125,22 @@ function Empty({ title, body }: { title: string; body: string }) {
   )
 }
 
-export function AdminPage({ route, allWork, allPeople }: AdminPageProps) {
+export function AdminPage() {
+  const { tab } = useParams<{ tab?: string }>()
+  const section = tab ?? "queue"
   const admin = useAdmin()
-  const section = route.segments[1] ?? "queue"
+  const { rawWork: allWork, rawPeople: allPeople } = useBrowse()
+
+  useEffect(() => {
+    return applyMeta({
+      title: "Moderation",
+      description: "Review queue, entries, people and the audit log.",
+      noindex: true,
+    })
+  }, [])
 
   const flags = useMemo(() => flagsFor(allWork, allPeople), [allWork, allPeople])
   const openFlags = flags.filter((flag) => !admin.state.reviewed.includes(flag.key))
-  // An appeal is the most time-sensitive thing in the queue: someone's work is
-  // down while it waits.
   const openAppeals = admin.state.notices.filter(
     (notice) => notice.appeal && !notice.appeal.outcome,
   )
@@ -196,8 +194,6 @@ export function AdminPage({ route, allWork, allPeople }: AdminPageProps) {
       title={head.title}
       description={head.description}
     >
-      {/* Said plainly and near the top, because a console that looks like it has
-          access control but does not is worse than one that admits it. */}
       <div className="mb-8 rounded-card border border-ink bg-ink p-5 text-paper">
         <p className="font-display text-sm font-semibold">This console has no access control.</p>
         <p className="mt-2 text-sm leading-relaxed text-paper/75">
@@ -225,8 +221,6 @@ export function AdminPage({ route, allWork, allPeople }: AdminPageProps) {
   )
 }
 
-// ── Queue ───────────────────────────────────────────────────────────────
-
 function QueueSection({
   flags,
   reports,
@@ -238,6 +232,7 @@ function QueueSection({
   allWork: Work[]
   allPeople: Person[]
 }) {
+  const navigate = useNavigate()
   const admin = useAdmin()
   const workById = new Map(allWork.map((item) => [item.id, item]))
   const peopleById = new Map(allPeople.map((item) => [item.id, item]))
@@ -376,16 +371,8 @@ function QueueSection({
   )
 }
 
-/**
- * Flags are grouped by rule, not listed flat.
- *
- * One rule firing across most of the corpus is one problem, not fifty-three
- * incidents. Listed flat, the seeded placeholder links buried every other
- * finding under 53 identical rows and the queue became something to scroll
- * past. Grouped, a systemic issue reads as systemic and can be closed in one
- * decision, while anything rare stays visible next to it.
- */
 function FlagGroups({ flags, allWork }: { flags: Flag[]; allWork: Work[] }) {
+  const navigate = useNavigate()
   const admin = useAdmin()
   const [openRule, setOpenRule] = useState<string | null>(null)
   const workById = new Map(allWork.map((item) => [item.id, item]))
@@ -501,9 +488,8 @@ function FlagGroups({ flags, allWork }: { flags: Flag[]; allWork: Work[] }) {
   )
 }
 
-// ── Entries ─────────────────────────────────────────────────────────────
-
 function EntriesSection({ allWork }: { allWork: Work[] }) {
+  const navigate = useNavigate()
   const admin = useAdmin()
   const [query, setQuery] = useState("")
   const [onlyHidden, setOnlyHidden] = useState(false)
@@ -586,9 +572,8 @@ function EntriesSection({ allWork }: { allWork: Work[] }) {
   )
 }
 
-// ── People ──────────────────────────────────────────────────────────────
-
 function PeopleSection({ allPeople, allWork }: { allPeople: Person[]; allWork: Work[] }) {
+  const navigate = useNavigate()
   const admin = useAdmin()
   const [query, setQuery] = useState("")
 
@@ -659,19 +644,6 @@ function PeopleSection({ allPeople, allWork }: { allPeople: Person[]; allWork: W
   )
 }
 
-// ── Funnel ──────────────────────────────────────────────────────────────
-
-/**
- * The PM view.
- *
- * `docs/BUSINESS.md` names completion rate of a first entry as the metric that
- * decides whether the central bet is right: the forms are demanding on
- * purpose, and too demanding kills supply. Without this the product would
- * launch unable to tell whether that bet is wrong.
- *
- * Rates are shown with both counts, because a percentage without its
- * denominator is the easiest number to mislead yourself with.
- */
 function FunnelSection() {
   const [counts, setCounts] = useState<FunnelCounts>(() => readFunnel())
 
@@ -767,8 +739,6 @@ function FunnelSection() {
     </div>
   )
 }
-
-// ── Site settings ───────────────────────────────────────────────────────
 
 function SiteSection({ allWork }: { allWork: Work[] }) {
   const admin = useAdmin()
@@ -975,9 +945,8 @@ function CopyEditor({ slotId }: { slotId: string }) {
   )
 }
 
-// ── Audit log ───────────────────────────────────────────────────────────
-
 function LogSection() {
+  const navigate = useNavigate()
   const admin = useAdmin()
 
   if (admin.state.log.length === 0) {

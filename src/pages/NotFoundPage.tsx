@@ -1,19 +1,18 @@
+import { useEffect } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
 import { Container } from "@/components/layout/Container"
 import { Button } from "@/components/ui/Button"
 import { ArrowRight } from "@/components/ui/Icon"
-import { navigate } from "@/lib/router"
+import { applyMeta } from "@/lib/head"
 
-/**
- * A real 404, rather than falling through to the home page.
- *
- * Silently serving the front page for an unknown path tells a person nothing
- * and tells a crawler that every broken link is another copy of the homepage,
- * which is how a small site accumulates duplicate-content problems.
- *
- * It offers the two destinations a lost visitor actually wants instead of only
- * a link home: most bad URLs here are a stale entry link or a renamed profile.
- */
-export function NotFoundPage({ path }: { path: string }) {
+export function NotFoundPage() {
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    return applyMeta({ title: "Page not found", description: "Nothing lives at that address.", noindex: true })
+  }, [])
+
   return (
     <Container className="flex min-h-[70vh] max-w-xl flex-col justify-center py-20">
       <p className="eyebrow">404</p>
@@ -21,7 +20,7 @@ export function NotFoundPage({ path }: { path: string }) {
         Nothing lives at that address
       </h1>
       <p className="mt-4 text-base leading-relaxed text-muted">
-        <code className="rounded bg-paper-2 px-1.5 py-0.5 text-sm">{path}</code> is not a page
+        <code className="rounded bg-paper-2 px-1.5 py-0.5 text-sm">{pathname}</code> is not a page
         here. Entries and profiles keep their addresses, so a link that used to work has usually
         been unpublished by its author rather than moved.
       </p>

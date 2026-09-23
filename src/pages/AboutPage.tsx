@@ -1,8 +1,10 @@
+import { useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { Container } from "@/components/layout/Container"
 import { PageIntro, Prose, Section } from "@/components/layout/PageIntro"
 import { Button } from "@/components/ui/Button"
 import { ArrowRight } from "@/components/ui/Icon"
-import { navigate } from "@/lib/router"
+import { applyMeta } from "@/lib/head"
 
 const RULES = [
   {
@@ -11,10 +13,10 @@ const RULES = [
   },
   {
     rule: "Every entry states the problem, the decisions, and what changed",
-    why: "“It never shipped” is a valid outcome, and the seeded directory includes cancelled projects and accepted regressions on purpose. A portfolio where everything succeeded is not credible.",
+    why: "\"It never shipped\" is a valid outcome, and the seeded directory includes cancelled projects and accepted regressions on purpose. A portfolio where everything succeeded is not credible.",
   },
   {
-    rule: "Proof points are labelled “Results claimed”",
+    rule: "Proof points are labelled \"Results claimed\"",
     why: "We cannot verify a number. Presenting claimed figures as verified facts would be the single most damaging thing this product could do.",
   },
   {
@@ -31,10 +33,19 @@ const NOT_BUILT = [
   ["Messaging, shortlists, job posts", "A two-sided hiring flow is a different product."],
   ["Likes, follows, feeds", "Popularity ranking reintroduces exactly the dynamic this exists to avoid."],
   ["Verification badges", "Attractive, and hard. Doing it badly is worse than not doing it."],
-  ["AI-written case studies", "The form’s whole value is that a person answered the questions."],
+  ["AI-written case studies", "The form's whole value is that a person answered the questions."],
 ]
 
 export function AboutPage() {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    return applyMeta({
+      title: "About",
+      description: "Why a portfolio should be segmented by craft and evidenced by outcome, and the rules that make it hard to publish anything else.",
+    })
+  }, [])
+
   return (
     <div>
       <PageIntro
@@ -47,7 +58,7 @@ export function AboutPage() {
         <Section title="Why it exists">
           <p>
             Hiring evidence in tech barely exists in portable form. A CV compresses three years
-            into six bullets and a job title that reflects one company’s levelling. LinkedIn
+            into six bullets and a job title that reflects one company's levelling. LinkedIn
             optimises for keywords, so everyone converges on the same vocabulary. Dribbble and
             Behance show what work <em>looked like</em> - a reviewer cannot tell whether it shipped
             or what changed. GitHub is real evidence for exactly one craft, and only for public
@@ -116,7 +127,7 @@ export function AboutPage() {
         <Section title="What this build actually is">
           <p>
             A front-end demo. The people and case studies you are reading are seeded fixtures, and
-            anything you create lives in your own browser’s storage - nothing is uploaded and there
+            anything you create lives in your own browser's storage - nothing is uploaded and there
             is no account on any server. An API exists in the repository and is not yet wired to
             this interface.
           </p>

@@ -1,56 +1,62 @@
-import { useState } from "react"
-import { Container } from "@/components/layout/Container"
-import { Button } from "@/components/ui/Button"
-import { Field, TextInput } from "@/components/ui/Field"
-import { ArrowRight, Check } from "@/components/ui/Icon"
-import { useAccount } from "@/hooks/useAccount"
-import { passwordProblem } from "@/lib/password"
-import { navigate, type Route } from "@/lib/router"
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Container } from "@/components/layout/Container";
+import { Button } from "@/components/ui/Button";
+import { Field, TextInput } from "@/components/ui/Field";
+import { ArrowRight, Check } from "@/components/ui/Icon";
+import { useAccount } from "@/hooks/useAccount";
+import { passwordProblem } from "@/lib/password";
+import { useBrowse } from "@/context/BrowseContext";
+import { applyMeta } from "@/lib/head";
 
-interface SignInPageProps {
-  route: Route
-  onSignUp: () => void
-}
+export function SignInPage() {
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { openJoin } = useBrowse();
+  const { signIn, resetPassword, hasStoredAccount, storedEmail } = useAccount();
+  const mode = pathname.startsWith("/reset") ? "reset" : "signin";
 
-/**
- * Sign in, and the reset beside it.
- *
- * Both live on one page because they share every field and half the copy, and
- * because "forgot password" that navigates somewhere else loses the email the
- * person already typed.
- *
- * The honesty notice is not decoration. This build has no server: the hash
- * lives in `localStorage`, anyone with dev tools can edit it, and a reset
- * sends no mail. Saying that plainly is better than a login screen that
- * implies a security boundary it does not have.
- */
-export function SignInPage({ route, onSignUp }: SignInPageProps) {
-  const { signIn, resetPassword, hasStoredAccount, storedEmail } = useAccount()
-  const mode = route.segments[0] === "reset" ? "reset" : "signin"
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [working, setWorking] = useState(false);
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirm, setConfirm] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const [working, setWorking] = useState(false)
+  useEffect(() => {
+    if (mode === "reset") {
+      return applyMeta({
+        title: "Set a new password",
+        description: "Choose a new password for your profile.",
+        noindex: true,
+      });
+    }
+    return applyMeta({
+      title: "Sign in",
+      description: "Back to your panel, your entries and your traffic.",
+      noindex: true,
+    });
+  }, [mode]);
 
   async function submit(event: React.FormEvent) {
-    event.preventDefault()
-    setError(null)
+    event.preventDefault();
+    setError(null);
 
     if (mode === "reset") {
-      const problem = passwordProblem(password)
-      if (problem) return setError(problem)
-      if (password !== confirm) return setError("The two passwords do not match.")
+      const problem = passwordProblem(password);
+      if (problem) return setError(problem);
+      if (password !== confirm)
+        return setError("The two passwords do not match.");
     }
 
-    setWorking(true)
+    setWorking(true);
     const result =
-      mode === "reset" ? await resetPassword(email, password) : await signIn(email, password)
-    setWorking(false)
+      mode === "reset"
+        ? await resetPassword(email, password)
+        : await signIn(email, password);
+    setWorking(false);
 
-    if (!result.ok) return setError(result.reason)
-    navigate("/panel")
+    if (!result.ok) return setError(result.reason);
+    navigate("/panel");
   }
 
   return (
@@ -70,17 +76,23 @@ export function SignInPage({ route, onSignUp }: SignInPageProps) {
             No profile in this browser
           </p>
           <p className="mt-2 text-sm leading-relaxed text-muted">
-            Profiles are stored per browser in this build, so there is nothing here to sign in to
-            yet. Creating one takes three steps.
+            Profiles are stored per browser in this build, so there is nothing
+            here to sign in to yet. Creating one takes three steps.
           </p>
-          <Button className="mt-5" onClick={onSignUp}>
+          <Button className="mt-5" onClick={openJoin}>
             Sign up
             <ArrowRight size={16} />
           </Button>
         </div>
       ) : (
         <form className="mt-8 flex flex-col gap-5" onSubmit={submit}>
-          <Field label="Email" required hint={storedEmail ? `This browser holds ${storedEmail}.` : undefined}>
+          <Field
+            label="Email"
+            required
+            hint={
+              storedEmail ? `This browser holds ${storedEmail}.` : undefined
+            }
+          >
             {({ id, invalid }) => (
               <TextInput
                 id={id}
@@ -94,12 +106,17 @@ export function SignInPage({ route, onSignUp }: SignInPageProps) {
             )}
           </Field>
 
-          <Field label={mode === "reset" ? "New password" : "Password"} required>
+          <Field
+            label={mode === "reset" ? "New password" : "Password"}
+            required
+          >
             {({ id, invalid }) => (
               <TextInput
                 id={id}
                 type="password"
-                autoComplete={mode === "reset" ? "new-password" : "current-password"}
+                autoComplete={
+                  mode === "reset" ? "new-password" : "current-password"
+                }
                 invalid={invalid}
                 value={password}
                 placeholder={mode === "reset" ? "At least 8 characters" : ""}
@@ -131,16 +148,20 @@ export function SignInPage({ route, onSignUp }: SignInPageProps) {
 
           <div className="flex flex-wrap items-center gap-4">
             <Button type="submit" disabled={working}>
-              {working ? "Checking…" : mode === "reset" ? "Set password and sign in" : "Sign in"}
+              {working
+                ? "Checking…"
+                : mode === "reset"
+                  ? "Set password and sign in"
+                  : "Sign in"}
             </Button>
 
             <button
               type="button"
               onClick={() => {
-                setError(null)
-                setPassword("")
-                setConfirm("")
-                navigate(mode === "reset" ? "/signin" : "/reset")
+                setError(null);
+                setPassword("");
+                setConfirm("");
+                navigate(mode === "reset" ? "/signin" : "/reset");
               }}
               className="cursor-pointer font-display text-sm font-medium text-ink underline decoration-ink/25 underline-offset-4 transition-colors duration-200 hover:decoration-pop-pink"
             >
@@ -156,11 +177,12 @@ export function SignInPage({ route, onSignUp }: SignInPageProps) {
           What this actually does
         </p>
         <p className="mt-2 text-sm leading-relaxed text-muted">
-          There is no server in this build. Your profile and a PBKDF2 hash of your password are
-          stored in this browser, so a reset sends no email and anyone who can open dev tools can
-          edit the record. Treat this as the flow, not the boundary. The API in{" "}
-          <code>/server</code> is where real authentication lives: scrypt hashes, rotating refresh
-          tokens, and sessions the database can expire.
+          There is no server in this build. Your profile and a PBKDF2 hash of
+          your password are stored in this browser, so a reset sends no email
+          and anyone who can open dev tools can edit the record. Treat this as
+          the flow, not the boundary. The API in <code>/server</code> is where
+          real authentication lives: scrypt hashes, rotating refresh tokens, and
+          sessions the database can expire.
         </p>
       </div>
 
@@ -169,7 +191,7 @@ export function SignInPage({ route, onSignUp }: SignInPageProps) {
           Want a different profile?{" "}
           <button
             type="button"
-            onClick={onSignUp}
+            onClick={openJoin}
             className="cursor-pointer font-display font-medium text-ink underline decoration-ink/25 underline-offset-4 transition-colors duration-200 hover:decoration-pop-pink"
           >
             Sign up
@@ -178,5 +200,5 @@ export function SignInPage({ route, onSignUp }: SignInPageProps) {
         </p>
       )}
     </Container>
-  )
+  );
 }

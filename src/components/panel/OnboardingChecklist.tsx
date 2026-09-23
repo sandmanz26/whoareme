@@ -1,6 +1,6 @@
+import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/Button"
 import { ArrowRight, Check, Close } from "@/components/ui/Icon"
-import { navigate } from "@/lib/router"
 import { cn } from "@/lib/utils"
 
 export interface OnboardingStep {
@@ -38,6 +38,7 @@ export function OnboardingChecklist({
   onDismiss: () => void
   firstName: string
 }) {
+  const navigate = useNavigate()
   const done = steps.filter((step) => step.done).length
   const percent = Math.round((done / steps.length) * 100)
   const complete = done === steps.length

@@ -1,47 +1,29 @@
+import { useEffect, useMemo } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import { Container } from "@/components/layout/Container"
 import { Avatar } from "@/components/ui/Avatar"
 import { SocialLinks } from "@/components/ui/SocialLinks"
 import { Badge } from "@/components/ui/Badge"
 import { Button } from "@/components/ui/Button"
-import { ArrowRight, ArrowUpRight, Pin } from "@/components/ui/Icon"
+import { ArrowRight, ArrowUpRight, Chart, Pin } from "@/components/ui/Icon"
 import { WorkCover } from "@/components/work/WorkCover"
 import { WorkFigures } from "@/components/work/WorkFigures"
 import { Reveal } from "@/components/work/Reveal"
 import { useReadingProgress } from "@/hooks/useReveal"
 import { templateById } from "@/data/workTemplates"
 import { WorkCard } from "@/components/work/WorkCard"
-import { headlineProof, proofOf, type Work, type WorkFigure } from "@/data/work"
+import { headlineProof, proofOf, type WorkFigure } from "@/data/work"
 import { figuresFor, orphanFigures } from "@/lib/figures"
 import { categoryById, roleById } from "@/data/taxonomy"
-import type { Author } from "@/lib/authors"
-import { navigate } from "@/lib/router"
 import { businessModelById } from "@/data/businessModels"
-import type { SimilarWork } from "@/lib/similar"
-import type { Target } from "@/data/admin"
+import { moreFromAuthor, similarWork } from "@/lib/similar"
 import { ReportButton } from "@/components/admin/ReportModal"
 import { useAccount } from "@/hooks/useAccount"
 import { opensByWork } from "@/data/traffic"
-import { Chart } from "@/components/ui/Icon"
+import { useBrowse } from "@/context/BrowseContext"
+import { applyMeta, clamp } from "@/lib/head"
+import { track } from "@/lib/analytics"
 
-interface WorkPageProps {
-  work: Work | undefined
-  authors: Map<string, Author>
-  /** Other entries by the same person, newest first. */
-  moreByAuthor: Work[]
-  /** Scored by shared skills, topic and business model. */
-  similar: SimilarWork[]
-  /** Clicking a skill filters the index rather than doing nothing. */
-  onSkillClick: (skill: string) => void
-  /** Opens the report dialog for this entry. */
-  onReport: (target: Target, label: string) => void
-}
-
-/**
- * A chapter heading is the spine of a case study, so it is a real heading.
- * Rendering every one of them as a tiny uppercase micro-label gave the page a
- * flat, templated rhythm where the reader could not tell the argument from the
- * metadata.
- */
 function Chapter({
   title,
   body,
@@ -53,8 +35,6 @@ function Chapter({
   figures?: readonly WorkFigure[]
   delay?: number
 }) {
-  // A chapter with figures but no prose is still worth rendering - the caption
-  // carries the argument. A chapter with neither is not.
   if (!body.trim() && figures.length === 0) return null
   return (
     <Reveal delay={delay}>
@@ -67,16 +47,36 @@ function Chapter({
   )
 }
 
-export function WorkPage({
-  work,
-  authors,
-  moreByAuthor,
-  similar,
-  onSkillClick,
-  onReport,
-}: WorkPageProps) {
-  const { ref: progressRef, progress } = useReadingProgress<HTMLElement>()
+export function WorkPage() {
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const { allWork, authors, addSkillFilter, openReport, trackWorkOpen } = useBrowse()
   const { account, traffic } = useAccount()
+  const { ref: progressRef, progress } = useReadingProgress<HTMLElement>()
+
+  const work = useMemo(() => (id ? allWork.find((item) => item.id === id) : undefined), [id, allWork])
+  const moreByAuthor = useMemo(() => (work ? moreFromAuthor(work, allWork) : []), [work, allWork])
+  const similar = useMemo(() => (work ? similarWork(work, allWork) : []), [work, allWork])
+
+  useEffect(() => {
+    if (work) track("case_study_opened")
+  }, [work])
+
+  useEffect(() => {
+    if (!account || !work || work.authorId !== account.id) return
+    trackWorkOpen(work.id)
+  }, [account, work, trackWorkOpen])
+
+  useEffect(() => {
+    if (!work) return
+    const author = authors.get(work.authorId)
+    return applyMeta({
+      title: author ? `${work.title}, by ${author.name}` : work.title,
+      description: clamp(work.summary || work.problem),
+      type: "article",
+      image: work.thumbnail,
+    })
+  }, [work, authors])
 
   if (!work) {
     return (
@@ -93,9 +93,6 @@ export function WorkPage({
   }
 
   const author = authors.get(work.authorId)
-  // Traffic is the author's own data. There is no view of anyone else's, here
-  // or in the API, and no public count on the card: a popularity number is the
-  // ranking signal this directory deliberately does not have.
   const isMine = account?.id === work.authorId
   const opens = isMine ? (opensByWork(traffic)[work.id] ?? 0) : null
   const headline = headlineProof(work)
@@ -110,9 +107,6 @@ export function WorkPage({
 
   return (
     <article ref={progressRef} className="pb-24">
-      {/* A case study runs long on purpose. The bar is the cheapest way to say
-          how much is left, and it is the only motion on the page that is not
-          an entrance. */}
       <div
         aria-hidden="true"
         className="sticky top-16 z-30 h-0.5 w-full bg-transparent sm:top-18"
@@ -123,11 +117,6 @@ export function WorkPage({
         />
       </div>
 
-      {/* Two ways back, because a reader arrives here by two routes: from a
-          grid of everyone's work, or from one person's profile. Offering only
-          "all portfolios" loses the reader who was halfway through reading a
-          person. The author link is first because it is the more specific
-          destination. */}
       <Container className="flex flex-wrap items-center gap-x-1 gap-y-1 pt-8">
         {author && (
           <>
@@ -199,7 +188,7 @@ export function WorkPage({
                   <li key={skill}>
                     <button
                       type="button"
-                      onClick={() => onSkillClick?.(skill)}
+                      onClick={() => addSkillFilter(skill)}
                       className="inline-flex min-h-10 cursor-pointer items-center rounded-pill border border-line bg-card px-3.5 font-display text-xs font-medium text-ink-2 transition-colors duration-200 hover:border-ink hover:text-ink"
                     >
                       {skill}
@@ -210,8 +199,6 @@ export function WorkPage({
             )}
           </header>
 
-          {/* Guided entries get the three fixed chapters; free-form entries
-              bring their own headings in their own order. */}
           {work.sections && work.sections.length > 0 ? (
             work.sections.map((section, index) => (
               <Chapter
@@ -244,7 +231,6 @@ export function WorkPage({
             </>
           )}
 
-          {/* A figure whose chapter was renamed would otherwise vanish. */}
           {orphans.length > 0 && (
             <section>
               <h2 className="display text-[clamp(1.25rem,2.4vw,1.625rem)]">More evidence</h2>
@@ -269,7 +255,6 @@ export function WorkPage({
           )}
         </div>
 
-        {/* Sidebar: the parts a reviewer scans before reading a word. */}
         <aside className="flex flex-col gap-8 lg:sticky lg:top-24 lg:self-start">
           {author && (
             <div className="rounded-card border border-line bg-card p-5">
@@ -393,6 +378,7 @@ export function WorkPage({
               </>
             )}
           </div>
+
           {opens !== null && (
             <div className="rounded-card border border-line bg-paper-2/60 p-5">
               <h2 className="eyebrow">Your numbers</h2>
@@ -414,7 +400,7 @@ export function WorkPage({
 
           <p className="text-center">
             <ReportButton
-              onClick={() => onReport({ kind: "work", id: work.id }, work.title)}
+              onClick={() => openReport({ kind: "work", id: work.id }, work.title)}
             />
           </p>
         </aside>

@@ -1,52 +1,29 @@
-import { useMemo } from "react"
-import { Container } from "@/components/layout/Container"
-import { Avatar } from "@/components/ui/Avatar"
-import { SocialLinks } from "@/components/ui/SocialLinks"
-import { Badge } from "@/components/ui/Badge"
-import { Button } from "@/components/ui/Button"
-import { ArrowRight, Globe, Pin } from "@/components/ui/Icon"
-import { WorkCard } from "@/components/work/WorkCard"
-import { proofOf, type Work } from "@/data/work"
-import type { Person } from "@/data/people"
-import { CATEGORIES, roleById, type CategoryId } from "@/data/taxonomy"
-import type { Author } from "@/lib/authors"
-import { navigate } from "@/lib/router"
-import type { Target } from "@/data/admin"
-import { ReportButton } from "@/components/admin/ReportModal"
-import { cn } from "@/lib/utils"
-
-interface ProfilePageProps {
-  person: Person | undefined
-  /** Everything this person has published, newest first. */
-  work: Work[]
-  authors: Map<string, Author>
-  /** Reported so a person can see their own profile views in the panel. */
-  onProfileView: (personId: string) => void
-  onSkillClick: (skill: string) => void
-  /** Opens the report dialog for this profile. */
-  onReport: (target: Target, label: string) => void
-}
+import { useEffect, useMemo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Container } from "@/components/layout/Container";
+import { Avatar } from "@/components/ui/Avatar";
+import { SocialLinks } from "@/components/ui/SocialLinks";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { ArrowRight, Globe, Pin } from "@/components/ui/Icon";
+import { WorkCard } from "@/components/work/WorkCard";
+import { proofOf } from "@/data/work";
+import { CATEGORIES, roleById, type CategoryId } from "@/data/taxonomy";
+import { ReportButton } from "@/components/admin/ReportModal";
+import { cn } from "@/lib/utils";
+import { useBrowse } from "@/context/BrowseContext";
+import { applyMeta, clamp } from "@/lib/head";
+import { track } from "@/lib/analytics";
+import type { Work } from "@/data/work";
 
 interface TopicGroup {
-  id: CategoryId
-  label: string
-  tint: string
-  kind: "industry" | "practice"
-  items: Work[]
+  id: CategoryId;
+  label: string;
+  tint: string;
+  kind: "industry" | "practice";
+  items: Work[];
 }
 
-/**
- * Group a body of work by topic.
- *
- * An entry with two topics appears under both, on purpose - the question a
- * reader is asking is "what has this person done in banking", and hiding the
- * entry from one of its topics to keep the list tidy answers it wrongly. The
- * count above the grid says "entries", not "unique entries", for the same
- * reason.
- *
- * Groups follow CATEGORIES order rather than being sorted by size, so the two
- * kinds stay adjacent and a profile does not reorder itself as work is added.
- */
 function groupByTopic(work: readonly Work[]): TopicGroup[] {
   return CATEGORIES.map((category) => ({
     id: category.id,
@@ -54,7 +31,7 @@ function groupByTopic(work: readonly Work[]): TopicGroup[] {
     tint: category.tint,
     kind: category.kind,
     items: work.filter((item) => item.topics.includes(category.id)),
-  })).filter((group) => group.items.length > 0)
+  })).filter((group) => group.items.length > 0);
 }
 
 function Stat({ value, label }: { value: string | number; label: string }) {
@@ -65,37 +42,81 @@ function Stat({ value, label }: { value: string | number; label: string }) {
         {label}
       </p>
     </div>
-  )
+  );
 }
 
-export function ProfilePage({
-  person,
-  work,
-  authors,
-  onProfileView,
-  onSkillClick,
-  onReport,
-}: ProfilePageProps) {
-  const groups = useMemo(() => groupByTopic(work), [work])
+export function ProfilePage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const {
+    allPeople,
+    allWork,
+    authors,
+    trackProfileView,
+    addSkillFilter,
+    openReport,
+  } = useBrowse();
+
+  const person = useMemo(
+    () => (id ? allPeople.find((p) => p.id === id) : undefined),
+    [id, allPeople],
+  );
+  const work = useMemo(
+    () =>
+      id
+        ? allWork
+            .filter((item) => item.authorId === id)
+            .slice()
+            .sort((a, b) => b.year - a.year)
+        : [],
+    [id, allWork],
+  );
+  const groups = useMemo(() => groupByTopic(work), [work]);
+
+  useEffect(() => {
+    if (person) track("profile_opened");
+  }, [person]);
+
+  useEffect(() => {
+    if (person) trackProfileView(person.id);
+  }, [person, trackProfileView]);
+
+  useEffect(() => {
+    if (!person) return;
+    const role = roleById(person.role);
+    return applyMeta({
+      title: `${person.name}, ${role.label}`,
+      description: clamp(
+        person.bio ||
+          `${person.title} at ${person.company}, ${person.location}. ${work.length} case studies.`,
+      ),
+      type: "profile",
+      image: person.photo,
+    });
+  }, [person, work.length]);
 
   if (!person) {
     return (
       <Container className="flex min-h-[60vh] flex-col items-center justify-center py-24 text-center">
         <h1 className="display text-3xl">Profile not found</h1>
         <p className="mt-3 max-w-sm text-sm text-muted">
-          The link may be stale, or this person is no longer listed in the directory.
+          The link may be stale, or this person is no longer listed in the
+          directory.
         </p>
         <Button className="mt-7" onClick={() => navigate("/")}>
           Back to the directory
         </Button>
       </Container>
-    )
+    );
   }
 
-  const role = roleById(person.role)
-  const industries = groups.filter((group) => group.kind === "industry")
-  const practices = groups.filter((group) => group.kind === "practice")
-  const proofCount = work.reduce((total, item) => total + proofOf(item).length, 0)
+  const role = roleById(person.role);
+  const industries = groups.filter((group) => group.kind === "industry");
+  const practices = groups.filter((group) => group.kind === "practice");
+  const proofCount = work.reduce(
+    (total, item) => total + proofOf(item).length,
+    0,
+  );
 
   return (
     <div className="pb-24">
@@ -110,7 +131,6 @@ export function ProfilePage({
         </button>
       </Container>
 
-      {/* ── Identity ─────────────────────────────────────────────────── */}
       <Container className="mt-4">
         <header className="flex flex-col gap-6 border-b border-line pb-10 sm:flex-row sm:items-start sm:gap-8">
           <Avatar
@@ -121,7 +141,9 @@ export function ProfilePage({
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="display text-[clamp(1.75rem,5vw,2.75rem)]">{person.name}</h1>
+              <h1 className="display text-[clamp(1.75rem,5vw,2.75rem)]">
+                {person.name}
+              </h1>
               {person.open && (
                 <span className="inline-flex items-center gap-1.5 rounded-pill bg-pop-lime px-3 py-1 font-display text-[0.6875rem] font-semibold tracking-wide text-ink">
                   <span className="size-1.5 rounded-full bg-ink" />
@@ -139,7 +161,9 @@ export function ProfilePage({
             </p>
 
             {person.bio && (
-              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-2">{person.bio}</p>
+              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-2">
+                {person.bio}
+              </p>
             )}
 
             {person.languages.length > 0 && (
@@ -164,11 +188,13 @@ export function ProfilePage({
                 <li key={`${skill}-${index}`}>
                   <button
                     type="button"
-                    onClick={() => onSkillClick(skill)}
+                    onClick={() => addSkillFilter(skill)}
                     className="cursor-pointer rounded-pill transition-transform duration-200 ease-pop active:scale-[0.97]"
                   >
                     <Badge className="hover:border-ink/40">{skill}</Badge>
-                    <span className="sr-only">Filter portfolios by {skill}</span>
+                    <span className="sr-only">
+                      Filter portfolios by {skill}
+                    </span>
                   </button>
                 </li>
               ))}
@@ -183,18 +209,17 @@ export function ProfilePage({
         </header>
       </Container>
 
-      {/* ── Empty state ──────────────────────────────────────────────── */}
       {work.length === 0 ? (
         <Container className="py-20 text-center">
           <h2 className="display text-2xl">No published work yet</h2>
           <p className="mx-auto mt-3 max-w-md text-sm text-muted">
-            {person.name.split(" ")[0]} is listed in the directory but has not published a case
-            study. A profile without work is a business card - this product is the other thing.
+            {person.name.split(" ")[0]} is listed in the directory but has not
+            published a case study. A profile without work is a business card -
+            this product is the other thing.
           </p>
         </Container>
       ) : (
         <>
-          {/* ── Topic index ──────────────────────────────────────────── */}
           <Container className="mt-10">
             <div className="flex flex-col gap-4 rounded-card border border-line bg-card p-5 sm:flex-row sm:items-start sm:gap-8">
               <TopicIndex title="Industry" groups={industries} />
@@ -202,12 +227,11 @@ export function ProfilePage({
             </div>
             <p className="mt-3 text-xs text-muted">
               {proofCount} results claimed across {work.length}{" "}
-              {work.length === 1 ? "entry" : "entries"}. An entry that shipped in two topics is
-              listed under both.
+              {work.length === 1 ? "entry" : "entries"}. An entry that shipped
+              in two topics is listed under both.
             </p>
           </Container>
 
-          {/* ── The work, split by topic ─────────────────────────────── */}
           {groups.map((group) => (
             <section
               key={group.id}
@@ -219,13 +243,18 @@ export function ProfilePage({
                   <h2 className="display flex items-center gap-3 text-[clamp(1.375rem,3vw,1.875rem)]">
                     <span
                       aria-hidden="true"
-                      className={cn("size-2.5 rounded-full", group.tint.split(" ")[0])}
+                      className={cn(
+                        "size-2.5 rounded-full",
+                        group.tint.split(" ")[0],
+                      )}
                     />
                     {group.label}
                   </h2>
                   <p className="font-display text-sm font-medium text-muted">
-                    {group.items.length} {group.items.length === 1 ? "entry" : "entries"}
-                    {group.kind === "practice" && " · practice, not an industry"}
+                    {group.items.length}{" "}
+                    {group.items.length === 1 ? "entry" : "entries"}
+                    {group.kind === "practice" &&
+                      " · practice, not an industry"}
                   </p>
                 </div>
 
@@ -236,7 +265,7 @@ export function ProfilePage({
                         work={item}
                         author={authors.get(item.authorId)}
                         index={index}
-                        onSkillClick={onSkillClick}
+                        onSkillClick={addSkillFilter}
                       />
                     </div>
                   ))}
@@ -247,24 +276,29 @@ export function ProfilePage({
         </>
       )}
 
-      {/* ── Footer action ────────────────────────────────────────────── */}
       <Container className="mt-16">
         <div className="flex flex-col items-start gap-4 rounded-card border border-line bg-paper-2/60 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm text-ink-2">
             <p>
               Every number on this page is{" "}
-              <span className="font-display font-semibold text-ink">claimed by the author</span>,
-              not verified by us.
+              <span className="font-display font-semibold text-ink">
+                claimed by the author
+              </span>
+              , not verified by us.
             </p>
             <p className="mt-2">
-              <ReportButton onClick={() => onReport({ kind: "person", id: person.id }, person.name)} />
+              <ReportButton
+                onClick={() =>
+                  openReport({ kind: "person", id: person.id }, person.name)
+                }
+              />
             </p>
           </div>
           <Button
             variant="outline"
             onClick={() => {
-              onProfileView(person.id)
-              navigate("/work")
+              trackProfileView(person.id);
+              navigate("/work");
             }}
           >
             Browse every portfolio
@@ -273,12 +307,17 @@ export function ProfilePage({
         </div>
       </Container>
     </div>
-  )
+  );
 }
 
-/** Jump links, so a long profile is navigable without scrolling past it. */
-function TopicIndex({ title, groups }: { title: string; groups: TopicGroup[] }) {
-  if (groups.length === 0) return null
+function TopicIndex({
+  title,
+  groups,
+}: {
+  title: string;
+  groups: TopicGroup[];
+}) {
+  if (groups.length === 0) return null;
 
   return (
     <div className="min-w-0 flex-1">
@@ -297,7 +336,10 @@ function TopicIndex({ title, groups }: { title: string; groups: TopicGroup[] }) 
             >
               <span
                 aria-hidden="true"
-                className={cn("size-1.5 rounded-full", group.tint.split(" ")[0])}
+                className={cn(
+                  "size-1.5 rounded-full",
+                  group.tint.split(" ")[0],
+                )}
               />
               {group.label}
               <span className="text-muted">{group.items.length}</span>
@@ -306,10 +348,9 @@ function TopicIndex({ title, groups }: { title: string; groups: TopicGroup[] }) 
         ))}
       </ul>
     </div>
-  )
+  );
 }
 
-/** Exported for the case-study page's "back to profile" affordance. */
 export function profileHref(authorId: string): string {
-  return `/people/${authorId}`
+  return `/people/${authorId}`;
 }

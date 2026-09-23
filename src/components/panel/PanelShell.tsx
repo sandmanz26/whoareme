@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
+import { useNavigate } from "react-router-dom"
 import { Container } from "@/components/layout/Container"
-import { navigate } from "@/lib/router"
 import { cn } from "@/lib/utils"
 import { ArrowUpRight } from "@/components/ui/Icon"
 
@@ -31,6 +31,7 @@ export function PanelShell({
   action,
   children,
 }: PanelShellProps) {
+  const navigate = useNavigate()
   return (
     <Container className="grid gap-10 py-10 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-14 lg:py-14">
       <nav aria-label="Panel" className="lg:sticky lg:top-24 lg:self-start">

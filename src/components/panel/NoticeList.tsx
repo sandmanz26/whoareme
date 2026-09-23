@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button"
 import { Check } from "@/components/ui/Icon"
 import { actionLabel, type Notice } from "@/data/admin"
 import { useAdmin } from "@/hooks/useAdmin"
-import { navigate } from "@/lib/router"
+import { useNavigate } from "react-router-dom"
 
 /**
  * What a moderation decision looks like from the other side.
@@ -58,6 +58,7 @@ function NoticeRow({
   onRead: () => void
   onAppeal: (text: string) => void
 }) {
+  const navigate = useNavigate()
   const [writing, setWriting] = useState(false)
   const [text, setText] = useState("")
 
