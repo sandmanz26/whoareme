@@ -2,3 +2,6 @@ node_modules
 dist
 .DS_Store
 *.local
+
+# A local checkout the dev shared for comparison; never a submodule, never committed here.
+whoareyou_dev_injected/

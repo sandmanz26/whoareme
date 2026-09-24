@@ -22,6 +22,59 @@ Newest first.
 
 ---
 
+## 24 September 2026 — react-router-dom, and a frontend doctrine from the dev
+
+A dev (Rendy Dendimara) picked the project up, audited it, and landed a change
+of their own: the hand-rolled `pushState` router is now `react-router-dom` v7,
+and a new `docs/FRONTEND_RULES.md` sets an approved stack for everything that
+comes after. Brought in here after building and driving it in a real browser —
+the dev's own checkout had never been `npm install`ed.
+
+### The router migration
+
+`src/lib/router.ts` — `useRoute`, `navigate`, `interceptLinkClicks`,
+`pageRootOf` — is gone. `src/routes.tsx` now holds one `createBrowserRouter`
+tree, `src/context/BrowseContext.tsx` carries the filter/work/people/modal
+state that used to live in `App.tsx`'s `Shell`, and every page reads it via
+`useBrowse()` plus `useParams()` instead of receiving it as props. `App.tsx`
+is six lines.
+
+This is rule 1 changing for a stated reason, which is the bar the rule itself
+sets. `react-router-dom` is the first runtime dependency beyond `react` and
+`react-dom` the SPA has ever carried. What it buys: `<Link>`, `useNavigate()`,
+`<ScrollRestoration>`, nested layouts and lazy route boundaries — all things
+the hand-rolled router either didn't have or reimplemented by hand. What it
+does not touch: the per-route `applyMeta()` call and the funnel `track()`
+calls were not centralised casualties of the rewrite — they now live in each
+page component, which is arguably where they belonged all along, and every
+one of them still fires. Verified by walking every route in a real browser: no
+console errors, no horizontal overflow at 360, and every page's title and
+meta description update on client-side navigation, not just on a hard load.
+
+### `docs/FRONTEND_RULES.md`
+
+A stack doctrine for whatever gets built against the API next: Axios, TanStack
+Query, Zustand, React Hook Form + Zod, react-hot-toast, shadcn/ui copied in
+rather than installed. `CLAUDE.md` rule 1 now points here instead of stating
+zero-dependencies outright — the rule became "stay on the approved list," not
+"stay on nothing."
+
+**None of this is wired up yet.** The five packages this doc names besides
+`react-router-dom` are in `package.json` and nowhere else — no `src/api/`,
+no `src/store/`, no `src/lib/api.ts`. Read the rules file before starting on
+the API-wiring gap in `docs/PROJECT_CONTEXT.md` §12; it is now the intended
+shape of that work, not a menu.
+
+### A stale audit came along too
+
+`docs/AUDIT.md`, dated 17 September, is the dev's read of the codebase before
+they touched it. Two of its claims are wrong as of the day it was written —
+it lists Content Moderation and the Admin Interface as entirely missing, and
+both already existed by then. Kept as the dev's own document rather than
+edited, but flagged here so nobody treats it as a current state of the world.
+
+---
+
 ## 18 September 2026 — The API catches up with the SPA
 
 The previous rounds built four things in the SPA that the API had no answer
