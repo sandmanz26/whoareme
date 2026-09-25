@@ -136,3 +136,16 @@ export const Globe = (p: IconProps) => (
     <path d="M3 12h18M12 3c2.4 2.5 3.6 5.6 3.6 9s-1.2 6.5-3.6 9c-2.4-2.5-3.6-5.6-3.6-9S9.6 5.5 12 3Z" />
   </Svg>
 )
+
+export const Play = (p: IconProps) => (
+  <Svg {...p}>
+    <polygon points="7 4 20 12 7 20 7 4" />
+  </Svg>
+)
+
+export const Video = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="2" y="6" width="14" height="12" rx="2" />
+    <path d="m16 10.5 5.2-3.1a.5.5 0 0 1 .8.4v8.4a.5.5 0 0 1-.8.4L16 13.5" />
+  </Svg>
+)

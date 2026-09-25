@@ -3,6 +3,12 @@ import { fieldsForTemplate, templateById } from "@/data/workTemplates"
 import { TOPIC_QUOTA, type WorkDraft } from "@/data/account"
 import { CATEGORIES } from "@/data/taxonomy"
 
+/** "a design system", "an engineering leadership" - template labels are
+ *  ordinary words, so a vowel-letter check is all this needs. */
+function withIndefiniteArticle(noun: string): string {
+  return `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`
+}
+
 export interface ReadinessItem {
   id: string
   label: string
@@ -61,7 +67,7 @@ export function readinessFor(
     if (required.length > 0) {
       items.push({
         id: "evidence",
-        label: `Evidence for a ${templateById(draft.template)?.label.toLowerCase() ?? "case study"}`,
+        label: `Evidence for ${withIndefiniteArticle(templateById(draft.template)?.label.toLowerCase() ?? "case study")}`,
         done: required.every((field) => value(field.name)),
         hint: "The question this kind of work actually gets asked.",
       })

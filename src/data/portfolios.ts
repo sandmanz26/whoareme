@@ -445,6 +445,34 @@ const CORE_WORK: Work[] = [
     ],
   },
   {
+    id: "corridor-pods-split",
+    template: "eng-leadership",
+    model: "enterprise",
+    skills: ["Hiring", "Stakeholder management", "Distributed systems"],
+    authorId: "ahmad-faizal-hamzah",
+    role: "engineering",
+    topics: ["leadership"],
+    title: "From one backlog to three corridor pods",
+    summary: "Eleven engineers on one backlog meant every corridor waited on every other corridor.",
+    year: 2025,
+    duration: "18 months",
+    scope: "Engineering manager · 11 engineers, reporting to the CTO",
+    problem:
+      "I inherited eleven engineers on one backlog and one on-call rotation. A regulator deadline on the Philippines corridor meant the Vietnam corridor's already-late work waited again, and two engineers had quietly stopped picking up anything with a date attached.",
+    approach:
+      "Split into three corridor-owned pods of three to four engineers, each with its own on-call and its own roadmap, and stopped taking 'everyone helps everyone' requests from the top. Kept one shared platform pod for the FX and compliance code every corridor needed, so the split did not triplicate the parts that should not be triplicated. The first attempt split the pods by seniority, not by corridor, and every approval still routed through the senior pod anyway - reversed that after six weeks.",
+    outcome:
+      "Corridors started shipping independently instead of queueing behind each other, and both engineers who had disengaged re-committed within the year - one of them now leads a pod.",
+    stack: ["Java", "Kafka", "Postgres"],
+    links: [{ label: "Team structure writeup", href: "https://example.com/selat-pay/pod-model" }],
+    details: [
+      { label: "Delivery", value: "Corridor lead time 6 weeks → 2 weeks, 3 shipping in parallel instead of 1", proof: true },
+      { label: "Retention", value: "Zero regretted attrition in 18 months; both disengaged engineers re-committed", proof: true },
+      { label: "Mistake", value: "First split was by seniority, not by corridor - reversed after 6 weeks" },
+      { label: "Scope", value: "11 engineers, 3 corridor pods, 1 shared platform pod" },
+    ],
+  },
+  {
     id: "ekyc-rejection-rework",
     template: "prod-rescue",
     model: "enterprise",

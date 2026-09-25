@@ -2,8 +2,11 @@ import { useMemo, useState } from "react"
 import { SEED_WORK } from "@/data/portfolios"
 import { proofOf } from "@/data/work"
 import { roleById, type RoleId } from "@/data/taxonomy"
+import { templateById } from "@/data/workTemplates"
 import { ChevronDown } from "@/components/ui/Icon"
 import { cn } from "@/lib/utils"
+
+const strong = (work: (typeof SEED_WORK)[number]) => Boolean(work.problem) && proofOf(work).length >= 2
 
 /**
  * A worked example from the same craft, next to the empty form.
@@ -14,16 +17,38 @@ import { cn } from "@/lib/utils"
  * someone else's words one click from publication. So it sits alongside as a
  * reference, collapsed by default, and it is a real published entry rather
  * than a written-for-onboarding sample.
+ *
+ * Matched to what was actually picked, not just the craft. "What a strong
+ * design system looks like" showing a flagship case study would be worse than
+ * showing nothing - the shape of the evidence is the entire point of the
+ * template someone just chose, and a mismatched example teaches the wrong
+ * shape with the right label on it. The fallback chain only loosens the match
+ * one dimension at a time: the same template, then the same shape of work in
+ * any craft, then anything in the same craft, then nothing.
  */
-export function CraftExample({ role, templateLabel }: { role: RoleId; templateLabel?: string }) {
+export function CraftExample({
+  role,
+  templateId,
+  templateLabel,
+}: {
+  role: RoleId
+  templateId?: string
+  templateLabel?: string
+}) {
   const [open, setOpen] = useState(false)
 
-  const example = useMemo(
-    () =>
-      SEED_WORK.find((work) => work.role === role && work.problem && proofOf(work).length >= 2) ??
-      SEED_WORK.find((work) => work.role === role),
-    [role],
-  )
+  const example = useMemo(() => {
+    const archetype = templateById(templateId)?.archetype
+    return (
+      SEED_WORK.find((work) => work.template === templateId && strong(work)) ??
+      SEED_WORK.find((work) => work.template === templateId) ??
+      (archetype &&
+        (SEED_WORK.find((work) => templateById(work.template)?.archetype === archetype && strong(work)) ??
+          SEED_WORK.find((work) => templateById(work.template)?.archetype === archetype))) ??
+      SEED_WORK.find((work) => work.role === role && strong(work)) ??
+      SEED_WORK.find((work) => work.role === role)
+    )
+  }, [role, templateId])
 
   if (!example) return null
   const proof = proofOf(example).slice(0, 2)

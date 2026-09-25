@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { WorkFigure } from "@/data/work"
 import { ArrowRight } from "@/components/ui/Icon"
+import { FigureMedia } from "./FigureMedia"
 import { cn } from "@/lib/utils"
 
 /**
@@ -88,31 +89,26 @@ export function FigureSlider({
             // Slides off-screen are reachable by scrolling, so they stay in
             // the accessibility tree rather than being hidden from it.
           >
-            {onZoom ? (
+            {/* A video is already the interactive thing - zooming an iframe
+                buys nothing, and a button cannot wrap one without breaking
+                its own controls. */}
+            {onZoom && figure.kind !== "video" ? (
               <button
                 type="button"
                 onClick={() => onZoom(figure)}
                 className="relative block w-full cursor-zoom-in overflow-hidden rounded-2xl"
               >
-                <img
-                  src={figure.src}
-                  alt={figure.alt}
-                  width={figure.width}
-                  height={figure.height}
+                <FigureMedia
+                  figure={figure}
                   loading={slide === 0 ? "eager" : "lazy"}
-                  decoding="async"
                   className="max-h-[32rem] w-full rounded-2xl border border-line bg-paper-2 object-contain"
                 />
                 <span className="sr-only">Enlarge: {figure.alt}</span>
               </button>
             ) : (
-              <img
-                src={figure.src}
-                alt={figure.alt}
-                width={figure.width}
-                height={figure.height}
+              <FigureMedia
+                figure={figure}
                 loading={slide === 0 ? "eager" : "lazy"}
-                decoding="async"
                 className="max-h-[32rem] w-full rounded-2xl border border-line bg-paper-2 object-contain"
               />
             )}

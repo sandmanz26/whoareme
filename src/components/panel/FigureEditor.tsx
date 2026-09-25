@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from "react"
 import type { WorkFigure } from "@/data/work"
 import { WorkFigures } from "@/components/work/WorkFigures"
-import { ChevronDown, Plus, Trash, Upload } from "@/components/ui/Icon"
+import { ChevronDown, Plus, Trash, Upload, Video } from "@/components/ui/Icon"
 import { dataUrlBytes, fileToFigure, formatBytes, STORAGE_BUDGET_BYTES } from "@/lib/image"
 import { layoutFor, ratioLabel, SHAPE_LABEL, shapeOf } from "@/lib/figures"
+import { parseVideoUrl, videoThumbnail, VIDEO_PROVIDER_LABEL } from "@/lib/video"
 import { cn } from "@/lib/utils"
 
 const MAX_FIGURES = 6
@@ -28,14 +29,20 @@ interface FigureEditorProps {
 }
 
 /**
- * Uploading is the easy half. The hard half is that an image with no caption
- * is decoration, and this product exists to stop decoration winning - so alt
- * text and a caption are required fields, not optional polish, and the editor
- * says why rather than just marking them with an asterisk.
+ * Uploading is the easy half. The hard half is that an image - or a video -
+ * with no caption is decoration, and this product exists to stop decoration
+ * winning. So alt text and a caption are required fields, not optional
+ * polish, and the editor says why rather than just marking them with an
+ * asterisk.
  *
- * The layout is not an author choice. It is derived from the images, shown
- * back as a live preview, so the author can see what adding one more will do
- * before they add it.
+ * A video is a link, not an upload: paste a YouTube, Vimeo or Loom share link
+ * and it plays in place, at a fixed 16:9, mixed into the same chapters and
+ * the same layouts as the photos - a design system with three screenshots and
+ * a two-minute walkthrough reads as one gallery, not two separate things.
+ *
+ * The layout is not an author choice. It is derived from what was added,
+ * shown back as a live preview, so the author can see what adding one more
+ * will do before they add it.
  */
 export function FigureEditor({
   figures,
@@ -47,6 +54,8 @@ export function FigureEditor({
   const input = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [videoUrl, setVideoUrl] = useState("")
+  const [videoError, setVideoError] = useState<string | null>(null)
 
   const usedBytes = useMemo(
     () => otherBytes + figures.reduce((total, figure) => total + dataUrlBytes(figure.src), 0),
@@ -96,6 +105,44 @@ export function FigureEditor({
     }
   }
 
+  /**
+   * A link, not an upload - so it needs no downscaling and costs the storage
+   * budget almost nothing. Stored at a fixed 16:9: there is no image to read
+   * real dimensions from, and every provider this embeds actually is 16:9.
+   */
+  function addVideo() {
+    const trimmed = videoUrl.trim()
+    if (!trimmed) return
+    if (full) return
+
+    let url: URL
+    try {
+      url = new URL(trimmed)
+    } catch {
+      setVideoError("That does not look like a URL.")
+      return
+    }
+    if (url.protocol !== "https:" && url.protocol !== "http:") {
+      setVideoError("That does not look like a URL.")
+      return
+    }
+
+    setVideoError(null)
+    onChange([
+      ...figures,
+      {
+        kind: "video",
+        src: trimmed,
+        width: 1920,
+        height: 1080,
+        alt: "",
+        caption: "",
+        section: sections[0]?.value ?? "problem",
+      },
+    ])
+    setVideoUrl("")
+  }
+
   function patch(index: number, part: Partial<WorkFigure>) {
     onChange(figures.map((figure, i) => (i === index ? { ...figure, ...part } : figure)))
   }
@@ -133,17 +180,34 @@ export function FigureEditor({
         <ul className="flex flex-col gap-4">
           {figures.map((figure, index) => {
             const shape = shapeOf(figure)
+            const video = figure.kind === "video" ? parseVideoUrl(figure.src) : null
+            const thumb = figure.kind === "video" ? videoThumbnail(figure.src) : null
             return (
               <li key={`${index}-${figure.src.slice(-16)}`} className="rounded-2xl border border-line bg-paper p-4">
                 <div className="flex flex-col gap-4 sm:flex-row">
                   <div className="shrink-0">
-                    <img
-                      src={figure.src}
-                      alt=""
-                      className="h-24 w-40 rounded-xl border border-line object-cover"
-                    />
+                    {figure.kind === "video" ? (
+                      <div className="relative h-24 w-40 overflow-hidden rounded-xl border border-line bg-ink">
+                        {thumb && (
+                          <img src={thumb} alt="" className="size-full object-cover opacity-70" />
+                        )}
+                        <span className="absolute inset-0 grid place-items-center text-paper">
+                          <Video size={20} />
+                        </span>
+                      </div>
+                    ) : (
+                      <img
+                        src={figure.src}
+                        alt=""
+                        className="h-24 w-40 rounded-xl border border-line object-cover"
+                      />
+                    )}
                     <p className="mt-1.5 font-display text-[0.6875rem] tracking-wide text-muted">
-                      {SHAPE_LABEL[shape]} · {ratioLabel(figure)}
+                      {figure.kind === "video"
+                        ? video
+                          ? VIDEO_PROVIDER_LABEL[video.provider]
+                          : "Video link (opens in a new tab)"
+                        : `${SHAPE_LABEL[shape]} · ${ratioLabel(figure)}`}
                     </p>
                   </div>
 
@@ -237,6 +301,41 @@ export function FigureEditor({
           {figures.length}/{MAX_FIGURES}
         </span>
       </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="url"
+          value={videoUrl}
+          disabled={full}
+          onChange={(event) => {
+            setVideoUrl(event.target.value)
+            if (videoError) setVideoError(null)
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault()
+              addVideo()
+            }
+          }}
+          placeholder="Or paste a YouTube, Vimeo or Loom link"
+          aria-label="Video URL"
+          className={cn(CONTROL, "min-w-[14rem] flex-1")}
+        />
+        <button
+          type="button"
+          onClick={addVideo}
+          disabled={full || !videoUrl.trim()}
+          className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-pill border border-ink/15 bg-card px-4 py-2.5 font-display text-sm font-medium text-ink transition-colors duration-200 hover:border-ink disabled:opacity-50"
+        >
+          <Video size={15} />
+          Add video
+        </button>
+      </div>
+      {videoError && (
+        <p role="alert" className="text-xs font-medium text-pop-pink">
+          {videoError}
+        </p>
+      )}
 
       {/* Storage is a real ceiling here, and silent quota failure is the worst
           possible outcome - so it is a visible meter rather than a surprise. */}

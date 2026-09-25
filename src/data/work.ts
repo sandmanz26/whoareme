@@ -12,18 +12,24 @@ export interface WorkSection {
 }
 
 /**
- * An image inside a case study.
+ * An image or a video inside a case study.
  *
  * `alt` and `caption` are both required, and that is a product decision rather
- * than an oversight: an uncaptioned screenshot is decoration, and this product
- * exists to stop decoration winning. The caption has to say what the reader is
- * looking at and why it is here.
+ * than an oversight: an uncaptioned screenshot - or an unexplained video - is
+ * decoration, and this product exists to stop decoration winning. The caption
+ * has to say what the reader is looking at and why it is here.
  *
- * `width` and `height` are the intrinsic pixel dimensions, captured at upload.
- * Layout is chosen from the aspect ratio, so it has to be known before the
- * image loads or the page reflows as each figure arrives.
+ * `width` and `height` are the intrinsic pixel dimensions. For an uploaded
+ * image they are captured at upload, so layout can be chosen from the aspect
+ * ratio before the image loads. A video has no upload step - it is a link the
+ * author pastes - so it is stored at a fixed 16:9, which is what every one of
+ * the providers this embeds actually is.
  */
 export interface WorkFigure {
+  /** Omitted for an uploaded image. `"video"` for a pasted link - a design
+   *  walkthrough, a demo, a talk - embedded in place of a screenshot. */
+  kind?: "video"
+  /** An uploaded image's data URL, or the video URL the author pasted. */
   src: string
   alt: string
   caption: string

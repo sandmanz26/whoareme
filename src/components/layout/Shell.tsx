@@ -12,7 +12,12 @@ function Layout() {
   const { joinOpen, closeJoin, reportOf, closeReport, openJoin } = useBrowse()
 
   return (
-    <div className="min-h-dvh overflow-x-hidden">
+    // `clip`, not `hidden`: setting only one axis to `hidden` makes the browser
+    // compute the other axis as `auto` (CSS2.1 §11.1.1), which turns this div
+    // into a scroll container and breaks `position: sticky` on the header
+    // inside it. `clip` still stops horizontal overflow without that side
+    // effect.
+    <div className="min-h-dvh overflow-x-clip">
       <a
         href="#work"
         className="sr-only rounded-pill bg-ink px-4 py-2 text-paper focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50"

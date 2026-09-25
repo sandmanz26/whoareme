@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Container } from "./Container";
 import { Button } from "@/components/ui/Button";
@@ -18,13 +18,31 @@ const LINKS: NavLink[] = [
 
 export function Navbar({ onJoin }: { onJoin: () => void }) {
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const lastScrollY = useRef(0);
   const { account, signOut } = useAccount();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const onHome = pathname === "/";
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    lastScrollY.current = window.scrollY;
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 8);
+
+      // Hide on the way down, reappear the moment someone scrolls back up -
+      // the header should not eat screen real estate while reading, but it
+      // has to come back on demand without a scroll-to-top round trip. Near
+      // the very top it always stays put, so the page never opens hidden.
+      const scrollingDown = y > lastScrollY.current;
+      const pastThreshold = y > 120;
+      setHidden(scrollingDown && pastThreshold);
+
+      lastScrollY.current = y;
+    };
+
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -34,6 +52,7 @@ export function Navbar({ onJoin }: { onJoin: () => void }) {
     <header
       className={cn(
         "sticky top-0 z-40 transition-all duration-300 ease-pop",
+        hidden ? "-translate-y-full" : "translate-y-0",
         scrolled
           ? "border-b border-line bg-paper/85 backdrop-blur-md"
           : "border-b border-transparent",

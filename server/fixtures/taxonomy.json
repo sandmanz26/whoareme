@@ -3,42 +3,50 @@
     {
       "id": "design",
       "label": "Designer",
-      "blurb": "Product, brand, motion"
+      "blurb": "Product, brand, motion",
+      "status": "live"
     },
     {
       "id": "engineering",
       "label": "Developer",
-      "blurb": "Frontend, backend, mobile"
+      "blurb": "Frontend, backend, mobile",
+      "status": "live"
     },
     {
       "id": "product",
       "label": "Product",
-      "blurb": "PM, owner, strategy"
-    },
-    {
-      "id": "data",
-      "label": "Data & AI",
-      "blurb": "ML, analytics, research"
+      "blurb": "PM, owner, strategy",
+      "status": "live"
     },
     {
       "id": "infra",
       "label": "DevOps",
-      "blurb": "Platform, SRE, cloud"
+      "blurb": "Platform, SRE, cloud",
+      "status": "live"
+    },
+    {
+      "id": "data",
+      "label": "Data & AI",
+      "blurb": "ML, analytics, research",
+      "status": "soon"
     },
     {
       "id": "quality",
       "label": "QA",
-      "blurb": "Automation, reliability"
+      "blurb": "Automation, reliability",
+      "status": "soon"
     },
     {
       "id": "growth",
       "label": "Growth",
-      "blurb": "Marketing, lifecycle"
+      "blurb": "Marketing, lifecycle",
+      "status": "soon"
     },
     {
       "id": "research",
       "label": "Research",
-      "blurb": "UXR, discovery"
+      "blurb": "UXR, discovery",
+      "status": "soon"
     }
   ],
   "topics": [

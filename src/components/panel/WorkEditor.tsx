@@ -1,13 +1,13 @@
 import { useMemo, useState, type ReactNode } from "react"
 import { Button } from "@/components/ui/Button"
+import { Combobox } from "@/components/ui/Combobox"
 import { SchemaField, validateFields, type FieldErrors } from "./SchemaForm"
 import { SkillPicker } from "./SkillPicker"
 import { ThumbnailPicker } from "./ThumbnailPicker"
 import { LinkListEditor, MetricEditor, SectionEditor } from "./ListEditors"
 import { FigureEditor } from "./FigureEditor"
 import { PublishReadiness } from "./PublishReadiness"
-import { CraftExample } from "./CraftExample"
-import { isPublishable, readinessFor } from "@/lib/readiness"
+import { readinessFor } from "@/lib/readiness"
 import { dataUrlBytes } from "@/lib/image"
 import { track } from "@/lib/analytics"
 import { WorkCard } from "@/components/work/WorkCard"
@@ -176,18 +176,18 @@ export function WorkEditor({
               </label>
             )}
             {guided && (
-              <select
+              <Combobox
                 id="template-switch"
                 value={state.template}
-                onChange={(event) => patch({ template: event.target.value })}
-                className="cursor-pointer rounded-pill border border-paper/25 bg-transparent px-4 py-2 font-display text-xs font-medium text-paper transition-colors duration-200 hover:bg-paper/10 focus:outline-none"
-              >
-                {templatesFor(state.role).map((option) => (
-                  <option key={option.id} value={option.id} className="text-ink">
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(next) => patch({ template: next })}
+                options={templatesFor(state.role).map((option) => ({
+                  value: option.id,
+                  label: option.label,
+                }))}
+                emptyLabel="Choose a template"
+                className="min-w-40 rounded-pill border border-paper/25 bg-transparent px-4 py-2 text-xs text-paper hover:bg-paper/10 focus:border-paper/50"
+                chevronClassName="text-paper/60"
+              />
             )}
             <button
               type="button"
@@ -293,8 +293,8 @@ export function WorkEditor({
         )}
 
         <Fieldset
-          title="Figures"
-          intro="Optional. Screenshots, diagrams, before and after - each one sits under the chapter you assign it to, and the page picks the layout from the image itself. A wide screenshot and a phone screen do not get the same treatment."
+          title="Figures & video"
+          intro="Optional. Screenshots, diagrams, before and after, or a YouTube, Vimeo or Loom link - each one sits under the chapter you assign it to, and the page picks the layout from what you added. A wide screenshot and a phone screen do not get the same treatment, and a design system reads better with the walkthrough next to the artefacts than either one alone."
         >
           <FigureEditor
             figures={state.figures ?? []}
@@ -357,9 +357,6 @@ export function WorkEditor({
       {/* Live preview: people write better entries when they can see the card. */}
       <aside className="flex min-w-0 flex-col gap-6 xl:sticky xl:top-24 xl:self-start">
         <PublishReadiness items={readiness} published={state.published} />
-
-        {/* The reference only earns its space while the entry is still thin. */}
-        {!isPublishable(readiness) && <CraftExample role={state.role} templateLabel={template.label} />}
 
         <div>
         <p className="eyebrow">Preview</p>

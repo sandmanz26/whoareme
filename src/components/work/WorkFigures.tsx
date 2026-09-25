@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react"
 import type { WorkFigure } from "@/data/work"
 import { layoutFor, shapeOf } from "@/lib/figures"
 import { FigureSlider } from "./FigureSlider"
+import { FigureMedia } from "./FigureMedia"
 import { Close } from "@/components/ui/Icon"
 import { cn } from "@/lib/utils"
 
@@ -51,7 +52,10 @@ export function WorkFigures({ figures, zoomable = true }: WorkFiguresProps) {
             key={`${figure.src.slice(-24)}-${index}`}
             figure={figure}
             layout={layout}
-            onZoom={zoomable ? () => setZoomed(figure) : undefined}
+            // A video is already the interactive thing; zooming an iframe
+            // buys nothing and a button cannot wrap one without breaking its
+            // own controls.
+            onZoom={zoomable && figure.kind !== "video" ? () => setZoomed(figure) : undefined}
           />
         ))}
       </div>
@@ -73,13 +77,9 @@ function Figure({
   const tall = layout === "tall"
 
   const image = (
-    <img
-      src={figure.src}
-      alt={figure.alt}
-      width={figure.width}
-      height={figure.height}
+    <FigureMedia
+      figure={figure}
       loading="lazy"
-      decoding="async"
       className={cn(
         "w-full rounded-2xl border border-line bg-paper-2 object-cover",
         // A single square image at full column width is a lot of nothing;

@@ -56,6 +56,7 @@ export const ROLE_SCHEMAS: Record<RoleId, RoleSchema> = {
     fields: [
       { name: "techProblem", label: "Engineering problem", kind: "textarea", required: true, placeholder: "Checkout p95 sat at 840ms under Black Friday load…", maxLength: 400 },
       { name: "architecture", label: "Architecture / approach", kind: "textarea", placeholder: "Split the monolith read path behind a CQRS projection…", maxLength: 400 },
+      { name: "techStack", label: "Tech stack", kind: "tags", placeholder: "TypeScript, Postgres, Kafka, Kubernetes", hint: "Comma separated. Shows on the card and feeds the stack filter." },
       { name: "performance", label: "Performance result", kind: "text", proof: true, placeholder: "p95 840ms → 120ms" },
       { name: "scale", label: "Scale it runs at", kind: "text", proof: true, placeholder: "18k req/s, 40M rows/day" },
       { name: "ownership", label: "What was yours specifically", kind: "text", placeholder: "Owned the projection service and the migration" },

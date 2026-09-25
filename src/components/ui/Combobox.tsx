@@ -28,6 +28,8 @@ interface BaseProps {
   describedBy?: string
   /** Extra classes for the trigger, so callers keep control of their own shape. */
   className?: string
+  /** Overrides the chevron's default `text-muted`, for a trigger on a dark surface. */
+  chevronClassName?: string
 }
 
 /**
@@ -76,6 +78,7 @@ export function Combobox(props: ComboboxProps) {
     invalid = false,
     describedBy,
     className,
+    chevronClassName,
   } = props
 
   const multiple = props.multiple === true
@@ -357,7 +360,11 @@ export function Combobox(props: ComboboxProps) {
         <span className={cn("truncate", chosen.length === 0 && "text-muted")}>{triggerLabel}</span>
         <ChevronDown
           size={15}
-          className={cn("shrink-0 text-muted transition-transform duration-200", open && "rotate-180")}
+          className={cn(
+            "shrink-0 transition-transform duration-200",
+            chevronClassName ?? "text-muted",
+            open && "rotate-180",
+          )}
         />
       </button>
 
