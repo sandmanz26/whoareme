@@ -27,3 +27,11 @@ export const reportLimiter = rateLimit({
   legacyHeaders: false,
   skip: skipInTests,
 })
+
+export const writeLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 30,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  skip: skipInTests,
+})

@@ -19,6 +19,27 @@ declare global {
   }
 }
 
+/** Try to authenticate but never block the request. Sets req.user when valid. */
+export const isOptionalAuth = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : null
+    if (token) {
+      const user = await User.findOne({ token, status: "active" }).select("_id slug role access token")
+      if (user) {
+        try { jwt.verify(token, env.JWT_SECRET) } catch { return next() }
+        req.user = {
+          id: user._id.toString(),
+          slug: user.slug,
+          role: user.role as RoleId,
+          access: (user.access ?? "member") as AccessLevel,
+        }
+      }
+    }
+  } catch { /* silently skip — optional auth never fails the request */ }
+  next()
+}
+
 /**
  * Authenticate request and optionally gate by access level.
  *
