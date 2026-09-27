@@ -1,64 +1,67 @@
 import type { NextFunction, Request, Response } from "express"
-import { MongoServerError } from "mongodb"
-import { ZodError } from "zod"
-import { ApiError } from "../lib/errors.js"
-import { logger } from "../lib/logger.js"
-import { env } from "../config/env.js"
+import { logger } from "../libraries/logger.js"
+import { env } from "../config/index.js"
 
-export function notFoundHandler(req: Request, res: Response) {
-  res.status(404).json({ error: { code: "not_found", message: `No route for ${req.method} ${req.path}` } })
+export class ApiError extends Error {
+  status: number
+  code: string
+  details?: unknown
+
+  constructor(status: number, code: string, message: string, details?: unknown) {
+    super(message)
+    this.name = "ApiError"
+    this.status = status
+    this.code = code
+    this.details = details
+  }
 }
 
-/**
- * One place that decides what a client is told. Anything unrecognised becomes
- * a 500 with an opaque message — internal errors must never leak a stack, a
- * driver message or a field name a caller was not meant to know about.
- */
-export function errorHandler(error: unknown, req: Request, res: Response, _next: NextFunction) {
-  if (error instanceof ApiError) {
-    res.status(error.status).json({
-      error: { code: error.code, message: error.message, ...(error.details ? { details: error.details } : {}) },
+export function notFound(name: string): ApiError {
+  return new ApiError(404, "not_found", `${name} not found.`)
+}
+
+export function conflict(message: string, details?: unknown): ApiError {
+  return new ApiError(409, "conflict", message, details)
+}
+
+export function unauthorized(message = "Unauthorized. Please sign in."): ApiError {
+  return new ApiError(401, "unauthorized", message)
+}
+
+export function forbidden(message = "You do not have permission to perform this action."): ApiError {
+  return new ApiError(403, "forbidden", message)
+}
+
+export function badRequest(message: string, details?: unknown): ApiError {
+  return new ApiError(400, "bad_request", message, details)
+}
+
+export class QuotaError extends ApiError {
+  constructor(topics: string[]) {
+    super(
+      409,
+      "topic_quota_exceeded",
+      `Topic quota reached for: ${topics.join(", ")}. You may publish at most 2 entries per topic.`,
+      { topics },
+    )
+  }
+}
+
+export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction): void {
+  logger.error({ err, path: req.path, method: req.method }, "request-error")
+
+  if (err instanceof ApiError) {
+    res.status(err.status).json({
+      success: false,
+      data: null,
+      message: err.message,
+      ...(err.details !== undefined && { details: err.details }),
     })
     return
   }
 
-  if (error instanceof ZodError) {
-    res.status(400).json({
-      error: {
-        code: "validation_failed",
-        message: "Some fields need attention.",
-        details: error.issues.map((issue) => ({
-          field: issue.path.join("."),
-          message: issue.message,
-        })),
-      },
-    })
-    return
-  }
+  const message =
+    env.NODE_ENV === "development" && err instanceof Error ? err.message : "Something went wrong."
 
-  if (error instanceof MongoServerError) {
-    if (error.code === 11000) {
-      const field = Object.keys(error.keyPattern ?? {})[0] ?? "value"
-      res.status(409).json({
-        error: { code: "duplicate", message: `That ${field} is already taken.`, details: { field } },
-      })
-      return
-    }
-    if (error.code === 121) {
-      // Schema validation rejected the document — a bug in our own mapping,
-      // not something the caller can fix, so log loudly and stay vague.
-      logger.error({ err: error, path: req.path }, "document failed schema validation")
-      res.status(500).json({ error: { code: "internal", message: "Could not save that." } })
-      return
-    }
-  }
-
-  logger.error({ err: error, path: req.path, method: req.method }, "unhandled error")
-  res.status(500).json({
-    error: {
-      code: "internal",
-      message: "Something went wrong on our side.",
-      ...(env.NODE_ENV === "development" && error instanceof Error ? { details: error.message } : {}),
-    },
-  })
+  res.status(500).json({ success: false, data: null, message })
 }
