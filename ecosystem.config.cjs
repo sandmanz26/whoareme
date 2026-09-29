@@ -6,10 +6,11 @@ module.exports = {
     // ── Frontend (static SPA via serve) ───────────────────────────────────────
     {
       name:      "whoareyou-fe",
-      script:    "serve",
-      args:      "-s dist -l tcp://0.0.0.0:9091",
+      script:    "npm",
+      args:      "run preview",
       cwd:       BASE_PATH,
       instances: 1,
+      exec_mode: "fork",
       autorestart: true,
       watch:     false,
       env: {
