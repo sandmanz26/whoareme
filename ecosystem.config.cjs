@@ -20,7 +20,7 @@ module.exports = {
     // ── Backend (compiled Node) ───────────────────────────────────────────────
     {
       name:      "whoareyou-api",
-      script:    "dist/server.js",
+      script:    "dist/src/server.js",
       node_args: "--env-file=.env",
       cwd:       `${BASE_PATH}/server`,
       instances: 1,
