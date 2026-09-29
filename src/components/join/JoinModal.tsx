@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
+import axios from "axios"
 import { Modal } from "@/components/ui/Modal"
 import { Button } from "@/components/ui/Button"
-import { Field, SelectInput, TextInput } from "@/components/ui/Field"
+import { Field, PasswordInput, SelectInput, TextInput } from "@/components/ui/Field"
 import { ArrowRight, Check } from "@/components/ui/Icon"
 import { track } from "@/lib/analytics"
 import { initialsOf } from "@/lib/utils"
@@ -32,6 +33,7 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
   const { register } = useAccount()
   const [values, setValues] = useState<JoinValues>(EMPTY_JOIN_VALUES)
   const [errors, setErrors] = useState<JoinErrors>({})
+  const [serverError, setServerError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [working, setWorking] = useState(false)
 
@@ -41,8 +43,8 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
 
   function update<K extends keyof JoinValues>(key: K, value: JoinValues[K]) {
     setValues((current) => ({ ...current, [key]: value }))
-    // Clear the field's error as soon as the person starts fixing it.
     setErrors((current) => (current[key] ? { ...current, [key]: undefined } : current))
+    setServerError(null)
   }
 
   async function submit() {
@@ -56,30 +58,39 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
     // Hashing is async, so the button is disabled while it runs - PBKDF2 at
     // 150k iterations is deliberately not instant.
     setWorking(true)
-    await register(
-      {
-        name: values.name.trim(),
-        email: values.email.trim(),
-        role: values.role as RoleId,
-        // Filled in from the panel, not here.
-        location: "",
-        title: "",
-        years: "",
-        topics: [],
-        portfolio: "",
-        pitch: "",
-        photo: "",
-      },
-      values.password,
-    )
-    setWorking(false)
-    track("signup_completed")
-    setSubmitted(true)
+    try {
+      await register(
+        {
+          name: values.name.trim(),
+          email: values.email.trim(),
+          role: values.role as RoleId,
+          // Filled in from the panel, not here.
+          location: "",
+          title: "",
+          years: "",
+          topics: [],
+          portfolio: "",
+          pitch: "",
+          photo: "",
+        },
+        values.password,
+      )
+      track("signup_completed")
+      setSubmitted(true)
+    } catch (err) {
+      const msg = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message ?? "Something went wrong."
+        : "Something went wrong. Please try again."
+      setServerError(msg)
+    } finally {
+      setWorking(false)
+    }
   }
 
   function reset() {
     setValues(EMPTY_JOIN_VALUES)
     setErrors({})
+    setServerError(null)
     setSubmitted(false)
   }
 
@@ -169,9 +180,8 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
               hint="Guards the way back into this profile. Stored hashed, in this browser only."
             >
               {({ id, describedBy, invalid }) => (
-                <TextInput
+                <PasswordInput
                   id={id}
-                  type="password"
                   autoComplete="new-password"
                   aria-describedby={describedBy}
                   invalid={invalid}
@@ -182,6 +192,12 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
               )}
             </Field>
           </div>
+
+          {serverError && (
+            <p role="alert" className="text-sm font-medium text-pop-pink">
+              {serverError}
+            </p>
+          )}
 
           <div className="mt-8 flex items-center justify-between gap-3 border-t border-line pt-6">
             <Button type="button" variant="ghost" onClick={handleClose}>

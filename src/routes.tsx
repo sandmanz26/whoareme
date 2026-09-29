@@ -6,13 +6,15 @@ import { WorkPage } from "@/pages/WorkPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { PanelPage } from "@/pages/PanelPage";
 import { AdminPage } from "@/pages/AdminPage";
-import { SignInPage } from "@/pages/SignInPage";
+import { SignInPage } from "@/pages/SignInPage"
+import { GuestRoute } from "@/components/layout/GuestRoute";
 import { AboutPage } from "@/pages/AboutPage";
 import { ChangelogPage } from "@/pages/ChangelogPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
 import { TermsPage } from "@/pages/TermsPage";
 import { ContentPolicyPage } from "@/pages/ContentPolicyPage";
 import { AccessibilityPage } from "@/pages/AccessibilityPage";
+import { VerifyPage } from "@/pages/VerifyPage"
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
 export const router = createBrowserRouter([
@@ -29,8 +31,9 @@ export const router = createBrowserRouter([
       { path: "terms", element: <TermsPage /> },
       { path: "content-policy", element: <ContentPolicyPage /> },
       { path: "accessibility", element: <AccessibilityPage /> },
-      { path: "signin", element: <SignInPage /> },
-      { path: "reset", element: <SignInPage /> },
+      { path: "verify", element: <VerifyPage /> },
+      { path: "signin", element: <GuestRoute><SignInPage /></GuestRoute> },
+      { path: "reset", element: <GuestRoute><SignInPage /></GuestRoute> },
       { path: "panel", element: <PanelPage /> },
       { path: "panel/:section", element: <PanelPage /> },
       { path: "panel/:section/:entry", element: <PanelPage /> },

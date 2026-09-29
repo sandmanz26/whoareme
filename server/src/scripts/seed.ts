@@ -1,23 +1,20 @@
-import { ObjectId } from "mongodb"
-import { connect, disconnect } from "../db/client.js"
-import { users, works } from "../db/collections.js"
-import { ensureIndexes } from "../db/indexes.js"
-import { applyValidators } from "../db/schema.js"
-import { buildSearchBlob } from "../lib/text.js"
-import { languagesFor } from "../lib/languages.js"
-import { logger } from "../lib/logger.js"
-import type { RoleId, TopicId, UserDoc, WorkDoc, BusinessModelId } from "../types.js"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
+import mongoose, { Types } from "mongoose"
+import { env } from "../config/index.js"
+import User from "../models/user.js"
+import Work from "../models/work.js"
+import { buildSearchBlob } from "../utils/text.js"
 
-// The API never imports from the app's source tree — it must stay
-// independently deployable. `npm run export:fixtures` in the repo root
-// regenerates these from the front-end fixtures.
-import peopleFixture from "../../fixtures/people.json" with { type: "json" }
-import worksFixture from "../../fixtures/works.json" with { type: "json" }
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const FIXTURES = path.join(__dirname, "../../fixtures")
 
-const PEOPLE = peopleFixture as SeedPerson[]
-const SEED_WORK = worksFixture as SeedWork[]
+async function readJson<T>(name: string): Promise<T> {
+  const { default: data } = await import(path.join(FIXTURES, name), { with: { type: "json" } })
+  return data as T
+}
 
-interface SeedPerson {
+interface PersonFixture {
   id: string
   name: string
   title: string
@@ -29,212 +26,207 @@ interface SeedPerson {
   years: number
   open: boolean
   photo: string
-  /** Present in the exported fixtures; derived from the country if not. */
-  languages?: string[]
+  languages: string[]
+  bio: string
 }
 
-interface SeedWork {
+interface WorkFixture {
   id: string
+  template: string
+  model: string
+  skills: string[]
   authorId: string
   role: string
-  model?: string | null
   topics: string[]
-  skills: string[]
   title: string
-  summary: string
+  summary?: string
   year: number
-  duration: string
-  scope: string
-  problem: string
-  approach: string
-  outcome: string
-  stack: string[]
-  links: Array<{ label: string; href: string }>
-  details: Array<{ label: string; value: string; proof?: boolean }>
-  sections?: Array<{ heading: string; body: string }>
+  duration?: string
+  scope?: string
+  problem?: string
+  approach?: string
+  outcome?: string
+  stack?: string[]
+  links?: { label: string; href: string }[]
+  details?: { label: string; value: string; proof?: boolean }[]
+  sections?: { heading: string; body: string }[]
 }
 
-const DRY_RUN = process.argv.includes("--dry")
-
-function userFrom(person: SeedPerson): UserDoc {
-  const now = new Date()
-  const doc: UserDoc = {
-    _id: new ObjectId(),
-    slug: person.id,
-    name: person.name,
-    email: null,
-    passwordHash: null,
-    emailVerifiedAt: null,
-    emailVerifyTokenHash: null,
-    emailVerifyExpiresAt: null,
-    role: person.role as RoleId,
-    title: person.title,
-    company: person.company,
-    location: person.location,
-    years: person.years,
-    languages: person.languages ?? languagesFor(person.location),
-    topics: person.categories as TopicId[],
-    skills: person.skills,
-    openToWork: person.open,
-    photoUrl: person.photo,
-    portfolioUrl: "",
-    pitch: "",
-    seeded: true,
-    status: "active",
-    // Everyone registers as a member. Promotion to moderator or admin is a
-    // deliberate act, never a side effect of signing up.
-    access: "member",
-    counts: { publishedWorks: 0, topicUsage: {} },
-    searchBlob: "",
-    createdAt: now,
-    updatedAt: now,
-  }
-  doc.searchBlob = buildSearchBlob([
-    doc.name, doc.title, doc.company, doc.location, ...doc.skills, ...doc.topics,
-  ])
-  return doc
+function userSearchBlob(u: { name: string; title: string; company: string; location: string; skills: string[]; topics: string[] }) {
+  return buildSearchBlob([u.name, u.title, u.company, u.location, ...u.skills, ...u.topics])
 }
 
-function workFrom(entry: SeedWork, author: UserDoc): WorkDoc {
-  const now = new Date()
-  // Spread published dates across the year so "most recent" has real order.
-  const publishedAt = new Date(entry.year, (entry.id.charCodeAt(0) % 12), 1 + (entry.id.length % 27))
-
-  const doc: WorkDoc = {
-    _id: new ObjectId(),
-    slug: entry.id,
-    authorId: author._id,
-    author: {
-      slug: author.slug,
-      name: author.name,
-      title: author.title,
-      company: author.company,
-      photoUrl: author.photoUrl,
-      // The entry grid filters on these, so they travel with the snapshot.
-      years: author.years,
-      languages: author.languages,
-    },
-    mode: entry.sections && entry.sections.length > 0 ? "custom" : "template",
-    role: entry.role as RoleId,
-    topics: entry.topics as TopicId[],
-    model: (entry.model ?? null) as BusinessModelId | null,
-    skills: entry.skills,
-    title: entry.title,
-    summary: entry.summary,
-    year: entry.year,
-    duration: entry.duration,
-    scope: entry.scope,
-    problem: entry.problem,
-    approach: entry.approach,
-    outcome: entry.outcome,
-    sections: entry.sections ?? [],
-    details: entry.details.map((d) => ({ label: d.label, value: d.value, proof: Boolean(d.proof) })),
-    links: entry.links,
-    stack: entry.stack,
-    thumbnailId: null,
-    status: "published",
-    publishedAt,
-    metrics: { opens: 0 },
-    searchBlob: "",
-    createdAt: publishedAt,
-    updatedAt: now,
-  }
-
-  doc.searchBlob = buildSearchBlob([
-    doc.title, doc.summary, doc.problem, doc.approach, doc.outcome,
-    ...doc.sections.flatMap((s) => [s.heading, s.body]),
-    ...doc.details.flatMap((d) => [d.label, d.value]),
-    ...doc.skills, ...doc.stack, ...doc.topics, doc.model ?? "",
+function workSearchBlob(w: WorkFixture, author: { name: string; company: string; location: string }) {
+  return buildSearchBlob([
+    w.title, w.summary, w.problem, w.approach, w.outcome,
+    ...(w.sections ?? []).flatMap((s) => [s.heading, s.body]),
+    ...(w.details ?? []).flatMap((d) => [d.label, d.value]),
+    ...w.skills, ...(w.stack ?? []), ...w.topics,
+    w.model,
     author.name, author.company, author.location,
   ])
-  return doc
 }
 
 async function main() {
-  logger.info({ people: PEOPLE.length, work: SEED_WORK.length, dryRun: DRY_RUN }, "seeding")
+  await mongoose.connect(env.MONGODB_URI, { dbName: env.MONGODB_DB })
+  console.log("Connected to", env.MONGODB_DB)
 
-  const orphans = SEED_WORK.filter((w) => !PEOPLE.some((p) => p.id === w.authorId))
-  if (orphans.length > 0) {
-    throw new Error(`Work entries reference unknown authors: ${orphans.map((w) => w.id).join(", ")}`)
-  }
+  const people: PersonFixture[] = await readJson("people.json")
+  const works: WorkFixture[]    = await readJson("works.json")
 
-  if (DRY_RUN) {
-    logger.info("dry run: fixtures parsed cleanly, nothing written")
-    return
-  }
+  const now = new Date()
 
-  await connect()
-  await applyValidators()
-  await ensureIndexes()
+  // Upsert users
+  const slugToId = new Map<string, Types.ObjectId>()
+  for (const p of people) {
+    const topics = p.categories as string[]
+    const blob = userSearchBlob({ name: p.name, title: p.title, company: p.company, location: p.location, skills: p.skills, topics })
 
-  // Upsert people first, then read back so works can reference real _ids.
-  for (const person of PEOPLE) {
-    const doc = userFrom(person)
-    const { _id, createdAt, counts, ...rest } = doc
-    void _id
-    await users().updateOne(
-      { slug: doc.slug },
-      { $set: { ...rest, updatedAt: new Date() }, $setOnInsert: { _id: new ObjectId(), createdAt, counts } },
-      { upsert: true },
-    )
-  }
-
-  const bySlug = new Map(
-    (await users().find({ seeded: true }).toArray()).map((user) => [user.slug, user]),
-  )
-
-  for (const entry of SEED_WORK) {
-    const author = bySlug.get(entry.authorId)
-    if (!author) continue
-    const doc = workFrom(entry, author)
-    const { _id, createdAt, metrics, ...rest } = doc
-    void _id
-    await works().updateOne(
-      { slug: doc.slug },
+    const result = await User.findOneAndUpdate(
+      { slug: p.id },
       {
-        $set: { ...rest, updatedAt: new Date() },
-        $setOnInsert: { _id: new ObjectId(), createdAt, metrics },
+        $set: {
+          slug:            p.id,
+          name:            p.name,
+          title:           p.title,
+          company:         p.company,
+          role:            p.role,
+          topics,
+          location:        p.location,
+          skills:          p.skills,
+          years:           p.years,
+          openToWork:      p.open,
+          photoUrl:        p.photo,
+          languages:       p.languages,
+          pitch:           p.bio,
+          seeded:          true,
+          status:          "active",
+          access:          "member",
+          emailVerifiedAt: now,
+          searchBlob:      blob,
+          updatedAt:       now,
+        },
+        $setOnInsert: {
+          email:        null,
+          passwordHash: null,
+          token:        null,
+          portfolioUrl: "",
+          counts:       { publishedWorks: 0, topicUsage: {} },
+          createdAt:    now,
+          deletedAt:    null,
+          createdBy:    null,
+          updatedBy:    null,
+          deletedBy:    null,
+        },
+      },
+      { upsert: true, new: true },
+    ).lean()
+
+    if (result) slugToId.set(p.id, (result as { _id: Types.ObjectId })._id)
+  }
+  console.log(`Upserted ${people.length} users`)
+
+  // Build a lookup map for author snapshots
+  const userMap = new Map<string, PersonFixture>()
+  for (const p of people) userMap.set(p.id, p)
+
+  // Upsert works
+  let workCount = 0
+  for (const w of works) {
+    const authorId = slugToId.get(w.authorId)
+    if (!authorId) {
+      console.warn(`  skipping ${w.id}: unknown authorId ${w.authorId}`)
+      continue
+    }
+
+    const person = userMap.get(w.authorId)!
+    const blob = workSearchBlob(w, { name: person.name, company: person.company, location: person.location })
+
+    await Work.findOneAndUpdate(
+      { slug: w.id },
+      {
+        $set: {
+          slug:      w.id,
+          authorId,
+          author: {
+            slug:      person.id,
+            name:      person.name,
+            title:     person.title,
+            company:   person.company,
+            photoUrl:  person.photo,
+            years:     person.years,
+            languages: person.languages,
+          },
+          authorSuspended: false,
+          mode:     "template",
+          role:     w.role,
+          topics:   w.topics,
+          model:    w.model,
+          skills:   w.skills,
+          title:    w.title,
+          summary:  w.summary  ?? "",
+          year:     w.year,
+          duration: w.duration ?? "",
+          scope:    w.scope    ?? "",
+          problem:  w.problem  ?? "",
+          approach: w.approach ?? "",
+          outcome:  w.outcome  ?? "",
+          sections: w.sections ?? [],
+          details:  (w.details ?? []).map((d) => ({ ...d, proof: d.proof ?? false })),
+          links:    w.links ?? [],
+          stack:    w.stack ?? [],
+          thumbnailPath: null,
+          status:      "published" as const,
+          publishedAt: now,
+          metrics:     { opens: 0 },
+          searchBlob:  blob,
+          updatedAt:   now,
+        },
+        $setOnInsert: {
+          createdAt: now,
+          deletedAt: null,
+          createdBy: null,
+          updatedBy: null,
+          deletedBy: null,
+        },
       },
       { upsert: true },
     )
+    workCount++
   }
+  console.log(`Upserted ${workCount} works`)
 
-  // Counters are derived, never seeded by hand.
-  const counts = await works()
-    .aggregate<{ _id: { authorId: ObjectId; topic: TopicId }; n: number }>([
-      { $match: { status: "published" } },
-      { $unwind: "$topics" },
-      { $group: { _id: { authorId: "$authorId", topic: "$topics" }, n: { $sum: 1 } } },
-    ])
-    .toArray()
+  // Derive counts from published works
+  const pipeline = [
+    { $match: { status: "published" as const, deletedAt: null } },
+    {
+      $group: {
+        _id: "$authorId",
+        publishedWorks: { $sum: 1 },
+        topics: { $push: "$topics" },
+      },
+    },
+  ]
 
-  const totals = await works()
-    .aggregate<{ _id: ObjectId; n: number }>([
-      { $match: { status: "published" } },
-      { $group: { _id: "$authorId", n: { $sum: 1 } } },
-    ])
-    .toArray()
+  const rows = await Work.aggregate(pipeline)
+  for (const row of rows) {
+    const topicUsage: Record<string, number> = {}
+    for (const arr of row.topics as string[][]) {
+      for (const t of arr) topicUsage[t] = (topicUsage[t] ?? 0) + 1
+    }
 
-  const rollup = new Map<string, { publishedWorks: number; topicUsage: Record<string, number> }>()
-  for (const row of totals) rollup.set(String(row._id), { publishedWorks: row.n, topicUsage: {} })
-  for (const row of counts) {
-    const key = String(row._id.authorId)
-    const entry = rollup.get(key) ?? { publishedWorks: 0, topicUsage: {} }
-    entry.topicUsage[row._id.topic] = row.n
-    rollup.set(key, entry)
+    await User.updateOne(
+      { _id: row._id },
+      { $set: { "counts.publishedWorks": row.publishedWorks, "counts.topicUsage": topicUsage, updatedAt: now } },
+    )
   }
-  for (const [id, value] of rollup) {
-    await users().updateOne({ _id: new ObjectId(id) }, { $set: { counts: value } })
-  }
+  console.log(`Reconciled counts for ${rows.length} users`)
 
-  logger.info(
-    { users: await users().countDocuments(), works: await works().countDocuments() },
-    "seed complete",
-  )
-  await disconnect()
+  await mongoose.disconnect()
+  console.log("Done")
 }
 
-main().catch((error) => {
-  logger.fatal({ err: error }, "seed failed")
+main().catch((err) => {
+  console.error(err)
   process.exit(1)
 })

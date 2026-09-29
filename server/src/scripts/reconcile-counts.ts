@@ -1,67 +1,52 @@
-import { connect, disconnect } from "../db/client.js"
-import { users, works } from "../db/collections.js"
-import { logger } from "../lib/logger.js"
-import type { TopicId } from "../types.js"
+import mongoose from "mongoose"
+import { env } from "../config/index.js"
+import User from "../models/user.js"
+import Work from "../models/work.js"
 
-/**
- * Recomputes `users.counts` from `works` and repairs any drift.
- *
- * The counters are maintained by a guarded update inside a transaction, so
- * they should never diverge — but a crashed migration or a manual write can
- * do it, and a wrong counter silently blocks someone from publishing. Safe to
- * run against a live database.
- */
 async function main() {
-  await connect()
+  await mongoose.connect(env.MONGODB_URI, { dbName: env.MONGODB_DB })
+  console.log("Connected to", env.MONGODB_DB)
 
-  const rows = await works()
-    .aggregate<{ _id: { authorId: unknown; topic: TopicId }; n: number }>([
-      { $match: { status: "published" } },
-      { $unwind: "$topics" },
-      { $group: { _id: { authorId: "$authorId", topic: "$topics" }, n: { $sum: 1 } } },
-    ])
-    .toArray()
+  const rows = await Work.aggregate([
+    { $match: { status: "published" as const, deletedAt: null } },
+    {
+      $group: {
+        _id: "$authorId",
+        publishedWorks: { $sum: 1 },
+        topics: { $push: "$topics" },
+      },
+    },
+  ])
 
-  const totals = await works()
-    .aggregate<{ _id: unknown; n: number }>([
-      { $match: { status: "published" } },
-      { $group: { _id: "$authorId", n: { $sum: 1 } } },
-    ])
-    .toArray()
-
-  const truth = new Map<string, { publishedWorks: number; topicUsage: Record<string, number> }>()
-  for (const row of totals) {
-    truth.set(String(row._id), { publishedWorks: row.n, topicUsage: {} })
-  }
+  let updated = 0
+  const now = new Date()
   for (const row of rows) {
-    const key = String(row._id.authorId)
-    const entry = truth.get(key) ?? { publishedWorks: 0, topicUsage: {} }
-    entry.topicUsage[row._id.topic] = row.n
-    truth.set(key, entry)
+    const topicUsage: Record<string, number> = {}
+    for (const arr of row.topics as string[][]) {
+      for (const t of arr) topicUsage[t] = (topicUsage[t] ?? 0) + 1
+    }
+
+    await User.updateOne(
+      { _id: row._id },
+      { $set: { "counts.publishedWorks": row.publishedWorks, "counts.topicUsage": topicUsage, updatedAt: now } },
+    )
+    updated++
   }
 
-  let repaired = 0
-  const cursor = users().find({}, { projection: { _id: 1, slug: 1, counts: 1 } })
+  // Zero out counts for authors with no published works
+  const authorIds = rows.map((r) => r._id)
+  const zeroed = await User.updateMany(
+    { _id: { $nin: authorIds }, "counts.publishedWorks": { $gt: 0 } },
+    { $set: { "counts.publishedWorks": 0, "counts.topicUsage": {}, updatedAt: now } },
+  )
 
-  for await (const user of cursor) {
-    const actual = truth.get(String(user._id)) ?? { publishedWorks: 0, topicUsage: {} }
-    const stored = user.counts ?? { publishedWorks: 0, topicUsage: {} }
-    const drifted =
-      stored.publishedWorks !== actual.publishedWorks ||
-      JSON.stringify(stored.topicUsage ?? {}) !== JSON.stringify(actual.topicUsage)
+  console.log(`Reconciled ${updated} users, zeroed ${zeroed.modifiedCount}`)
 
-    if (!drifted) continue
-
-    await users().updateOne({ _id: user._id }, { $set: { counts: actual, updatedAt: new Date() } })
-    logger.warn({ slug: user.slug, stored, actual }, "repaired drifted counts")
-    repaired += 1
-  }
-
-  logger.info({ repaired }, "reconcile complete")
-  await disconnect()
+  await mongoose.disconnect()
+  console.log("Done")
 }
 
-main().catch((error) => {
-  logger.fatal({ err: error }, "reconcile failed")
+main().catch((err) => {
+  console.error(err)
   process.exit(1)
 })
