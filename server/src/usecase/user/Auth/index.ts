@@ -45,10 +45,11 @@ function searchBlobFor(u: { name: string; title: string; company: string; locati
 
 import type { IUser } from "../../../interface/IUser.js"
 
-type UserLike = Pick<IUser, "slug" | "name" | "email" | "emailVerifiedAt" | "role" | "title" | "company" | "location" | "years" | "languages" | "topics" | "skills" | "openToWork" | "photoUrl" | "portfolioUrl" | "pitch" | "counts" | "createdAt">
+type UserLike = Pick<IUser, "_id" | "slug" | "name" | "email" | "emailVerifiedAt" | "role" | "title" | "company" | "location" | "years" | "languages" | "topics" | "skills" | "openToWork" | "photoUrl" | "portfolioUrl" | "pitch" | "counts" | "createdAt">
 
 export function publicUser(user: UserLike) {
   return {
+    id:              user._id.toString(),
     slug:            user.slug,
     name:            user.name,
     email:           user.email,

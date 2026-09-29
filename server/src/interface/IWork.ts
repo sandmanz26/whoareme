@@ -44,6 +44,8 @@ export interface IWork {
   authorSuspended: boolean
 
   mode: "template" | "custom"
+  /** Which role template shaped this entry (e.g. "eng-shipped"). Display-only label. */
+  template?: string
   role: RoleId
   topics: TopicId[]
   model: BusinessModelId | null

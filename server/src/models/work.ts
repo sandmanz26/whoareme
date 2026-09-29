@@ -48,8 +48,9 @@ const WorkSchema = new Schema<IWork>(
 
     authorSuspended: { type: Boolean, default: false },
 
-    mode:   { type: String, required: true },
-    role:   { type: String, required: true },
+    mode:     { type: String, required: true },
+    template: { type: String, default: null },
+    role:     { type: String, required: true },
     topics: { type: [String], default: [] },
     model:  { type: String, default: null },
     skills: { type: [String], default: [] },
