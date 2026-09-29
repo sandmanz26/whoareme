@@ -7,7 +7,7 @@ module.exports = {
     {
       name:      "whoareyou-fe",
       script:    "serve",
-      args:      ["-s", "dist", "-l", "9091", "--no-clipboard"],
+      args:      "-s dist -l tcp://0.0.0.0:9091",
       cwd:       BASE_PATH,
       instances: 1,
       autorestart: true,
