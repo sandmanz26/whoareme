@@ -10,6 +10,8 @@ export interface IUser {
   emailVerifiedAt: Date | null
   emailVerifyTokenHash: string | null
   emailVerifyExpiresAt: Date | null
+  passwordResetTokenHash: string | null
+  passwordResetExpiresAt: Date | null
 
   role: RoleId
   title: string

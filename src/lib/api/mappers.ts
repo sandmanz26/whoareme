@@ -65,8 +65,9 @@ export function mapAccount(u: ApiUser): Account {
     portfolio:    u.portfolioUrl,
     pitch:        u.pitch,
     photo:        u.photoUrl,
-    passwordHash: "",
-    createdAt:    u.createdAt,
+    passwordHash:    "",
+    emailVerifiedAt: u.emailVerifiedAt,
+    createdAt:       u.createdAt,
   }
 }
 

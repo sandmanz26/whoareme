@@ -1,21 +1,22 @@
 import multer from "multer"
+import { randomBytes } from "node:crypto"
 import path from "node:path"
+import fs from "node:fs"
 import { env } from "../index.js"
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, "uploads/")
-  },
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname)
-    const name = path.basename(file.originalname, ext).replace(/[^a-z0-9]/gi, "-").toLowerCase()
-    cb(null, `${Date.now()}-${name}${ext}`)
-  },
-})
+function makeStorage(dir: string) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+  return multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, dir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase()
+      cb(null, `${randomBytes(16).toString("hex")}${ext}`)
+    },
+  })
+}
 
 function fileFilter(_req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback): void {
-  const allowed = ["image/jpeg", "image/png", "image/webp"]
-  if (allowed.includes(file.mimetype)) {
+  if (["image/jpeg", "image/png", "image/webp"].includes(file.mimetype)) {
     cb(null, true)
   } else {
     cb(new Error("Only JPEG, PNG and WebP images are allowed."))
@@ -23,13 +24,13 @@ function fileFilter(_req: Express.Request, file: Express.Multer.File, cb: multer
 }
 
 export const uploadThumbnail = multer({
-  storage,
+  storage: makeStorage("uploads/thumbnails"),
   limits: { fileSize: env.MAX_THUMBNAIL_BYTES },
   fileFilter,
 })
 
 export const uploadPhoto = multer({
-  storage,
+  storage: makeStorage("uploads/profiles"),
   limits: { fileSize: env.MAX_THUMBNAIL_BYTES },
   fileFilter,
 })

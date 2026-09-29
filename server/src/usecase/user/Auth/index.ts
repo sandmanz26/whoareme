@@ -15,11 +15,11 @@ export const registerSchema = z.object({
   name:         z.string().trim().min(2).max(120),
   email:        z.string().trim().toLowerCase().email(),
   password:     z.string().min(10).max(200),
-  location:     z.string().trim().min(2).max(120),
+  location:     z.string().trim().max(120).default(""),
   role:         z.enum(ROLES).refine(isRoleLive, { message: "That craft is not open yet." }),
-  title:        z.string().trim().min(2).max(120),
+  title:        z.string().trim().max(120).default(""),
   years:        z.coerce.number().int().min(0).max(60),
-  topics:       z.array(z.enum(TOPICS)).min(1).max(4),
+  topics:       z.array(z.enum(TOPICS)).max(4).default([]),
   portfolioUrl: z.string().trim().url().max(500).or(z.literal("")).default(""),
   pitch:        z.string().trim().max(400).default(""),
 })
@@ -202,6 +202,39 @@ export const AuthUsecase = {
     ).lean()
     if (!user) throw badRequest("That verification link is invalid or has expired.")
     return { slug: user.slug, email: user.email }
+  },
+
+  async RequestPasswordReset(email: string) {
+    const user = await User.findOne({ email: email.toLowerCase().trim(), status: "active" }).lean()
+    if (!user || !user.email) return { token: null, user: null }
+
+    const token = randomBytes(32).toString("base64url")
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000)
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { passwordResetTokenHash: hashToken(token), passwordResetExpiresAt: expiresAt, updatedAt: new Date() } },
+    )
+    return { token, user }
+  },
+
+  async ConfirmPasswordReset(token: string, password: string) {
+    const user = await User.findOneAndUpdate(
+      { passwordResetTokenHash: hashToken(token), passwordResetExpiresAt: { $gt: new Date() } },
+      { $set: { passwordResetTokenHash: null, passwordResetExpiresAt: null, updatedAt: new Date() } },
+      { new: true },
+    )
+    if (!user) throw badRequest("That reset link is invalid or has expired.")
+
+    const passwordHash = await hashPassword(password)
+    const newToken = signToken({
+      sub: user._id.toString(), slug: user.slug,
+      role: user.role as never, access: (user.access ?? "member") as never,
+    })
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { passwordHash, token: newToken, updatedAt: new Date() } },
+    )
+    return { user: publicUser(user as unknown as UserLike), token: newToken }
   },
 
   async GetUserById(userId: string) {

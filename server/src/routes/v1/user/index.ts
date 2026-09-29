@@ -28,8 +28,10 @@ UserRouter.post("/auth/login",           authLimiter, asyncErrorHandler(AuthCont
 UserRouter.post("/auth/logout",          isAuth(),    asyncErrorHandler(AuthController.Logout))
 UserRouter.get( "/auth/me",             isAuth(),    asyncErrorHandler(AuthController.Me))
 UserRouter.patch("/auth/me",            isAuth(),    asyncErrorHandler(AuthController.UpdateMe))
-UserRouter.post("/auth/verify/request", isAuth(), authLimiter, asyncErrorHandler(AuthController.RequestVerify))
-UserRouter.post("/auth/verify/confirm", authLimiter, asyncErrorHandler(AuthController.ConfirmVerify))
+UserRouter.post("/auth/verify/request",  isAuth(), authLimiter, asyncErrorHandler(AuthController.RequestVerify))
+UserRouter.post("/auth/verify/confirm",  authLimiter, asyncErrorHandler(AuthController.ConfirmVerify))
+UserRouter.post("/auth/forgot-password", authLimiter, asyncErrorHandler(AuthController.ForgotPassword))
+UserRouter.post("/auth/reset-password",  authLimiter, asyncErrorHandler(AuthController.ResetPassword))
 
 // ── People ────────────────────────────────────────────────────────────────────
 UserRouter.get("/people",        asyncErrorHandler(PeopleController.GetList))

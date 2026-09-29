@@ -1,27 +1,19 @@
 import { useRef, useState } from "react"
 import { Avatar } from "@/components/ui/Avatar"
 import { Trash, Upload } from "@/components/ui/Icon"
-import { dataUrlBytes, fileToAvatar, formatBytes } from "@/lib/image"
+import { api } from "@/lib/api/client"
+import { useAccount } from "@/hooks/useAccount"
 
 interface AvatarPickerProps {
   value: string
-  /** Drives the monogram and its tint while there is no photo. */
   name: string
   onChange: (photo: string) => void
 }
 
-/**
- * Optional, like the case-study cover.
- *
- * The monogram is a real fallback rather than a placeholder to be ashamed of:
- * it is deterministic, tinted from the person's own name, and it never looks
- * broken. Plenty of people have good reasons not to put their face on a public
- * directory, and a profile should not read as unfinished because of it.
- *
- * The file is downscaled to 320px before it is stored, because everything here
- * shares one `localStorage` budget with the person's drafts.
- */
+type ApiResponse<T> = { success: boolean; data: T; message: string }
+
 export function AvatarPicker({ value, name, onChange }: AvatarPickerProps) {
+  const { refreshAccount } = useAccount()
   const input = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -31,13 +23,35 @@ export function AvatarPicker({ value, name, onChange }: AvatarPickerProps) {
     setError(null)
     setBusy(true)
     try {
-      onChange(await fileToAvatar(file))
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not use that image.")
+      const form = new FormData()
+      form.append("file", file)
+      const res = await api.post<ApiResponse<{ photoUrl: string }>>(
+        "/user/uploads/profile/photo",
+        form,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      )
+      const url = res.data.data.photoUrl
+      onChange(url)
+      await refreshAccount()
+    } catch {
+      setError("Could not upload that image. Check the format and size (max 1.5 MB).")
     } finally {
       setBusy(false)
-      // Clearing lets the same file be picked again after a removal.
       if (input.current) input.current.value = ""
+    }
+  }
+
+  async function handleRemove() {
+    setError(null)
+    setBusy(true)
+    try {
+      await api.delete("/user/uploads/profile/photo")
+      onChange("")
+      await refreshAccount()
+    } catch {
+      setError("Could not remove the photo.")
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -61,14 +75,15 @@ export function AvatarPicker({ value, name, onChange }: AvatarPickerProps) {
               className="inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-pill border border-ink/15 bg-card px-4 font-display text-sm font-medium text-ink transition-colors duration-200 hover:border-ink disabled:opacity-50"
             >
               <Upload size={15} />
-              {busy ? "Working…" : value ? "Replace" : "Upload a photo"}
+              {busy ? "Uploading…" : value ? "Replace" : "Upload a photo"}
             </button>
 
             {value && (
               <button
                 type="button"
-                onClick={() => onChange("")}
-                className="inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-pill px-3 font-display text-sm font-medium text-muted transition-colors duration-200 hover:text-pop-pink"
+                disabled={busy}
+                onClick={handleRemove}
+                className="inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-pill px-3 font-display text-sm font-medium text-muted transition-colors duration-200 hover:text-pop-pink disabled:opacity-50"
               >
                 <Trash size={15} />
                 Remove
@@ -78,7 +93,7 @@ export function AvatarPicker({ value, name, onChange }: AvatarPickerProps) {
 
           <p className="text-xs text-muted">
             {value
-              ? `Stored at ${formatBytes(dataUrlBytes(value))} in this browser.`
+              ? "Photo saved. Visible on your profile immediately."
               : "Optional. Without one you get a monogram tinted from your name."}
           </p>
           {error && (
@@ -92,7 +107,7 @@ export function AvatarPicker({ value, name, onChange }: AvatarPickerProps) {
       <input
         ref={input}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         className="sr-only"
         onChange={(event) => handleFile(event.target.files?.[0])}
       />

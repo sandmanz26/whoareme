@@ -21,6 +21,7 @@ export interface Account {
    * and ask them to set one" rather than locking them out of their own data.
    */
   passwordHash: string
+  emailVerifiedAt: string | null
   createdAt: string
 }
 

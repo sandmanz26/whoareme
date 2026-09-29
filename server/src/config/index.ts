@@ -26,6 +26,7 @@ const schema = z.object({
   MAX_THUMBNAIL_BYTES: z.coerce.number().int().positive().default(1_500_000),
 
   APP_BASE_URL: z.string().url().default("http://localhost:9800"),
+  API_BASE_URL: z.string().url().default("http://localhost:4000"),
 
   MAIL_TRANSPORT: z.enum(["none", "log", "http"]).default("none"),
   MAIL_API_URL: z.string().default(""),

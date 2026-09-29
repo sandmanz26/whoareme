@@ -3,7 +3,7 @@ import { z } from "zod"
 import { AuthUsecase, loginSchema, registerSchema, updateProfileSchema } from "../../../usecase/user/Auth/index.js"
 import { sendResponse } from "../../../utils/express.js"
 import { ApiError } from "../../../middleware/error.js"
-import { mailConfigured, sendMail, verificationMail } from "../../../service/mail.js"
+import { mailConfigured, sendMail, verificationMail, passwordResetMail } from "../../../service/mail.js"
 import { env } from "../../../config/index.js"
 
 const verifyConfirmSchema = z.object({ token: z.string().min(16).max(200) })
@@ -61,5 +61,29 @@ export const AuthController = {
     const { token } = verifyConfirmSchema.parse(req.body)
     const data = await AuthUsecase.ConfirmEmailVerification(token)
     sendResponse(res, 200, true, data, "Email verified.")
+  },
+
+  async ForgotPassword(req: Request, res: Response) {
+    const { email } = z.object({ email: z.string().trim().toLowerCase().email() }).parse(req.body)
+    const result = await AuthUsecase.RequestPasswordReset(email)
+
+    if (!result.user) {
+      return sendResponse(res, 200, true, { deliveredBy: "none" }, "If that email is in our system, a reset link is on its way.")
+    }
+    if (!mailConfigured()) {
+      return sendResponse(res, 200, true, { deliveredBy: "response", token: result.token }, "")
+    }
+    const sent = await sendMail(passwordResetMail(result.user.email as string, result.user.name as string, result.token!))
+    if (!sent.sent) throw new ApiError(502, "mail_failed", `We could not send the email. ${sent.reason}`)
+    sendResponse(res, 200, true, { deliveredBy: sent.transport }, "If that email is in our system, a reset link is on its way.")
+  },
+
+  async ResetPassword(req: Request, res: Response) {
+    const { token, password } = z.object({
+      token:    z.string().min(16).max(200),
+      password: z.string().min(10).max(200),
+    }).parse(req.body)
+    const data = await AuthUsecase.ConfirmPasswordReset(token, password)
+    sendResponse(res, 200, true, data, "Password reset successfully.")
   },
 }

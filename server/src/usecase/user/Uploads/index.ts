@@ -2,15 +2,16 @@ import fs from "node:fs/promises"
 import path from "node:path"
 import Work from "../../../models/work.js"
 import User from "../../../models/user.js"
+import { env } from "../../../config/index.js"
 import { forbidden, notFound } from "../../../middleware/error.js"
 
-function isOurFile(filename: string | null): boolean {
-  return Boolean(filename && !filename.startsWith("http"))
-}
-
-async function removeFile(filename: string | null) {
-  if (!isOurFile(filename)) return
-  await fs.unlink(path.join("uploads", filename!)).catch(() => {})
+/** Converts a stored full URL back to a local file path for deletion. */
+async function removeFile(storedUrl: string | null | undefined) {
+  if (!storedUrl) return
+  const base = env.API_BASE_URL.replace(/\/$/, "")
+  if (!storedUrl.startsWith(base + "/")) return
+  const rel = storedUrl.slice(base.length + 1) // e.g. "profiles/abc.jpg"
+  await fs.unlink(path.join("uploads", rel)).catch(() => {})
 }
 
 export const UploadsUsecase = {
@@ -20,9 +21,10 @@ export const UploadsUsecase = {
     if (work.authorId.toString() !== userId) throw forbidden("That entry belongs to someone else.")
 
     await removeFile(work.thumbnailPath)
-    await Work.updateOne({ _id: workId }, { $set: { thumbnailPath: filename, updatedAt: new Date() } })
+    const url = `${env.API_BASE_URL}/thumbnails/${filename}`
+    await Work.updateOne({ _id: workId }, { $set: { thumbnailPath: url, updatedAt: new Date() } })
 
-    return { thumbnailPath: filename, url: `/${filename}` }
+    return { thumbnailPath: url }
   },
 
   async DeleteThumbnail(userId: string, workId: string) {
@@ -38,9 +40,8 @@ export const UploadsUsecase = {
     const user = await User.findOne({ _id: userId, status: "active" }).lean()
     if (!user) throw notFound("Account")
 
-    await removeFile(user.photoUrl && !user.photoUrl.startsWith("http") ? user.photoUrl.replace(/^\//, "") : null)
-
-    const url = `/${filename}`
+    await removeFile(user.photoUrl)
+    const url = `${env.API_BASE_URL}/profiles/${filename}`
     await Promise.all([
       User.updateOne({ _id: userId }, { $set: { photoUrl: url, updatedAt: new Date() } }),
       Work.updateMany({ authorId: userId }, { $set: { "author.photoUrl": url } }),
@@ -53,10 +54,7 @@ export const UploadsUsecase = {
     const user = await User.findOne({ _id: userId, status: "active" }).lean()
     if (!user) throw notFound("Account")
 
-    if (user.photoUrl && !user.photoUrl.startsWith("http")) {
-      await removeFile(user.photoUrl.replace(/^\//, ""))
-    }
-
+    await removeFile(user.photoUrl)
     await Promise.all([
       User.updateOne({ _id: userId }, { $set: { photoUrl: "", updatedAt: new Date() } }),
       Work.updateMany({ authorId: userId }, { $set: { "author.photoUrl": "" } }),

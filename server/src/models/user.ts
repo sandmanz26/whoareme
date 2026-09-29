@@ -9,8 +9,10 @@ const UserSchema = new Schema<IUser>(
     email: { type: String, default: null, lowercase: true, trim: true },
     passwordHash:          { type: String, default: null },
     emailVerifiedAt:       { type: Date,   default: null },
-    emailVerifyTokenHash:  { type: String, default: null },
-    emailVerifyExpiresAt:  { type: Date,   default: null },
+    emailVerifyTokenHash:   { type: String, default: null },
+    emailVerifyExpiresAt:   { type: Date,   default: null },
+    passwordResetTokenHash: { type: String, default: null },
+    passwordResetExpiresAt: { type: Date,   default: null },
 
     role:         { type: String, required: true },
     title:        { type: String, default: "" },
