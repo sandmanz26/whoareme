@@ -35,3 +35,11 @@ export const writeLimiter = rateLimit({
   legacyHeaders: false,
   skip: skipInTests,
 })
+
+export const funnelLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  skip: skipInTests,
+})

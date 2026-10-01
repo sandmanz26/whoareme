@@ -25,9 +25,9 @@ export const isOptionalAuth = async (req: Request, _res: Response, next: NextFun
     const authHeader = req.headers.authorization
     const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : null
     if (token) {
-      const user = await User.findOne({ token, status: "active" }).select("_id slug role access token")
+      try { jwt.verify(token, env.JWT_SECRET) } catch { return next() }
+      const user = await User.findOne({ token, status: "active" }).select("_id slug role access")
       if (user) {
-        try { jwt.verify(token, env.JWT_SECRET) } catch { return next() }
         req.user = {
           id: user._id.toString(),
           slug: user.slug,
@@ -59,18 +59,16 @@ export const isAuth = (requiredAccess?: "moderator" | "admin") =>
         return
       }
 
-      const user = await User.findOne({ token, status: "active" }).select(
-        "_id slug role access token",
-      )
-
-      if (!user) {
+      try {
+        jwt.verify(token, env.JWT_SECRET)
+      } catch {
         res.status(401).json({ success: false, data: null, message: "Session invalid or expired." })
         return
       }
 
-      try {
-        jwt.verify(token, env.JWT_SECRET)
-      } catch {
+      const user = await User.findOne({ token, status: "active" }).select("_id slug role access")
+
+      if (!user) {
         res.status(401).json({ success: false, data: null, message: "Session invalid or expired." })
         return
       }

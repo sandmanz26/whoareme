@@ -47,27 +47,36 @@ import type { IUser } from "../../../interface/IUser.js"
 
 type UserLike = Pick<IUser, "_id" | "slug" | "name" | "email" | "emailVerifiedAt" | "role" | "title" | "company" | "location" | "years" | "languages" | "topics" | "skills" | "openToWork" | "photoUrl" | "portfolioUrl" | "pitch" | "counts" | "createdAt">
 
+/** Safe for any audience — no PII, no internal state. */
 export function publicUser(user: UserLike) {
   return {
-    id:              user._id.toString(),
-    slug:            user.slug,
-    name:            user.name,
+    id:           user._id.toString(),
+    slug:         user.slug,
+    name:         user.name,
+    role:         user.role,
+    title:        user.title,
+    company:      user.company,
+    location:     user.location,
+    years:        user.years,
+    languages:    user.languages ?? [],
+    topics:       user.topics,
+    skills:       user.skills,
+    openToWork:   user.openToWork,
+    photoUrl:     user.photoUrl,
+    portfolioUrl: user.portfolioUrl,
+    pitch:        user.pitch,
+    counts:       { publishedWorks: user.counts.publishedWorks },
+    createdAt:    user.createdAt,
+  }
+}
+
+/** Owner-only — adds email, emailVerifiedAt, and full quota counts. */
+function ownerUser(user: UserLike) {
+  return {
+    ...publicUser(user),
     email:           user.email,
     emailVerifiedAt: user.emailVerifiedAt,
-    role:            user.role,
-    title:           user.title,
-    company:         user.company,
-    location:        user.location,
-    years:           user.years,
-    languages:       user.languages ?? [],
-    topics:          user.topics,
-    skills:          user.skills,
-    openToWork:      user.openToWork,
-    photoUrl:        user.photoUrl,
-    portfolioUrl:    user.portfolioUrl,
-    pitch:           user.pitch,
     counts:          user.counts,
-    createdAt:       user.createdAt,
   }
 }
 
@@ -113,7 +122,7 @@ export const AuthUsecase = {
     })
     await user.save()
 
-    return { user: publicUser(user as unknown as UserLike), token }
+    return { user: ownerUser(user as unknown as UserLike), token }
   },
 
   async Login(input: z.infer<typeof loginSchema>) {
@@ -128,7 +137,7 @@ export const AuthUsecase = {
     user.token = token
     await user.save()
 
-    return { user: publicUser(user as unknown as UserLike), token }
+    return { user: ownerUser(user as unknown as UserLike), token }
   },
 
   async Logout(userId: string) {
@@ -138,7 +147,7 @@ export const AuthUsecase = {
   async Me(userId: string) {
     const user = await User.findOne({ _id: userId, status: "active" }).lean()
     if (!user) throw notFound("Account")
-    return publicUser(user as unknown as UserLike)
+    return ownerUser(user as unknown as UserLike)
   },
 
   async UpdateProfile(userId: string, patch: z.infer<typeof updateProfileSchema>) {
@@ -176,7 +185,7 @@ export const AuthUsecase = {
 
     const updated = await User.findOne({ _id: userId, status: "active" }).lean()
     if (!updated) throw notFound("Account")
-    return publicUser(updated as unknown as UserLike)
+    return ownerUser(updated as unknown as UserLike)
   },
 
   async RequestEmailVerification(userId: string) {
@@ -234,11 +243,11 @@ export const AuthUsecase = {
       { _id: user._id },
       { $set: { passwordHash, token: newToken, updatedAt: new Date() } },
     )
-    return { user: publicUser(user as unknown as UserLike), token: newToken }
+    return { user: ownerUser(user as unknown as UserLike), token: newToken }
   },
 
   async GetUserById(userId: string) {
-    const user = await User.findOne({ _id: userId, status: "active" }).lean()
+    const user = await User.findOne({ _id: userId, status: "active" }, "email name").lean()
     if (!user) throw notFound("Account")
     return user
   },

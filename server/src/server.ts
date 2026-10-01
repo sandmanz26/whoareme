@@ -11,7 +11,7 @@ import AppRouter from "./routes/index.js"
 
 const app = express()
 
-app.set("trust proxy", env.NODE_ENV === "production" ? 1 : false)
+app.set("trust proxy", env.TRUST_PROXY ?? (env.NODE_ENV === "production" ? 1 : false))
 app.disable("x-powered-by")
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }))

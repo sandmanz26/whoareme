@@ -192,7 +192,7 @@ async function main() {
   // Me
   const me = await get(base, "/auth/me", loginToken)
   assertEq("GET /auth/me → 200", me.status, 200)
-  assertEq("me.slug matches", ((me.json["data"] as Json)["slug"]), userId)
+  assertEq("me.slug matches", ((me.json["data"] as Json)["user"] as Json)["slug"], userId)
 
   // Unauthenticated me
   const meNoAuth = await get(base, "/auth/me")
@@ -201,7 +201,7 @@ async function main() {
   // Update profile
   const up = await patch(base, "/auth/me", { title: "Staff Engineer", years: 6 }, loginToken)
   assertEq("PATCH /auth/me → 200", up.status, 200)
-  assertEq("profile title updated", ((up.json["data"] as Json)["title"]), "Staff Engineer")
+  assertEq("profile title updated", ((up.json["data"] as Json)["user"] as Json)["title"], "Staff Engineer")
 
   // Email verify request (MAIL_TRANSPORT=none returns the token)
   const vreq = await post(base, "/auth/verify/request", {}, loginToken)
@@ -230,7 +230,7 @@ async function main() {
       const slug = items[0]!["slug"] as string
       const person = await get(base, `/people/${slug}`)
       assertEq(`GET /people/${slug} → 200`, person.status, 200)
-      assert("person has slug", typeof ((person.json["data"] as Json)["person"] as Json)["slug"] === "string")
+      assert("person has slug", typeof ((person.json["data"] as Json)["user"] as Json)["slug"] === "string")
 
       // Person's work
       const pw = await get(base, `/people/${slug}/work`)
@@ -267,7 +267,7 @@ async function main() {
   // Mine list
   const mineList = await get(base, "/work/mine/list", loginToken)
   assertEq("GET /work/mine/list → 200", mineList.status, 200)
-  assert("mine list is array", Array.isArray(mineList.json["data"]))
+  assert("mine list is array", Array.isArray((mineList.json["data"] as Json)["items"]))
 
   // Mine by id
   const mineById = await get(base, `/work/mine/${workId}`, loginToken)
@@ -352,7 +352,7 @@ async function main() {
         targetKind: "work",
         reason:     "false-claim",
       })
-      assertEq("POST /reports → 201", r.status, 201)
+      assertEq("POST /reports → 202", r.status, 202)
 
       // Duplicate report collapses silently (same hash)
       const r2 = await post(base, "/reports", {
@@ -444,7 +444,7 @@ async function main() {
   // Check notice was created
   const notices = await get(base, "/notices", targetToken)
   assertEq("GET /notices → 200", notices.status, 200)
-  const noticeList = notices.json["data"] as Json[]
+  const noticeList = ((notices.json["data"] as Json)["items"] ?? notices.json["data"]) as Json[]
   assert("notice created for unpublish", Array.isArray(noticeList) && noticeList.length > 0)
 
   const noticeId = noticeList[0]?.["_id"] as string
@@ -473,7 +473,8 @@ async function main() {
   console.log("\n§11 Appeals")
   {
     // Target user appeals the unpublish notice (from the first unpublish that was then re-published)
-    const noticeList2 = (await get(base, "/notices", targetToken)).json["data"] as Json[]
+    const noticeRes2  = await get(base, "/notices", targetToken)
+    const noticeList2 = ((noticeRes2.json["data"] as Json)["items"] ?? noticeRes2.json["data"]) as Json[]
     const unpublishNotice = noticeList2.find((n) => n["action"] === "unpublish")
     const appealNoticeId  = unpublishNotice?.["_id"] as string | undefined
 
@@ -481,7 +482,7 @@ async function main() {
       const appeal = await post(base, `/notices/${appealNoticeId}/appeal`, {
         text: "I believe this decision was incorrect because the content meets all guidelines.",
       }, targetToken)
-      assertEq("POST /notices/:id/appeal → 200", appeal.status, 200)
+      assertEq("POST /notices/:id/appeal → 201", appeal.status, 201)
 
       // Double appeal → 409
       const appeal2 = await post(base, `/notices/${appealNoticeId}/appeal`, { text: "Trying again" }, targetToken)
@@ -535,8 +536,9 @@ async function main() {
   {
     const r = await get(mod, "/log", modToken)
     assertEq("GET /moderation/log → 200", r.status, 200)
-    assert("audit log is array", Array.isArray(r.json["data"]))
-    assert("audit log has entries", (r.json["data"] as Json[]).length > 0)
+    const logItems = ((r.json["data"] as Json)["items"] ?? r.json["data"]) as Json[]
+    assert("audit log is array", Array.isArray(logItems))
+    assert("audit log has entries", logItems.length > 0)
   }
 
   // ── § 13 Moderation settings ──────────────────────────────────────────────────

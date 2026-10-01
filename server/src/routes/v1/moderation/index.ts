@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { asyncErrorHandler } from "../../../middleware/index.js"
 import { isAuth } from "../../../middleware/userAuth.js"
-import { writeLimiter } from "../../../middleware/rateLimit.js"
+import { funnelLimiter } from "../../../middleware/rateLimit.js"
 
 import { AnalyticsController }         from "../../../controller/moderation/Analytics/index.js"
 import { ModerationReportsController } from "../../../controller/moderation/Reports/index.js"
@@ -13,7 +13,7 @@ import { ModerationSettingsController } from "../../../controller/moderation/Set
 const ModerationRouter = Router()
 
 // ── Analytics (funnel ingest is public; read is moderator-gated) ─────────────
-ModerationRouter.post("/analytics/funnel", writeLimiter, asyncErrorHandler(AnalyticsController.RecordFunnel))
+ModerationRouter.post("/analytics/funnel", funnelLimiter, asyncErrorHandler(AnalyticsController.RecordFunnel))
 ModerationRouter.get( "/analytics/funnel", isAuth("moderator"), asyncErrorHandler(AnalyticsController.GetFunnel))
 
 // ── Moderator-only below ─────────────────────────────────────────────────────

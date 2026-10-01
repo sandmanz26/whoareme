@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto"
+import { createHash, createHmac } from "node:crypto"
 import { env } from "../config/index.js"
 
 export function viewerHash(ip: string, userAgent: string, day: string): string {
@@ -8,5 +8,5 @@ export function viewerHash(ip: string, userAgent: string, day: string): string {
 }
 
 export function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex")
+  return createHmac("sha256", env.JWT_SECRET).update(token).digest("hex")
 }

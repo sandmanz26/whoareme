@@ -2,7 +2,7 @@ import { z } from "zod"
 
 const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  PORT: z.coerce.number().int().positive().default(4000),
+  PORT: z.coerce.number().int().min(0).default(4000),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
 
   MONGODB_URI: z.string().min(1),
@@ -24,6 +24,10 @@ const schema = z.object({
     ),
 
   MAX_THUMBNAIL_BYTES: z.coerce.number().int().positive().default(1_500_000),
+
+  // Number of trusted reverse-proxy hops (0 = don't trust any proxy).
+  // Override in staging if it sits behind a load balancer.
+  TRUST_PROXY: z.coerce.number().int().min(0).max(10).optional(),
 
   APP_BASE_URL: z.string().url().default("http://localhost:9800"),
   API_BASE_URL: z.string().url().default("http://localhost:4000"),

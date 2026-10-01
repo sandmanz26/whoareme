@@ -81,6 +81,25 @@ const CARD_PROJECTION = {
   details: { $filter: { input: "$details", as: "d", cond: { $eq: ["$$d.proof", true] } } },
 }
 
+// Allowlist for the full public work detail — excludes internal/operational fields.
+const PUBLIC_WORK_DETAIL_PROJECTION = {
+  _id: 1, slug: 1, title: 1, summary: 1, role: 1, template: 1, topics: 1, model: 1,
+  skills: 1, year: 1, duration: 1, scope: 1, problem: 1, approach: 1, outcome: 1,
+  sections: 1, details: 1, links: 1, stack: 1,
+  thumbnailPath: 1, author: 1, publishedAt: 1, updatedAt: 1, createdAt: 1,
+  "metrics.opens": 1,
+  authorId: 1, // retained for RecordOpen in the controller; not a secret
+}
+
+// Fields stripped from mine (owner) responses before serialization.
+const MINE_STRIP_FIELDS = new Set(["searchBlob", "authorSuspended", "deletedAt", "deletedBy", "updatedBy", "createdBy", "__v"])
+
+function toMineDoc(doc: Awaited<ReturnType<typeof getMineOrThrow>>) {
+  const obj = doc.toObject({ versionKey: false }) as Record<string, unknown>
+  for (const key of MINE_STRIP_FIELDS) delete obj[key]
+  return obj
+}
+
 const SORTS: Record<string, Record<string, 1 | -1>> = {
   recent:  { publishedAt: -1, _id: -1 },
   title:   { title: 1, _id: 1 },
@@ -172,7 +191,7 @@ export const WorkUsecase = {
   },
 
   async GetBySlug(slug: string) {
-    const work = await WorkModel.findOne({ slug, ...PUBLIC_WORK }).lean()
+    const work = await WorkModel.findOne({ slug, ...PUBLIC_WORK }, PUBLIC_WORK_DETAIL_PROJECTION).lean()
     if (!work) throw notFound("Case study")
 
     const [moreByAuthor, similar] = await Promise.all([
@@ -203,11 +222,13 @@ export const WorkUsecase = {
   },
 
   async GetMineList(userId: string) {
-    return WorkModel.find({ authorId: userId, deletedAt: null }).sort({ updatedAt: -1 }).lean()
+    return WorkModel.find({ authorId: userId, deletedAt: null })
+      .select("-searchBlob -authorSuspended -deletedBy -updatedBy -createdBy")
+      .sort({ updatedAt: -1 }).lean()
   },
 
   async GetMineById(userId: string, workId: string) {
-    return getMineOrThrow(userId, workId)
+    return toMineDoc(await getMineOrThrow(userId, workId))
   },
 
   async Add(userId: string, input: WorkInput) {
@@ -218,7 +239,7 @@ export const WorkUsecase = {
       Boolean(await WorkModel.exists({ slug: candidate })),
     )
 
-    return WorkModel.create({
+    const created = await WorkModel.create({
       slug,
       authorId: userId,
       author:   authorSnapshot(author as unknown as AuthorLike),
@@ -229,6 +250,7 @@ export const WorkUsecase = {
       metrics:       { opens: 0 },
       searchBlob:    workSearchBlob(input, author as unknown as AuthorLike),
     })
+    return toMineDoc(created)
   },
 
   async Update(userId: string, workId: string, input: WorkInput) {
@@ -240,7 +262,7 @@ export const WorkUsecase = {
       { _id: workId },
       { $set: { ...input, author: authorSnapshot(author as unknown as AuthorLike), searchBlob: workSearchBlob(input, author as unknown as AuthorLike), updatedAt: new Date() } },
     )
-    return getMineOrThrow(userId, workId)
+    return toMineDoc(await getMineOrThrow(userId, workId))
   },
 
   async Publish(userId: string, workId: string) {
@@ -296,12 +318,12 @@ export const WorkUsecase = {
       throw err
     }
 
-    return getMineOrThrow(userId, workId)
+    return toMineDoc(await getMineOrThrow(userId, workId))
   },
 
   async Unpublish(userId: string, workId: string) {
     const work = await getMineOrThrow(userId, workId)
-    if (work.status !== "published") return work
+    if (work.status !== "published") return toMineDoc(work)
 
     const topics = work.topics as string[]
     await WorkModel.updateOne({ _id: workId }, { $set: { status: "draft" as const, publishedAt: null, updatedAt: new Date() } })
@@ -310,7 +332,7 @@ export const WorkUsecase = {
       { $inc: { "counts.publishedWorks": -1, ...Object.fromEntries(topics.map((t) => [`counts.topicUsage.${t}`, -1])) } },
     )
 
-    return getMineOrThrow(userId, workId)
+    return toMineDoc(await getMineOrThrow(userId, workId))
   },
 
   async Delete(userId: string, workId: string) {

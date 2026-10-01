@@ -38,7 +38,7 @@ export const AuthController = {
   },
 
   async RequestVerify(req: Request, res: Response) {
-    if (env.NODE_ENV === "production" && !mailConfigured()) {
+    if (!mailConfigured() && env.NODE_ENV === "production") {
       throw new ApiError(503, "not_configured", "Email verification needs a mail transport.")
     }
 
@@ -71,6 +71,9 @@ export const AuthController = {
       return sendResponse(res, 200, true, { deliveredBy: "none" }, "If that email is in our system, a reset link is on its way.")
     }
     if (!mailConfigured()) {
+      if (env.NODE_ENV === "production") {
+        throw new ApiError(503, "not_configured", "Email delivery is not configured.")
+      }
       return sendResponse(res, 200, true, { deliveredBy: "response", token: result.token }, "")
     }
     const sent = await sendMail(passwordResetMail(result.user.email as string, result.user.name as string, result.token!))

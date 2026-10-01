@@ -30,6 +30,15 @@ const CARD_PROJECTION = {
   publishedWorks: "$counts.publishedWorks",
 }
 
+// Explicit allowlist — any new schema field is excluded by default.
+const PUBLIC_PROFILE_PROJECTION = {
+  slug: 1, name: 1, title: 1, company: 1, location: 1, role: 1,
+  topics: 1, skills: 1, years: 1, languages: 1, openToWork: 1,
+  photoUrl: 1, portfolioUrl: 1, pitch: 1,
+  "counts.publishedWorks": 1,
+  createdAt: 1,
+}
+
 const PUBLIC_PERSON = { status: "active" as const, role: { $in: LIVE_ROLES }, deletedAt: null }
 
 function isoDay(date = new Date()) {
@@ -105,7 +114,7 @@ export const PeopleUsecase = {
   async GetBySlug(slug: string) {
     const user = await User.findOne(
       { slug, status: "active" as const, role: { $in: LIVE_ROLES }, deletedAt: null },
-      { passwordHash: 0, email: 0, searchBlob: 0, token: 0, emailVerifyTokenHash: 0 },
+      PUBLIC_PROFILE_PROJECTION,
     ).lean()
     if (!user) throw notFound("Person")
     return user
