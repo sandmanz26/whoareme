@@ -105,6 +105,7 @@ export function WorkEditor({
   function toggleTopic(id: CategoryId) {
     const selected = state.topics.includes(id)
     if (!selected && (usage[id] ?? 0) >= TOPIC_QUOTA) return
+    if (!selected && state.topics.length >= 4) return
     patch({ topics: selected ? state.topics.filter((t) => t !== id) : [...state.topics, id] })
     setErrors((current) => ({ ...current, topics: "" }))
   }
@@ -389,6 +390,7 @@ function TopicQuotaGroup({
   onToggle: (id: CategoryId) => void
   error?: string
 }) {
+  const atMax = selected.length >= 4
   return (
     <fieldset className="flex flex-col gap-2">
       <legend className="mb-2 font-display text-sm font-medium text-ink">Topics</legend>
@@ -396,7 +398,7 @@ function TopicQuotaGroup({
         {CATEGORIES.map((category) => {
           const used = usage[category.id] ?? 0
           const isSelected = selected.includes(category.id)
-          const atCap = !isSelected && used >= TOPIC_QUOTA
+          const atCap = !isSelected && (used >= TOPIC_QUOTA || atMax)
 
           return (
             <button

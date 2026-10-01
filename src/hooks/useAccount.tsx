@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import axios from "axios"
 import type { Account, WorkDraft } from "@/data/account"
 import { readJson, removeKey, writeJson } from "@/lib/storage"
@@ -13,11 +13,18 @@ import {
 } from "@/data/traffic"
 import { seedTraffic } from "@/data/trafficSeed"
 import { api, setApiToken } from "@/lib/api/client"
-import { mapAccount, type ApiUser } from "@/lib/api/mappers"
+import {
+  mapAccount,
+  mapApiWorkMineToDraft,
+  draftToApiBody,
+  type ApiUser,
+  type ApiWorkMine,
+} from "@/lib/api/mappers"
 
 const TOKEN_KEY   = "token"
-const DRAFTS_KEY  = "drafts"
 const TRAFFIC_KEY = "traffic"
+
+const isLocalId = (id: string) => id.startsWith("w-")
 
 type ApiResponse<T> = { success: boolean; data: T; message: string }
 
@@ -41,8 +48,8 @@ interface AccountContextValue {
   /** Re-fetches GET /auth/me and refreshes account state. Used after email verification. */
   refreshAccount: () => Promise<void>
   updateProfile: (patch: Partial<Account>) => void
-  saveDraft: (draft: WorkDraft) => void
-  deleteDraft: (id: string) => void
+  saveDraft: (draft: WorkDraft) => Promise<WorkDraft>
+  deleteDraft: (id: string) => Promise<void>
   trackProfileView: () => void
   trackWorkOpen: (workId: string) => void
   signOut: () => void
@@ -86,8 +93,11 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const [isInitializing, setIsInitializing] = useState(
     () => Boolean(readJson<string | null>(TOKEN_KEY, null)),
   )
-  const [drafts, setDrafts]   = useState<WorkDraft[]>(() => readJson<WorkDraft[]>(DRAFTS_KEY, []))
+  const [drafts, setDrafts]   = useState<WorkDraft[]>([])
+  const draftsRef             = useRef<WorkDraft[]>([])
   const [traffic, setTraffic] = useState<TrafficStore>(() => readJson<TrafficStore>(TRAFFIC_KEY, EMPTY_TRAFFIC))
+
+  useEffect(() => { draftsRef.current = drafts }, [drafts])
 
   // Restore session on mount if a JWT is stored locally
   useEffect(() => {
@@ -96,18 +106,17 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     setApiToken(token)
     api
       .get<ApiResponse<{ user: ApiUser }>>("/user/auth/me")
-      .then((res) => setAccount(mapAccount(res.data.data.user)))
+      .then(async (res) => {
+        setAccount(mapAccount(res.data.data.user))
+        const workRes = await api.get<ApiResponse<{ items: ApiWorkMine[] }>>("/user/work/mine/list")
+        setDrafts(workRes.data.data.items.map(mapApiWorkMineToDraft))
+      })
       .catch(() => {
         // Token expired or revoked — clear it so we don't retry on the next load
         removeKey(TOKEN_KEY)
         setApiToken(null)
       })
       .finally(() => setIsInitializing(false))
-  }, [])
-
-  const persistDrafts = useCallback((next: WorkDraft[]) => {
-    setDrafts(next)
-    writeJson(DRAFTS_KEY, next)
   }, [])
 
   const register = useCallback<AccountContextValue["register"]>(
@@ -132,6 +141,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       setApiToken(token)
       const mapped = mapAccount(user)
       setAccount(mapped)
+      setDrafts([])
       // Seed a starter traffic history so the panel doesn't open on empty charts
       const seeded = seedTraffic(mapped.id)
       setTraffic(seeded)
@@ -152,6 +162,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         writeJson(TOKEN_KEY, token)
         setApiToken(token)
         setAccount(mapAccount(user))
+        const workRes = await api.get<ApiResponse<{ items: ApiWorkMine[] }>>("/user/work/mine/list")
+        setDrafts(workRes.data.data.items.map(mapApiWorkMineToDraft))
         return { ok: true }
       } catch (err) {
         return { ok: false, reason: apiError(err) }
@@ -183,6 +195,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         writeJson(TOKEN_KEY, newToken)
         setApiToken(newToken)
         setAccount(mapAccount(user))
+        const workRes = await api.get<ApiResponse<{ items: ApiWorkMine[] }>>("/user/work/mine/list")
+        setDrafts(workRes.data.data.items.map(mapApiWorkMineToDraft))
         return { ok: true }
       } catch (err) {
         return { ok: false, reason: apiError(err) }
@@ -203,27 +217,78 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   )
 
   const saveDraft = useCallback<AccountContextValue["saveDraft"]>(
-    (draft) => {
+    async (draft) => {
+      const body = draftToApiBody(draft)
+      let resolved = draft
+
+      if (isLocalId(draft.id)) {
+        // First save: create on server, swap local id → MongoDB id
+        const res = await api.post<ApiResponse<{ work: ApiWorkMine }>>("/user/work", body)
+        const serverDraft = mapApiWorkMineToDraft(res.data.data.work)
+        // Keep the user's current in-progress values (server echoes minimal data on create)
+        resolved = { ...serverDraft, values: draft.values, links: draft.links,
+          sections: draft.sections, metrics: draft.metrics, skills: draft.skills,
+          topics: draft.topics, figures: draft.figures }
+      } else {
+        await api.put(`/user/work/${draft.id}`, body)
+        resolved = { ...draft, updatedAt: new Date().toISOString() }
+      }
+
+      // Handle thumbnail: upload data URL to API, or delete if removed
+      const prevThumb = draftsRef.current.find((d) => d.id === draft.id || d.id === resolved.id)?.thumbnail
+      if (resolved.thumbnail?.startsWith("data:")) {
+        try {
+          const blob = await fetch(resolved.thumbnail).then((r) => r.blob())
+          const ext  = blob.type.split("/")[1] ?? "jpg"
+          const form = new FormData()
+          form.append("file", new File([blob], `thumbnail.${ext}`, { type: blob.type }))
+          const upRes = await api.post<ApiResponse<{ thumbnailPath: string }>>(
+            `/user/uploads/work/${resolved.id}/thumbnail`,
+            form,
+            { headers: { "Content-Type": "multipart/form-data" } },
+          )
+          resolved = { ...resolved, thumbnail: upRes.data.data.thumbnailPath }
+        } catch {
+          // Upload failed — keep data URL locally, will retry on next save
+        }
+      } else if (!resolved.thumbnail && prevThumb && !prevThumb.startsWith("data:")) {
+        await api.delete(`/user/uploads/work/${resolved.id}/thumbnail`).catch(() => {})
+      }
+
+      // Handle publish state change relative to what we had before
+      const prev       = draftsRef.current.find((d) => d.id === draft.id || d.id === resolved.id)
+      const wasPublished = prev?.published ?? false
+
+      if (resolved.published && !wasPublished) {
+        try {
+          await api.post(`/user/work/${resolved.id}/publish`)
+        } catch {
+          resolved = { ...resolved, published: false }
+        }
+      } else if (!resolved.published && wasPublished) {
+        await api.post(`/user/work/${resolved.id}/unpublish`).catch(() => {})
+      }
+
       setDrafts((current) => {
-        const stamped = { ...draft, updatedAt: new Date().toISOString() }
-        const exists  = current.some((item) => item.id === stamped.id)
-        const next    = exists
-          ? current.map((item) => (item.id === stamped.id ? stamped : item))
-          : [stamped, ...current]
-        writeJson(DRAFTS_KEY, next)
-        return next
+        // Remove old local-id entry if id changed, then upsert
+        const without = current.filter((d) => d.id !== draft.id)
+        const exists  = without.some((d) => d.id === resolved.id)
+        return exists
+          ? without.map((d) => (d.id === resolved.id ? resolved : d))
+          : [resolved, ...without]
       })
+
+      return resolved
     },
     [],
   )
 
-  const deleteDraft = useCallback(
-    (id: string) => {
-      setDrafts((current) => {
-        const next = current.filter((item) => item.id !== id)
-        writeJson(DRAFTS_KEY, next)
-        return next
-      })
+  const deleteDraft = useCallback<AccountContextValue["deleteDraft"]>(
+    async (id) => {
+      if (!isLocalId(id)) {
+        await api.delete(`/user/work/${id}`)
+      }
+      setDrafts((current) => current.filter((d) => d.id !== id))
     },
     [],
   )
@@ -256,6 +321,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     removeKey(TOKEN_KEY)
     setApiToken(null)
     setAccount(null)
+    setDrafts([])
   }, [])
 
   const deleteAccount = useCallback(() => {
@@ -263,10 +329,10 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     removeKey(TOKEN_KEY)
     setApiToken(null)
     setAccount(null)
-    persistDrafts([])
+    setDrafts([])
     setTraffic(EMPTY_TRAFFIC)
     removeKey(TRAFFIC_KEY)
-  }, [persistDrafts])
+  }, [])
 
   const publishedWork = useMemo(
     () => (account ? drafts.filter((d) => d.published).map((d) => workFromDraft(d, account)) : []),

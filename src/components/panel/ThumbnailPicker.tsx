@@ -80,7 +80,7 @@ export function ThumbnailPicker({ value, seed, role, metric, onChange }: Thumbna
           </div>
 
           <p className="max-w-sm text-xs leading-relaxed text-muted">
-            Optional. Images are downscaled to 960px and stored in this browser only. Leave it
+            Optional. Images are downscaled to 960px and uploaded to the server on save. Leave it
             empty and the cover is drawn from your craft and headline number.
           </p>
           {error && (

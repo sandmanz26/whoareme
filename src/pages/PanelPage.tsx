@@ -723,8 +723,8 @@ function PortfolioSection({
   account: Account;
   author: ReturnType<typeof useBrowse>["viewerAuthor"];
   drafts: WorkDraft[];
-  onSave: (draft: WorkDraft) => void;
-  onDelete: (id: string) => void;
+  onSave: (draft: WorkDraft) => Promise<WorkDraft>;
+  onDelete: (id: string) => Promise<void>;
   opens: Record<string, number>;
 }) {
   const navigate = useNavigate();
@@ -770,9 +770,9 @@ function PortfolioSection({
               setNewDraft(null);
               setPendingRole(null);
             }}
-            onSave={(next) => {
-              onSave(next);
-              navigate(`/panel/portfolio/${next.id}`);
+            onSave={async (next) => {
+              const saved = await onSave(next);
+              navigate(`/panel/portfolio/${saved.id}`, { replace: true });
             }}
           />
         ) : (
@@ -833,9 +833,9 @@ function PortfolioSection({
           author={author}
           siblings={drafts}
           onRestart={() => navigate("/panel/portfolio/new")}
-          onSave={(next) => onSave(next)}
-          onDelete={() => {
-            onDelete(existing.id);
+          onSave={(next) => { onSave(next) }}
+          onDelete={async () => {
+            await onDelete(existing.id);
             navigate("/panel/portfolio");
           }}
         />
