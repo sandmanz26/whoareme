@@ -120,6 +120,56 @@ export function mapPerson(u: ApiUser): Person {
   }
 }
 
+// Backend card projection shape from /people/:slug/work and /work (browse)
+export interface ApiWorkCard {
+  slug: string
+  title: string
+  summary: string
+  role: string
+  topics: string[]
+  model: string | null
+  skills: string[]
+  year: number
+  thumbnailPath: string | null
+  author: {
+    slug: string
+    name: string
+    title: string
+    company: string
+    photoUrl: string
+    years: number
+    languages: string[]
+  }
+  publishedAt: string
+  metrics: { opens: number }
+  details: { label: string; value: string; proof: true }[]
+}
+
+export function mapWorkCard(w: ApiWorkCard): Work {
+  return {
+    id:        w.slug,
+    authorId:  w.author.slug,
+    role:      w.role as RoleId,
+    topics:    w.topics as CategoryId[],
+    model:     (w.model ?? undefined) as BusinessModelId | undefined,
+    title:     w.title,
+    summary:   w.summary,
+    year:      w.year,
+    duration:  "",
+    scope:     "",
+    problem:   "",
+    approach:  "",
+    outcome:   "",
+    stack:     [],
+    skills:    w.skills,
+    links:     [],
+    details:   w.details,
+    sections:  undefined,
+    thumbnail: w.thumbnailPath ?? undefined,
+    figures:   undefined,
+  }
+}
+
 export function mapWork(w: ApiWork): Work {
   return {
     id:        w.slug,

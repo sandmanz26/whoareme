@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Container } from "@/components/layout/Container";
 import { Avatar } from "@/components/ui/Avatar";
@@ -15,6 +15,16 @@ import { useBrowse } from "@/context/BrowseContext";
 import { applyMeta, clamp } from "@/lib/head";
 import { track } from "@/lib/analytics";
 import type { Work } from "@/data/work";
+import type { Person } from "@/data/people";
+import type { Author } from "@/lib/authors";
+import { linksFor } from "@/data/platforms";
+import { api } from "@/lib/api/client";
+import {
+  mapPerson,
+  mapWorkCard,
+  type ApiUser,
+  type ApiWorkCard,
+} from "@/lib/api/mappers";
 
 interface TopicGroup {
   id: CategoryId;
@@ -45,41 +55,61 @@ function Stat({ value, label }: { value: string | number; label: string }) {
   );
 }
 
+type ApiResponse<T> = { success: boolean; data: T; message: string };
+
 export function ProfilePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const {
-    allPeople,
-    allWork,
-    authors,
-    trackProfileView,
-    addSkillFilter,
-    openReport,
-  } = useBrowse();
+  const { addSkillFilter, openReport } = useBrowse();
 
-  const person = useMemo(
-    () => (id ? allPeople.find((p) => p.id === id) : undefined),
-    [id, allPeople],
-  );
-  const work = useMemo(
-    () =>
-      id
-        ? allWork
-            .filter((item) => item.authorId === id)
-            .slice()
-            .sort((a, b) => b.year - a.year)
-        : [],
-    [id, allWork],
-  );
+  const [person, setPerson] = useState<Person | null | undefined>(undefined);
+  const [work, setWork] = useState<Work[]>([]);
+  const [authors, setAuthors] = useState<Map<string, Author>>(new Map());
+
+  useEffect(() => {
+    if (!id) {
+      setPerson(null);
+      return;
+    }
+    setPerson(undefined);
+    setWork([]);
+
+    Promise.all([
+      api.get<ApiResponse<{ user: ApiUser }>>(`/user/people/${id}`),
+      api.get<ApiResponse<{ items: ApiWorkCard[]; meta: unknown }>>(
+        `/user/people/${id}/work`,
+      ),
+    ])
+      .then(([personRes, workRes]) => {
+        const mapped = mapPerson(personRes.data.data.user);
+        setPerson(mapped);
+
+        const authorEntry: Author = {
+          id: mapped.id,
+          name: mapped.name,
+          title: mapped.title,
+          company: mapped.company,
+          location: mapped.location,
+          role: mapped.role,
+          years: mapped.years,
+          languages: mapped.languages,
+          photo: mapped.photo,
+          links: linksFor(mapped.role, mapped.id),
+        };
+        setAuthors(new Map([[mapped.id, authorEntry]]));
+
+        const items = workRes.data.data.items.map(mapWorkCard);
+        items.sort((a, b) => b.year - a.year);
+        setWork(items);
+      })
+      .catch(() => setPerson(null));
+  }, [id]);
+
   const groups = useMemo(() => groupByTopic(work), [work]);
 
   useEffect(() => {
     if (person) track("profile_opened");
   }, [person]);
-
-  useEffect(() => {
-    if (person) trackProfileView(person.id);
-  }, [person, trackProfileView]);
 
   useEffect(() => {
     if (!person) return;
@@ -95,7 +125,15 @@ export function ProfilePage() {
     });
   }, [person, work.length]);
 
-  if (!person) {
+  if (person === undefined) {
+    return (
+      <Container className="flex min-h-[60vh] flex-col items-center justify-center py-24">
+        <p className="text-sm text-muted">Loading…</p>
+      </Container>
+    );
+  }
+
+  if (person === null) {
     return (
       <Container className="flex min-h-[60vh] flex-col items-center justify-center py-24 text-center">
         <h1 className="display text-3xl">Profile not found</h1>
@@ -294,13 +332,7 @@ export function ProfilePage() {
               />
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              trackProfileView(person.id);
-              navigate("/work");
-            }}
-          >
+          <Button variant="outline" onClick={() => navigate("/work")}>
             Browse every portfolio
             <ArrowRight size={16} />
           </Button>
