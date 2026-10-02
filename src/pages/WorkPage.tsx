@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { useQuery } from "@tanstack/react-query"
 import { Container } from "@/components/layout/Container"
 import { Avatar } from "@/components/ui/Avatar"
 import { SocialLinks } from "@/components/ui/SocialLinks"
@@ -23,6 +24,9 @@ import { opensByWork } from "@/data/traffic"
 import { useBrowse } from "@/context/BrowseContext"
 import { applyMeta, clamp } from "@/lib/head"
 import { track } from "@/lib/analytics"
+import { fetchWorkBySlug } from "@/lib/api/endpoints/work"
+import { mapWork } from "@/lib/api/mappers"
+import { QUERY_KEYS } from "@/lib/api/queryKeys"
 
 function Chapter({
   title,
@@ -54,7 +58,16 @@ export function WorkPage() {
   const { account, traffic } = useAccount()
   const { ref: progressRef, progress } = useReadingProgress<HTMLElement>()
 
-  const work = useMemo(() => (id ? allWork.find((item) => item.id === id) : undefined), [id, allWork])
+  const { data: work, isPending } = useQuery({
+    queryKey: QUERY_KEYS.workDetail(id ?? ""),
+    queryFn: async () => {
+      const { work } = await fetchWorkBySlug(id!)
+      return mapWork(work)
+    },
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  })
+
   const moreByAuthor = useMemo(() => (work ? moreFromAuthor(work, allWork) : []), [work, allWork])
   const similar = useMemo(() => (work ? similarWork(work, allWork) : []), [work, allWork])
 
@@ -77,6 +90,8 @@ export function WorkPage() {
       image: work.thumbnail,
     })
   }, [work, authors])
+
+  if (isPending) return null
 
   if (!work) {
     return (
