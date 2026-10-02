@@ -72,7 +72,12 @@ const PUBLIC_PROFILE_PROJECTION = {
   createdAt: 1,
 }
 
-const PUBLIC_PERSON = { status: "active" as const, role: { $in: LIVE_ROLES }, deletedAt: null }
+const PUBLIC_PERSON = {
+  status: "active" as const,
+  access: "member" as const,
+  role: { $in: LIVE_ROLES },
+  deletedAt: null,
+}
 
 function isoDay(date = new Date()) {
   return date.toISOString().slice(0, 10)
@@ -149,10 +154,7 @@ export const PeopleUsecase = {
   },
 
   async GetBySlug(slug: string) {
-    const user = await User.findOne(
-      { slug, status: "active" as const, role: { $in: LIVE_ROLES }, deletedAt: null },
-      PUBLIC_PROFILE_PROJECTION,
-    ).lean()
+    const user = await User.findOne({ slug, ...PUBLIC_PERSON }, PUBLIC_PROFILE_PROJECTION).lean()
     if (!user) throw notFound("Person")
     return user
   },

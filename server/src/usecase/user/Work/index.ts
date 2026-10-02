@@ -197,6 +197,20 @@ const PUBLIC_WORK = {
   deletedAt: null,
 }
 
+/**
+ * Builds a work filter that also excludes works authored by staff (moderator
+ * or admin). Staff accounts are not content creators and should never appear
+ * in public listings. Pre-queried per request — the staff set is tiny.
+ */
+async function publicWorkFilter(extra: Record<string, unknown> = {}) {
+  const staffIds = await User.distinct("_id", { access: { $in: ["moderator", "admin"] } })
+  return {
+    ...PUBLIC_WORK,
+    ...extra,
+    authorId: { $nin: staffIds },
+  }
+}
+
 function authorSnapshot(user: AuthorLike) {
   return {
     slug: user.slug,
@@ -241,7 +255,7 @@ export const WorkUsecase = {
     const tokens = q.q ? q.q.trim().split(/\s+/).filter(Boolean) : []
     const pagination = { page: q.page, limit: q.limit }
 
-    const match: Record<string, unknown> = { ...PUBLIC_WORK }
+    const match: Record<string, unknown> = await publicWorkFilter()
     const and: Record<string, unknown>[] = []
 
     if (q.role) and.push({ role: q.role })
@@ -321,15 +335,16 @@ export const WorkUsecase = {
   },
 
   async GetBySlug(slug: string) {
+    const publicMatch = await publicWorkFilter()
     const work = await WorkModel.findOne(
-      { slug, ...PUBLIC_WORK },
+      { slug, ...publicMatch },
       PUBLIC_WORK_DETAIL_PROJECTION,
     ).lean()
     if (!work) throw notFound("Case study")
 
     const [moreByAuthor, similar] = await Promise.all([
       WorkModel.aggregate([
-        { $match: { authorId: work.authorId, _id: { $ne: work._id }, ...PUBLIC_WORK } },
+        { $match: { ...publicMatch, authorId: work.authorId, _id: { $ne: work._id } } },
         { $sort: { publishedAt: -1 } },
         { $limit: 3 },
         { $project: CARD_PROJECTION },
@@ -337,10 +352,14 @@ export const WorkUsecase = {
       WorkModel.aggregate([
         {
           $match: {
-            ...PUBLIC_WORK,
+            ...publicMatch,
             _id: { $ne: work._id },
-            authorId: { $ne: work.authorId },
-            $or: [{ skills: { $in: work.skills } }, { topics: { $in: work.topics } }],
+            $and: [
+              // publicMatch already excludes staff via $nin; this narrows
+              // further to exclude the current work's author too.
+              { authorId: { $ne: work.authorId } },
+              { $or: [{ skills: { $in: work.skills } }, { topics: { $in: work.topics } }] },
+            ],
           },
         },
         {
@@ -525,7 +544,7 @@ export const WorkUsecase = {
   async GetByAuthorSlug(slug: string, rawQuery: Record<string, unknown>) {
     const pagination = parsePagination(rawQuery)
     const author = await User.findOne(
-      { slug, status: "active", role: { $in: LIVE_ROLES } },
+      { slug, status: "active", access: "member", role: { $in: LIVE_ROLES } },
       "_id",
     ).lean()
     if (!author) throw notFound("Person")
