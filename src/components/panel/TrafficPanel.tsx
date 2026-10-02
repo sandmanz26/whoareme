@@ -1,16 +1,9 @@
 import { useMemo } from "react"
-import {
-  lastDays,
-  opensByWork,
-  seriesFor,
-  totalProfileViews,
-  totalWorkOpens,
-  windowTotal,
-  type TrafficStore,
-} from "@/data/traffic"
+import { windowTotal } from "@/data/traffic"
 import type { WorkDraft } from "@/data/account"
 import { Chart, Eye } from "@/components/ui/Icon"
 import { cn } from "@/lib/utils"
+import type { TrafficSummary } from "@/hooks/useTrafficSummary"
 
 const WINDOW = 30
 
@@ -88,18 +81,19 @@ function StatCard({
 }
 
 export function TrafficPanel({
-  traffic,
+  summary,
   drafts,
 }: {
-  traffic: TrafficStore
+  summary: TrafficSummary
   drafts: WorkDraft[]
 }) {
-  const days = useMemo(() => lastDays(WINDOW), [])
-  const series = useMemo(() => seriesFor(traffic, days), [traffic, days])
-  const perWork = useMemo(() => opensByWork(traffic), [traffic])
+  const { series, totals, opensBySlug } = summary
 
   const published = drafts.filter((draft) => draft.published)
-  const ranked = [...published].sort((a, b) => (perWork[b.id] ?? 0) - (perWork[a.id] ?? 0))
+  const ranked = useMemo(
+    () => [...published].sort((a, b) => (opensBySlug[b.id] ?? 0) - (opensBySlug[a.id] ?? 0)),
+    [published, opensBySlug],
+  )
 
   return (
     <div className="flex flex-col gap-6">
@@ -107,14 +101,14 @@ export function TrafficPanel({
         <StatCard
           icon={<Eye size={15} />}
           label="Profile views"
-          total={totalProfileViews(traffic)}
+          total={totals.profileViews}
           series={series.profile}
           days={series.days}
         />
         <StatCard
           icon={<Chart size={15} />}
           label="Portfolio opens"
-          total={totalWorkOpens(traffic)}
+          total={totals.workOpens}
           series={series.work}
           days={series.days}
         />
@@ -131,8 +125,8 @@ export function TrafficPanel({
         ) : (
           <ul className="mt-5 flex flex-col gap-3">
             {ranked.map((draft) => {
-              const opens = perWork[draft.id] ?? 0
-              const peak = Math.max(1, ...ranked.map((item) => perWork[item.id] ?? 0))
+              const opens = opensBySlug[draft.id] ?? 0
+              const peak = Math.max(1, ...ranked.map((item) => opensBySlug[item.id] ?? 0))
               return (
                 <li key={draft.id} className="flex items-center gap-4">
                   <span className="min-w-0 flex-1">
@@ -157,10 +151,9 @@ export function TrafficPanel({
       </section>
 
       <p className="rounded-card border border-dashed border-ink/20 px-5 py-4 text-xs leading-relaxed text-muted">
-        <span className="font-display font-semibold text-ink">How these numbers work.</span> This
-        is a front-end demo with no server, so the 30-day history was generated when you
-        registered. Opens and profile views that happen in this browser are counted for real on
-        top of it. Signing out clears the lot.
+        <span className="font-display font-semibold text-ink">How these numbers work.</span>{" "}
+        Profile views and portfolio opens are counted when other people visit — your own visits
+        are excluded. Numbers update within a few minutes.
       </p>
     </div>
   )

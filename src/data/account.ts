@@ -22,6 +22,7 @@ export interface Account {
    */
   passwordHash: string
   emailVerifiedAt: string | null
+  access: "member" | "moderator" | "admin"
   createdAt: string
 }
 

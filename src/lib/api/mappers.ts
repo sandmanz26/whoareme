@@ -14,6 +14,8 @@ export interface ApiUser {
   email: string | null
   emailVerifiedAt: string | null
   role: string
+  /** Present only on ownerUser responses (GET /auth/me, login, register). */
+  access?: "member" | "moderator" | "admin"
   title: string
   company: string
   location: string
@@ -97,6 +99,7 @@ export function mapAccount(u: ApiUser): Account {
     photo:        u.photoUrl,
     passwordHash:    "",
     emailVerifiedAt: u.emailVerifiedAt,
+    access:          u.access ?? "member",
     createdAt:       u.createdAt,
   }
 }

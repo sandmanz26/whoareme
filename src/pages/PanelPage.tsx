@@ -16,7 +16,6 @@ import {
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { WorkEditor } from "@/components/panel/WorkEditor";
 import { WorkCover } from "@/components/work/WorkCover";
-import { opensByWork } from "@/data/traffic";
 import { AvatarPicker } from "@/components/panel/AvatarPicker";
 import { NoticeList } from "@/components/panel/NoticeList";
 import { Button } from "@/components/ui/Button";
@@ -47,10 +46,10 @@ import {
   type RoleId,
 } from "@/data/taxonomy";
 import { draftCompleteness } from "@/lib/workMapper";
-import { totalProfileViews, totalWorkOpens } from "@/data/traffic";
 import { useAccount } from "@/hooks/useAccount";
 import { useMyWork } from "@/hooks/useMyWork";
 import { useMyProfile } from "@/hooks/useMyProfile";
+import { useTrafficSummary } from "@/hooks/useTrafficSummary";
 import { api } from "@/lib/api/client";
 import { useBrowse } from "@/context/BrowseContext";
 import { cn, initialsOf } from "@/lib/utils";
@@ -65,9 +64,10 @@ export function PanelPage() {
     entry?: string;
   }>();
   const navigate = useNavigate();
-  const { account, isInitializing, traffic, deleteAccount } = useAccount();
+  const { account, isInitializing, deleteAccount } = useAccount();
   const { drafts, saveDraft, deleteDraft } = useMyWork();
   const { updateProfile } = useMyProfile();
+  const trafficSummary = useTrafficSummary();
   const { viewerAuthor } = useBrowse();
   const onboarding = useOnboarding();
 
@@ -127,7 +127,7 @@ export function PanelPage() {
         title="Traffic"
         description="Who is looking, and at what."
       >
-        <TrafficPanel traffic={traffic} drafts={drafts} />
+        <TrafficPanel summary={trafficSummary} drafts={drafts} />
       </PanelShell>
     );
   }
@@ -141,7 +141,7 @@ export function PanelPage() {
         author={viewerAuthor}
         drafts={drafts}
         onSave={saveDraft}
-        opens={opensByWork(traffic)}
+        opens={trafficSummary.opensBySlug}
         onDelete={deleteDraft}
       />
     );
@@ -168,8 +168,8 @@ export function PanelPage() {
         account={account}
         drafts={drafts}
         author={viewerAuthor}
-        profileViews={totalProfileViews(traffic)}
-        workOpens={totalWorkOpens(traffic)}
+        profileViews={trafficSummary.totals.profileViews}
+        workOpens={trafficSummary.totals.workOpens}
         onboardingHidden={onboarding.hidden}
         onHideOnboarding={onboarding.hide}
       />

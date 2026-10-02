@@ -45,7 +45,7 @@ function searchBlobFor(u: { name: string; title: string; company: string; locati
 
 import type { IUser } from "../../../interface/IUser.js"
 
-type UserLike = Pick<IUser, "_id" | "slug" | "name" | "email" | "emailVerifiedAt" | "role" | "title" | "company" | "location" | "years" | "languages" | "topics" | "skills" | "openToWork" | "photoUrl" | "portfolioUrl" | "pitch" | "counts" | "createdAt">
+type UserLike = Pick<IUser, "_id" | "slug" | "name" | "email" | "emailVerifiedAt" | "role" | "access" | "title" | "company" | "location" | "years" | "languages" | "topics" | "skills" | "openToWork" | "photoUrl" | "portfolioUrl" | "pitch" | "counts" | "createdAt">
 
 /** Safe for any audience — no PII, no internal state. */
 export function publicUser(user: UserLike) {
@@ -70,12 +70,13 @@ export function publicUser(user: UserLike) {
   }
 }
 
-/** Owner-only — adds email, emailVerifiedAt, and full quota counts. */
+/** Owner-only — adds email, emailVerifiedAt, access level, and full quota counts. */
 function ownerUser(user: UserLike) {
   return {
     ...publicUser(user),
     email:           user.email,
     emailVerifiedAt: user.emailVerifiedAt,
+    access:          user.access ?? "member",
     counts:          user.counts,
   }
 }

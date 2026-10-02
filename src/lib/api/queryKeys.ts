@@ -7,4 +7,9 @@ export const QUERY_KEYS = {
   personWork:     (slug: string) => ["person", slug, "work"] as const,
   peopleList:     (params?: object) => ["people", "list", params ?? {}] as const,
   workList:       (params?: object) => ["work", "list",   params ?? {}] as const,
+  trafficSummary:      ["traffic", "summary"]       as const,
+  moderationReports:   ["moderation", "reports"]    as const,
+  moderationAppeals:   ["moderation", "appeals"]    as const,
+  moderationLog:       ["moderation", "log"]        as const,
+  moderationSettings:  ["moderation", "settings"]   as const,
 }

@@ -15,7 +15,7 @@ const csv = z.string().optional().transform((v) =>
 
 export const listPeopleQuerySchema = z.object({
   page:       z.coerce.number().int().min(1).default(1),
-  limit:      z.coerce.number().int().min(1).max(100).default(24),
+  limit:      z.coerce.number().int().min(1).max(5000).default(24),
   role:       z.enum(ROLES).optional(),
   topic:      z.enum(TOPICS).optional(),
   skills:     csv.pipe(z.array(z.string().max(60)).max(8)),

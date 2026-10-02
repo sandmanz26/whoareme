@@ -1,4 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useAccount } from "@/hooks/useAccount"
 import {
   EMPTY_MODERATION,
   type AuditEntry,
@@ -9,38 +11,88 @@ import {
   type ReportReasonId,
   type SiteContact,
   type Target,
+  type TargetKind,
 } from "@/data/admin"
 import { copySlotById } from "@/data/siteCopy"
 import type { RoleId } from "@/data/taxonomy"
-import { readJson, writeJson } from "@/lib/storage"
+import { QUERY_KEYS } from "@/lib/api/queryKeys"
+import {
+  fetchReports,
+  fetchAppeals,
+  fetchAuditLog,
+  fetchSettings,
+  resolveReport as apiResolveReport,
+  unpublishWork,
+  republishWork,
+  suspendPerson,
+  reinstatePerson,
+  decideAppeal as apiDecideAppeal,
+  updateSettings,
+  type ApiModerationReport,
+  type ApiModerationAppeal,
+  type ApiModerationLogEntry,
+} from "@/lib/api/endpoints/moderation"
 
-const KEY = "moderation"
+function mapReport(r: ApiModerationReport): Report {
+  return {
+    id: r._id,
+    target: { kind: (r.targetKind === "user" ? "person" : r.targetKind) as TargetKind, id: r.targetId },
+    reason: r.reason as Report["reason"],
+    note: r.note ?? "",
+    createdAt: r.createdAt,
+  }
+}
+
+function mapAppeal(a: ApiModerationAppeal): Notice {
+  return {
+    id: a._id,
+    personId: a.userId,
+    action: a.action as ModerationActionId,
+    target: a.targetKind && a.targetId
+      ? { kind: (a.targetKind === "user" ? "person" : a.targetKind) as TargetKind, id: a.targetId }
+      : null,
+    targetLabel: a.targetLabel,
+    reason: a.reason,
+    at: a.createdAt,
+    readAt: a.readAt ?? null,
+    appeal: a.appeal
+      ? {
+          text: a.appeal.text,
+          at: a.appeal.createdAt,
+          outcome: a.appeal.outcome,
+          outcomeReason: a.appeal.outcomeReason ?? "",
+          decidedAt: a.appeal.decidedAt ?? null,
+        }
+      : null,
+  }
+}
+
+function mapLogEntry(l: ApiModerationLogEntry): AuditEntry {
+  return {
+    id: l._id,
+    action: l.action as ModerationActionId,
+    target: l.targetKind && l.targetId
+      ? { kind: (l.targetKind === "user" ? "person" : l.targetKind) as TargetKind, id: l.targetId }
+      : null,
+    targetLabel: l.targetLabel,
+    reason: l.reason,
+    at: l.createdAt,
+    by: l.actorSlug ?? "Moderator",
+  }
+}
 
 interface AdminContextValue {
   state: ModerationState
-  /** Overlay predicates the public surfaces read. */
   isWorkHidden: (workId: string) => boolean
   isPersonSuspended: (personId: string) => boolean
   isRoleDisabled: (role: RoleId) => boolean
-  /** Current value of an editable string, falling back to the shipped default. */
   copy: (slotId: string) => string
-
   report: (target: Target, reason: ReportReasonId, note: string) => void
-  /** `authorId` receives the statement of reasons the decision owes them. */
-  setWorkHidden: (
-    workId: string,
-    hidden: boolean,
-    label: string,
-    reason: string,
-    authorId?: string,
-  ) => void
+  setWorkHidden: (workId: string, hidden: boolean, label: string, reason: string, authorId?: string) => void
   setPersonSuspended: (personId: string, suspended: boolean, label: string, reason: string) => void
-  /** Notices addressed to one person, newest first. */
   noticesFor: (personId: string) => Notice[]
   markNoticeRead: (noticeId: string) => void
-  /** The author contests a decision. */
   appealNotice: (noticeId: string, text: string) => void
-  /** A moderator decides an appeal. Overturning reverses the original action. */
   decideAppeal: (noticeId: string, outcome: "upheld" | "overturned", reason: string) => void
   dismiss: (key: string, label: string, reason: string) => void
   resolveReport: (reportId: string, reason: string) => void
@@ -52,390 +104,179 @@ interface AdminContextValue {
 
 const AdminContext = createContext<AdminContextValue | null>(null)
 
-function id(): string {
-  return Math.random().toString(36).slice(2, 10)
-}
-
 /**
- * Moderation decisions and site settings, over `localStorage`.
+ * Moderation decisions and site settings, sourced from the API.
  *
- * Deliberately a sibling of `useAccount` rather than part of it: an author's
- * own drafts and a moderator's decisions about everyone's content are
- * different data with different lifetimes, and merging them would mean signing
- * out wipes the moderation log.
+ * Predicates `isWorkHidden` / `isPersonSuspended` always return false because
+ * the server already filters hidden and suspended content from public listings.
+ * The audit log is the source of truth for past decisions.
  *
- * Nothing here is an access control. Anyone who can open this build can open
- * the console; the gate lives in the API, where `requireAdmin` checks a role on
- * a verified token. The console says so on screen rather than implying a
- * security boundary that does not exist.
+ * `dismiss` and `reviewed` are local-only: flags are client-side lint checks and
+ * their dismissal does not need to persist across moderators or devices.
+ *
+ * Nothing here is an access control. The gate lives in the API, where
+ * `isAuth("moderator")` checks the access level on a verified token.
  */
 export function AdminProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<ModerationState>(() => ({
-    ...EMPTY_MODERATION,
-    ...readJson<Partial<ModerationState>>(KEY, {}),
-  }))
+  const { account } = useAccount()
+  const queryClient = useQueryClient()
+  const isMod = account?.access === "moderator" || account?.access === "admin"
 
-  const persist = useCallback((next: ModerationState) => {
-    setState(next)
-    writeJson(KEY, next)
-  }, [])
+  const [reviewed, setReviewed] = useState<string[]>([])
 
-  /** Every state change goes through here, so nothing lands unlogged. */
-  const commit = useCallback(
-    (
-      patch: Partial<ModerationState>,
-      entry: { action: ModerationActionId; target: Target | null; targetLabel: string; reason: string },
-    ) => {
-      setState((current) => {
-        const log: AuditEntry = {
-          id: id(),
-          action: entry.action,
-          target: entry.target,
-          targetLabel: entry.targetLabel,
-          reason: entry.reason.trim() || "No reason given",
-          at: new Date().toISOString(),
-          // No accounts in this build. The API records the authenticated admin.
-          by: "Moderator (local)",
-        }
-        const next = { ...current, ...patch, log: [log, ...current.log].slice(0, 200) }
-        writeJson(KEY, next)
-        return next
-      })
-    },
-    [],
-  )
+  const { data: apiReports = [] } = useQuery({
+    queryKey: QUERY_KEYS.moderationReports,
+    queryFn:  fetchReports,
+    enabled:  isMod,
+    staleTime: 60 * 1000,
+  })
 
-  const report = useCallback(
-    (target: Target, reason: ReportReasonId, note: string) => {
-      setState((current) => {
-        const entry: Report = {
-          id: id(),
-          target,
-          reason,
-          note: note.trim(),
-          createdAt: new Date().toISOString(),
-        }
-        const next = { ...current, reports: [entry, ...current.reports].slice(0, 200) }
-        writeJson(KEY, next)
-        return next
-      })
-    },
-    [],
-  )
+  const { data: apiAppeals = [] } = useQuery({
+    queryKey: QUERY_KEYS.moderationAppeals,
+    queryFn:  fetchAppeals,
+    enabled:  isMod,
+    staleTime: 60 * 1000,
+  })
+
+  const { data: apiLog = [] } = useQuery({
+    queryKey: QUERY_KEYS.moderationLog,
+    queryFn:  fetchAuditLog,
+    enabled:  isMod,
+    staleTime: 60 * 1000,
+  })
+
+  const { data: apiSettings = null } = useQuery({
+    queryKey: QUERY_KEYS.moderationSettings,
+    queryFn:  fetchSettings,
+    enabled:  isMod,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const state = useMemo<ModerationState>(() => ({
+    hiddenWork:       [],
+    suspendedPeople:  [],
+    reviewed,
+    reports:          apiReports.map(mapReport),
+    notices:          apiAppeals.map(mapAppeal),
+    log:              apiLog.map(mapLogEntry),
+    disabledRoles:    (apiSettings?.disabledRoles ?? []) as RoleId[],
+    contact:          apiSettings?.contact ?? EMPTY_MODERATION.contact,
+    copy:             apiSettings?.copy ?? {},
+  }), [reviewed, apiReports, apiAppeals, apiLog, apiSettings])
+
+  const invalidateModeration = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["moderation"] })
+  }, [queryClient])
 
   const setWorkHidden = useCallback(
-    (workId: string, hidden: boolean, label: string, reason: string, authorId?: string) => {
-      setState((current) => {
-        const hiddenWork = hidden
-          ? [...new Set([...current.hiddenWork, workId])]
-          : current.hiddenWork.filter((item) => item !== workId)
-        const at = new Date().toISOString()
-        const action: ModerationActionId = hidden ? "unpublish" : "republish"
-        const log: AuditEntry = {
-          id: id(),
-          action,
-          target: { kind: "work", id: workId },
-          targetLabel: label,
-          reason: reason.trim() || "No reason given",
-          at,
-          by: "Moderator (local)",
-        }
-        // The notice is created in the same operation as the decision, so a
-        // withheld entry cannot exist without its author having been told why.
-        const notices = authorId
-          ? [
-              {
-                id: id(),
-                personId: authorId,
-                action,
-                target: { kind: "work" as const, id: workId },
-                targetLabel: label,
-                reason: log.reason,
-                at,
-                readAt: null,
-                appeal: null,
-              },
-              ...current.notices,
-            ].slice(0, 100)
-          : current.notices
-        const next = { ...current, hiddenWork, notices, log: [log, ...current.log].slice(0, 200) }
-        writeJson(KEY, next)
-        return next
-      })
+    async (workId: string, hidden: boolean, _label: string, reason: string) => {
+      if (hidden) await unpublishWork(workId, reason)
+      else await republishWork(workId, reason)
+      queryClient.invalidateQueries({ queryKey: ["work", "list"] })
+      queryClient.invalidateQueries({ queryKey: ["people", "list"] })
+      invalidateModeration()
     },
-    [],
+    [queryClient, invalidateModeration],
   )
 
   const setPersonSuspended = useCallback(
-    (personId: string, suspended: boolean, label: string, reason: string) => {
-      setState((current) => {
-        const suspendedPeople = suspended
-          ? [...new Set([...current.suspendedPeople, personId])]
-          : current.suspendedPeople.filter((item) => item !== personId)
-        const at = new Date().toISOString()
-        const action: ModerationActionId = suspended ? "suspend" : "reinstate"
-        const log: AuditEntry = {
-          id: id(),
-          action,
-          target: { kind: "person", id: personId },
-          targetLabel: label,
-          reason: reason.trim() || "No reason given",
-          at,
-          by: "Moderator (local)",
-        }
-        const notices = [
-          {
-            id: id(),
-            personId,
-            action,
-            target: { kind: "person" as const, id: personId },
-            targetLabel: label,
-            reason: log.reason,
-            at,
-            readAt: null,
-            appeal: null,
-          },
-          ...current.notices,
-        ].slice(0, 100)
-        const next = {
-          ...current,
-          suspendedPeople,
-          notices,
-          log: [log, ...current.log].slice(0, 200),
-        }
-        writeJson(KEY, next)
-        return next
-      })
+    async (personId: string, suspended: boolean, _label: string, reason: string) => {
+      if (suspended) await suspendPerson(personId, reason)
+      else await reinstatePerson(personId, reason)
+      queryClient.invalidateQueries({ queryKey: ["people", "list"] })
+      queryClient.invalidateQueries({ queryKey: ["work", "list"] })
+      invalidateModeration()
     },
-    [],
-  )
-
-  const dismiss = useCallback(
-    (key: string, label: string, reason: string) => {
-      setState((current) => {
-        const log: AuditEntry = {
-          id: id(),
-          action: "dismiss",
-          target: null,
-          targetLabel: label,
-          reason: reason.trim() || "No reason given",
-          at: new Date().toISOString(),
-          by: "Moderator (local)",
-        }
-        const next = {
-          ...current,
-          reviewed: [...new Set([...current.reviewed, key])],
-          log: [log, ...current.log].slice(0, 200),
-        }
-        writeJson(KEY, next)
-        return next
-      })
-    },
-    [],
+    [queryClient, invalidateModeration],
   )
 
   const resolveReport = useCallback(
-    (reportId: string, reason: string) => {
-      setState((current) => {
-        const target = current.reports.find((item) => item.id === reportId)
-        const log: AuditEntry = {
-          id: id(),
-          action: "dismiss",
-          target: target?.target ?? null,
-          targetLabel: "Report closed",
-          reason: reason.trim() || "No reason given",
-          at: new Date().toISOString(),
-          by: "Moderator (local)",
-        }
-        const next = {
-          ...current,
-          reports: current.reports.filter((item) => item.id !== reportId),
-          log: [log, ...current.log].slice(0, 200),
-        }
-        writeJson(KEY, next)
-        return next
-      })
+    async (reportId: string, reason: string) => {
+      await apiResolveReport(reportId, reason)
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationReports })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationLog })
     },
-    [],
+    [queryClient],
   )
 
-  const setRoleDisabled = useCallback(
-    (role: RoleId, disabled: boolean, label: string) => {
-      setState((current) => {
-        const disabledRoles = disabled
-          ? [...new Set([...current.disabledRoles, role])]
-          : current.disabledRoles.filter((item) => item !== role)
-        const log: AuditEntry = {
-          id: id(),
-          action: "settings",
-          target: null,
-          targetLabel: `Craft: ${label}`,
-          reason: disabled
-            ? "Hidden from the browse controls. Existing entries keep the craft and stay readable."
-            : "Offered in the browse controls again.",
-          at: new Date().toISOString(),
-          by: "Moderator (local)",
-        }
-        const next = { ...current, disabledRoles, log: [log, ...current.log].slice(0, 200) }
-        writeJson(KEY, next)
-        return next
-      })
+  const decideAppeal = useCallback(
+    async (noticeId: string, outcome: "upheld" | "overturned", reason: string) => {
+      await apiDecideAppeal(noticeId, outcome, reason)
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationAppeals })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationLog })
+      if (outcome === "overturned") {
+        queryClient.invalidateQueries({ queryKey: ["work", "list"] })
+        queryClient.invalidateQueries({ queryKey: ["people", "list"] })
+      }
     },
-    [],
+    [queryClient],
+  )
+
+  const dismiss = useCallback((key: string) => {
+    setReviewed((cur) => [...new Set([...cur, key])])
+  }, [])
+
+  const setRoleDisabled = useCallback(
+    async (role: RoleId, disabled: boolean, label: string) => {
+      const current = (apiSettings?.disabledRoles ?? []) as RoleId[]
+      const next = disabled
+        ? [...new Set([...current, role])]
+        : current.filter((r) => r !== role)
+      await updateSettings(
+        { disabledRoles: next },
+        disabled ? `Hidden from browse controls: ${label}` : `Shown in browse controls again: ${label}`,
+      )
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationSettings })
+    },
+    [queryClient, apiSettings],
   )
 
   const setContact = useCallback(
-    (contact: SiteContact) => {
-      commit({ contact }, {
-        action: "settings",
-        target: null,
-        targetLabel: "Contact details",
-        reason: `Now ${contact.email}, ${contact.location}`,
-      })
+    async (contact: SiteContact) => {
+      await updateSettings({ contact }, `Contact updated: ${contact.email}, ${contact.location}`)
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationSettings })
     },
-    [commit],
+    [queryClient],
   )
 
   const setCopy = useCallback(
-    (slotId: string, value: string) => {
-      setState((current) => {
-        const copy = { ...current.copy }
-        const fallback = copySlotById(slotId)?.defaultValue ?? ""
-        // Storing a value identical to the default would make the admin screen
-        // claim an override exists when nothing was really changed.
-        if (value.trim() === "" || value === fallback) delete copy[slotId]
-        else copy[slotId] = value
-
-        const log: AuditEntry = {
-          id: id(),
-          action: "settings",
-          target: null,
-          targetLabel: copySlotById(slotId)?.label ?? slotId,
-          reason: copy[slotId] ? "Copy edited" : "Copy reset to the shipped default",
-          at: new Date().toISOString(),
-          by: "Moderator (local)",
-        }
-        const next = { ...current, copy, log: [log, ...current.log].slice(0, 200) }
-        writeJson(KEY, next)
-        return next
-      })
+    async (slotId: string, value: string) => {
+      const currentCopy = { ...(apiSettings?.copy ?? {}) }
+      const fallback = copySlotById(slotId)?.defaultValue ?? ""
+      if (value.trim() === "" || value === fallback) delete currentCopy[slotId]
+      else currentCopy[slotId] = value
+      await updateSettings(
+        { copy: currentCopy },
+        currentCopy[slotId] ? "Copy edited" : "Copy reset to the shipped default",
+      )
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationSettings })
     },
-    [],
+    [queryClient, apiSettings],
   )
 
+  const resetAll = useCallback(() => {
+    setReviewed([])
+  }, [])
+
+  // Phase 5: wire to POST /reports
+  const report = useCallback((_target: Target, _reason: ReportReasonId, _note: string) => {}, [])
+
   const noticesFor = useCallback(
-    (personId: string) =>
-      state.notices.filter((notice) => notice.personId === personId),
+    (personId: string) => state.notices.filter((n) => n.personId === personId),
     [state.notices],
   )
 
-  const markNoticeRead = useCallback((noticeId: string) => {
-    setState((current) => {
-      const next = {
-        ...current,
-        notices: current.notices.map((notice) =>
-          notice.id === noticeId && !notice.readAt
-            ? { ...notice, readAt: new Date().toISOString() }
-            : notice,
-        ),
-      }
-      writeJson(KEY, next)
-      return next
-    })
-  }, [])
-
-  const appealNotice = useCallback((noticeId: string, text: string) => {
-    setState((current) => {
-      const next = {
-        ...current,
-        notices: current.notices.map((notice) =>
-          notice.id === noticeId
-            ? {
-                ...notice,
-                appeal: {
-                  text: text.trim(),
-                  at: new Date().toISOString(),
-                  outcome: null,
-                  outcomeReason: "",
-                  decidedAt: null,
-                },
-              }
-            : notice,
-        ),
-      }
-      writeJson(KEY, next)
-      return next
-    })
-  }, [])
-
-  /**
-   * Overturning actually reverses the original action.
-   *
-   * An appeal process that records a decision without undoing anything is
-   * theatre. So overturning an unpublish republishes the entry and overturning
-   * a suspension reinstates the profile, in the same operation that records
-   * the outcome.
-   */
-  const decideAppeal = useCallback(
-    (noticeId: string, outcome: "upheld" | "overturned", reason: string) => {
-      setState((current) => {
-        const notice = current.notices.find((item) => item.id === noticeId)
-        if (!notice) return current
-        const at = new Date().toISOString()
-        const trimmed = reason.trim() || "No reason given"
-
-        let hiddenWork = current.hiddenWork
-        let suspendedPeople = current.suspendedPeople
-        if (outcome === "overturned" && notice.target) {
-          if (notice.target.kind === "work") {
-            hiddenWork = hiddenWork.filter((workId) => workId !== notice.target!.id)
-          } else {
-            suspendedPeople = suspendedPeople.filter((id) => id !== notice.target!.id)
-          }
-        }
-
-        const log: AuditEntry = {
-          id: id(),
-          action: outcome === "overturned" ? "republish" : "dismiss",
-          target: notice.target,
-          targetLabel: `Appeal ${outcome}: ${notice.targetLabel}`,
-          reason: trimmed,
-          at,
-          // Named separately so the log shows the appeal was not decided by
-          // whoever took the original action.
-          by: "Appeal reviewer (local)",
-        }
-
-        const next = {
-          ...current,
-          hiddenWork,
-          suspendedPeople,
-          notices: current.notices.map((item) =>
-            item.id === noticeId && item.appeal
-              ? {
-                  ...item,
-                  appeal: { ...item.appeal, outcome, outcomeReason: trimmed, decidedAt: at },
-                }
-              : item,
-          ),
-          log: [log, ...current.log].slice(0, 200),
-        }
-        writeJson(KEY, next)
-        return next
-      })
-    },
-    [],
-  )
-
-  const resetAll = useCallback(() => persist(EMPTY_MODERATION), [persist])
+  // Phase 5: wire to user-facing notice API
+  const markNoticeRead = useCallback((_noticeId: string) => {}, [])
+  const appealNotice = useCallback((_noticeId: string, _text: string) => {}, [])
 
   const value = useMemo<AdminContextValue>(
     () => ({
       state,
-      isWorkHidden: (workId) => state.hiddenWork.includes(workId),
-      isPersonSuspended: (personId) => state.suspendedPeople.includes(personId),
-      isRoleDisabled: (role) => state.disabledRoles.includes(role),
-      copy: (slotId) => state.copy[slotId] ?? copySlotById(slotId)?.defaultValue ?? "",
+      isWorkHidden:      () => false,
+      isPersonSuspended: () => false,
+      isRoleDisabled:    (role) => state.disabledRoles.includes(role),
+      copy:              (slotId) => state.copy[slotId] ?? copySlotById(slotId)?.defaultValue ?? "",
       report,
       setWorkHidden,
       setPersonSuspended,

@@ -67,13 +67,11 @@ interface BrowseContextValue {
   addSkillFilter: (skill: string) => void;
   openJoin: () => void;
   openReport: (target: Target, label: string) => void;
-  trackProfileView: (viewedId: string) => void;
   joinOpen: boolean;
   closeJoin: () => void;
   reportOf: { target: Target; label: string } | null;
   closeReport: () => void;
   viewerAuthor: Author | GuestAuthor;
-  trackWorkOpen: (id: string) => void;
 }
 
 const BrowseContext = createContext<BrowseContextValue | null>(null);
@@ -86,12 +84,7 @@ export function useBrowse(): BrowseContextValue {
 
 function useBrowseState(): BrowseContextValue {
   const navigate = useNavigate();
-  const {
-    account,
-    drafts,
-    trackProfileView: trackView,
-    trackWorkOpen,
-  } = useAccount();
+  const { account, drafts } = useAccount();
   const { isWorkHidden, isPersonSuspended } = useAdmin();
 
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
@@ -207,13 +200,6 @@ function useBrowseState(): BrowseContextValue {
   );
   const closeReport = useCallback(() => setReportOf(null), []);
 
-  const trackProfileView = useCallback(
-    (viewedId: string) => {
-      if (account && viewedId === account.id) trackView();
-    },
-    [account, trackView],
-  );
-
   const viewerAuthor: Author | GuestAuthor = account
     ? (authors.get(account.id) ?? {
         id: account.id,
@@ -256,13 +242,11 @@ function useBrowseState(): BrowseContextValue {
     addSkillFilter,
     openJoin,
     openReport,
-    trackProfileView,
     joinOpen,
     closeJoin,
     reportOf,
     closeReport,
     viewerAuthor,
-    trackWorkOpen,
   };
 }
 

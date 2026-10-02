@@ -5,14 +5,6 @@ import type { Account, WorkDraft } from "@/data/account"
 import { readJson, removeKey, writeJson } from "@/lib/storage"
 import { workFromDraft } from "@/lib/workMapper"
 import type { Work } from "@/data/work"
-import {
-  EMPTY_TRAFFIC,
-  isoDay,
-  recordProfileView,
-  recordWorkOpen,
-  type TrafficStore,
-} from "@/data/traffic"
-import { seedTraffic } from "@/data/trafficSeed"
 import { setApiToken } from "@/lib/api/client"
 import { mapAccount, mapApiWorkMineToDraft } from "@/lib/api/mappers"
 import {
@@ -27,8 +19,7 @@ import { fetchWorkMineList } from "@/lib/api/endpoints/work"
 import { QUERY_KEYS } from "@/lib/api/queryKeys"
 import { useMyWork } from "./useMyWork"
 
-const TOKEN_KEY   = "token"
-const TRAFFIC_KEY = "traffic"
+const TOKEN_KEY = "token"
 
 export type SignInResult = { ok: true } | { ok: false; reason: string }
 
@@ -41,14 +32,11 @@ interface AccountContextValue {
   /** Kept for BrowseContext backward compatibility. Mutations live in useMyWork(). */
   drafts: WorkDraft[]
   publishedWork: Work[]
-  traffic: TrafficStore
   register: (account: Omit<Account, "id" | "createdAt" | "passwordHash" | "emailVerifiedAt">, password: string) => Promise<Account>
   signIn: (email: string, password: string) => Promise<SignInResult>
   resetPassword: (email: string, password: string) => Promise<SignInResult>
   confirmPasswordReset: (token: string, password: string) => Promise<SignInResult>
   refreshAccount: () => Promise<void>
-  trackProfileView: () => void
-  trackWorkOpen: (workId: string) => void
   signOut: () => void
   deleteAccount: () => void
 }
@@ -64,7 +52,6 @@ function apiError(err: unknown): string {
 
 export function AccountProvider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<Account | null>(null)
-  const [traffic, setTraffic] = useState<TrafficStore>(() => readJson<TrafficStore>(TRAFFIC_KEY, EMPTY_TRAFFIC))
 
   // Tracks whether a valid token is present — controls the me query's enabled state.
   // Also initializes the axios token synchronously on first render.
@@ -132,9 +119,6 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       const mapped = mapAccount(user)
       setAccount(mapped)
       queryClient.setQueryData<WorkDraft[]>(QUERY_KEYS.workMineList, [])
-      const seeded = seedTraffic(mapped.id)
-      setTraffic(seeded)
-      writeJson(TRAFFIC_KEY, seeded)
       queryClient.setQueryData(QUERY_KEYS.me, { user })
       setTokenExists(true)
       return mapped
@@ -213,27 +197,9 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     setTokenExists(false)
     queryClient.removeQueries({ queryKey: QUERY_KEYS.me })
     queryClient.removeQueries({ queryKey: QUERY_KEYS.workMineList })
+    queryClient.removeQueries({ queryKey: QUERY_KEYS.trafficSummary })
     setAccount(null)
-    setTraffic(EMPTY_TRAFFIC)
-    removeKey(TRAFFIC_KEY)
   }, [queryClient])
-
-  // ── Traffic tracking (local-only) ──────────────────────────────────────────
-  const trackProfileView = useCallback(() => {
-    setTraffic((current) => {
-      const next = recordProfileView(current, isoDay(new Date()))
-      writeJson(TRAFFIC_KEY, next)
-      return next
-    })
-  }, [])
-
-  const trackWorkOpen = useCallback((workId: string) => {
-    setTraffic((current) => {
-      const next = recordWorkOpen(current, isoDay(new Date()), workId)
-      writeJson(TRAFFIC_KEY, next)
-      return next
-    })
-  }, [])
 
   // ── Context value ──────────────────────────────────────────────────────────
   const publishedWork = useMemo(
@@ -249,14 +215,11 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       storedEmail: account?.email ?? null,
       drafts,
       publishedWork,
-      traffic,
       register,
       signIn,
       resetPassword,
       confirmPasswordReset,
       refreshAccount,
-      trackProfileView,
-      trackWorkOpen,
       signOut,
       deleteAccount,
     }),
@@ -265,14 +228,11 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       isInitializing,
       drafts,
       publishedWork,
-      traffic,
       register,
       signIn,
       resetPassword,
       confirmPasswordReset,
       refreshAccount,
-      trackProfileView,
-      trackWorkOpen,
       signOut,
       deleteAccount,
     ],
