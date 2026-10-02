@@ -188,6 +188,7 @@ async function main() {
             languages: person.languages,
           },
           authorSuspended: false,
+          seeded: true,
           mode: "template",
           role: w.role,
           topics: w.topics,

@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express"
+import { ZodError } from "zod"
 import { logger } from "../libraries/logger.js"
 import { env } from "../config/index.js"
 
@@ -58,6 +59,17 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
       data: null,
       message: err.message,
       ...(err.details !== undefined && { details: err.details }),
+    })
+    return
+  }
+
+  if (err instanceof ZodError) {
+    const first = err.issues[0]
+    res.status(400).json({
+      success: false,
+      data: null,
+      message: first?.message ?? "Invalid request.",
+      details: { issues: err.issues },
     })
     return
   }

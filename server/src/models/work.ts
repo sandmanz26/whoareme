@@ -47,6 +47,7 @@ const WorkSchema = new Schema<IWork>(
     author: { type: AuthorSnapshotSchema, required: true },
 
     authorSuspended: { type: Boolean, default: false },
+    seeded: { type: Boolean, default: false },
 
     mode: { type: String, required: true },
     template: { type: String, default: null },
@@ -90,6 +91,7 @@ WorkSchema.index({ authorId: 1, status: 1 })
 WorkSchema.index({ topics: 1, status: 1 })
 WorkSchema.index({ role: 1, status: 1 })
 WorkSchema.index({ authorSuspended: 1, status: 1 })
+WorkSchema.index({ seeded: 1 })
 WorkSchema.index({ searchBlob: "text" })
 
 const Work = model<IWork>("Work", WorkSchema)

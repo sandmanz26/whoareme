@@ -57,7 +57,9 @@ async function api(
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
-  const json = (await res.json()) as Json
+  // 204 has no body; also guard against any other empty-body responses.
+  const text = await res.text()
+  const json = (text ? JSON.parse(text) : {}) as Json
   return { status: res.status, json }
 }
 
@@ -399,25 +401,36 @@ async function main() {
   console.log("\n§9 Reports")
   let reportTargetId = ""
   {
-    // Get a published work to report
+    // Get a published work to report. /reports accepts a slug (not ObjectId)
+    // and requires auth — pass loginToken.
     const works = await get(base, "/work")
     const item = ((works.json["data"] as Json)["items"] as Json[])[0]
-    reportTargetId = (item?.["_id"] as string) ?? ""
+    reportTargetId = (item?.["slug"] as string) ?? ""
 
     if (reportTargetId) {
-      const r = await post(base, "/reports", {
-        targetId: reportTargetId,
-        targetKind: "work",
-        reason: "false-claim",
-      })
+      const r = await post(
+        base,
+        "/reports",
+        {
+          targetId: reportTargetId,
+          targetKind: "work",
+          reason: "false-claim",
+        },
+        loginToken,
+      )
       assertEq("POST /reports → 202", r.status, 202)
 
       // Duplicate report collapses silently (same hash)
-      const r2 = await post(base, "/reports", {
-        targetId: reportTargetId,
-        targetKind: "work",
-        reason: "false-claim",
-      })
+      const r2 = await post(
+        base,
+        "/reports",
+        {
+          targetId: reportTargetId,
+          targetKind: "work",
+          reason: "false-claim",
+        },
+        loginToken,
+      )
       assert("duplicate report does not error", r2.status < 500)
     } else {
       assert("skipped report test (no works)", false)
@@ -492,8 +505,6 @@ async function main() {
   })
   const targetToken = (target.json["data"] as Json)["token"] as string
   const targetSlug = ((target.json["data"] as Json)["user"] as Json)["slug"] as string
-  const targetUser = await User.findOne({ slug: targetSlug }).select("_id").lean()
-  const targetId = (targetUser as { _id: mongoose.Types.ObjectId })._id.toString()
 
   // Create + publish a work as target user (need verified email first)
   const tvreq = await post(base, "/auth/verify/request", {}, targetToken)
@@ -507,12 +518,13 @@ async function main() {
     targetToken,
   )
   const twId = ((tw.json["data"] as Json)["work"] as Json)["_id"] as string
+  const twSlug = ((tw.json["data"] as Json)["work"] as Json)["slug"] as string
   await post(base, `/work/${twId}/publish`, {}, targetToken)
 
-  // Moderation: unpublish work
+  // Moderation: unpublish work (moderation endpoints resolve by slug, not ObjectId)
   const modUnpub = await post(
     mod,
-    `/work/${twId}/unpublish`,
+    `/work/${twSlug}/unpublish`,
     { reason: "Violates community standards." },
     modToken,
   )
@@ -533,7 +545,7 @@ async function main() {
   // Moderation: republish work
   const modRepub = await post(
     mod,
-    `/work/${twId}/republish`,
+    `/work/${twSlug}/republish`,
     { reason: "Reviewed, actually fine." },
     modToken,
   )
@@ -542,7 +554,7 @@ async function main() {
   // Moderation: suspend user
   const suspend = await post(
     mod,
-    `/people/${targetId}/suspend`,
+    `/people/${targetSlug}/suspend`,
     { reason: "Repeated violations." },
     modToken,
   )
@@ -558,7 +570,7 @@ async function main() {
   // Moderation: reinstate user
   const reinstate = await post(
     mod,
-    `/people/${targetId}/reinstate`,
+    `/people/${targetSlug}/reinstate`,
     { reason: "Issue resolved." },
     modToken,
   )
@@ -585,11 +597,11 @@ async function main() {
       )
       assertEq("POST /notices/:id/appeal → 201", appeal.status, 201)
 
-      // Double appeal → 409
+      // Double appeal → 409 (text must be ≥20 chars to pass validation)
       const appeal2 = await post(
         base,
         `/notices/${appealNoticeId}/appeal`,
-        { text: "Trying again" },
+        { text: "Trying this appeal one more time please." },
         targetToken,
       )
       assertEq("double appeal → 409", appeal2.status, 409)
@@ -597,7 +609,7 @@ async function main() {
       // Moderation: get open appeals
       const openAppeals = await get(mod, "/appeals", modToken)
       assertEq("GET /moderation/appeals → 200", openAppeals.status, 200)
-      const appealItems = openAppeals.json["data"] as Json[]
+      const appealItems = (openAppeals.json["data"] as Json)["items"] as Json[]
       assert("appeal is in queue", Array.isArray(appealItems) && appealItems.length > 0)
 
       const appealId = appealItems[0]?.["_id"] as string
@@ -678,7 +690,11 @@ async function main() {
       mod,
       "/settings",
       {
-        contact: "hello@test.local",
+        contact: {
+          email: "hello@test.local",
+          location: "Jakarta, ID",
+          responseTime: "Within two working days.",
+        },
         reason: "Smoke test update",
       },
       modToken,

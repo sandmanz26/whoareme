@@ -43,6 +43,9 @@ export interface IWork {
    */
   authorSuspended: boolean
 
+  /** True for works inserted by the seed script. Lets admin filter real vs demo data. */
+  seeded: boolean
+
   mode: "template" | "custom"
   /** Which role template shaped this entry (e.g. "eng-shipped"). Display-only label. */
   template?: string
