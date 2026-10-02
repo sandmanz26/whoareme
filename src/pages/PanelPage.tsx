@@ -43,6 +43,8 @@ import {
 import { draftCompleteness } from "@/lib/workMapper";
 import { totalProfileViews, totalWorkOpens } from "@/data/traffic";
 import { useAccount } from "@/hooks/useAccount";
+import { useMyWork } from "@/hooks/useMyWork";
+import { useMyProfile } from "@/hooks/useMyProfile";
 import { api } from "@/lib/api/client";
 import { useBrowse } from "@/context/BrowseContext";
 import { cn, initialsOf } from "@/lib/utils";
@@ -57,16 +59,9 @@ export function PanelPage() {
     entry?: string;
   }>();
   const navigate = useNavigate();
-  const {
-    account,
-    isInitializing,
-    drafts,
-    traffic,
-    saveDraft,
-    deleteDraft,
-    updateProfile,
-    deleteAccount,
-  } = useAccount();
+  const { account, isInitializing, traffic, deleteAccount } = useAccount();
+  const { drafts, saveDraft, deleteDraft } = useMyWork();
+  const { updateProfile } = useMyProfile();
   const { viewerAuthor } = useBrowse();
   const onboarding = useOnboarding();
 
