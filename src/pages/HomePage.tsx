@@ -1,13 +1,13 @@
-import { useEffect } from "react";
-import { Hero } from "@/components/home/Hero";
-import { Marquee } from "@/components/home/Marquee";
-import { RoleGrid } from "@/components/home/RoleGrid";
-import { WorkBrowser } from "@/components/home/WorkBrowser";
-import { Directory } from "@/components/home/Directory";
-import { JoinCta } from "@/components/home/JoinCta";
-import { isPracticeTopic } from "@/data/taxonomy";
-import { useBrowse } from "@/context/BrowseContext";
-import { applyMeta } from "@/lib/head";
+import { useEffect } from "react"
+import { Hero } from "@/components/home/Hero"
+import { Marquee } from "@/components/home/Marquee"
+import { RoleGrid } from "@/components/home/RoleGrid"
+import { WorkBrowser } from "@/components/home/WorkBrowser"
+import { Directory } from "@/components/home/Directory"
+import { JoinCta } from "@/components/home/JoinCta"
+import { isPracticeTopic } from "@/data/taxonomy"
+import { useBrowse } from "@/context/BrowseContext"
+import { applyMeta } from "@/lib/head"
 
 export function HomePage() {
   const {
@@ -23,17 +23,15 @@ export function HomePage() {
     authors,
     handleRoleSelect,
     openJoin,
-  } = useBrowse();
+  } = useBrowse()
 
   useEffect(() => {
     // Home page falls through to defaults in applyMeta
-    return applyMeta({});
-  }, []);
+    return applyMeta({})
+  }, [])
 
   function scrollToWork() {
-    document
-      .getElementById("work")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("work")?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
   return (
@@ -47,11 +45,7 @@ export function HomePage() {
 
       <Marquee />
 
-      <RoleGrid
-        counts={roleCounts}
-        activeRoles={filters.role}
-        onSelect={handleRoleSelect}
-      />
+      <RoleGrid counts={roleCounts} activeRoles={filters.role} onSelect={handleRoleSelect} />
 
       <WorkBrowser
         work={work}
@@ -71,14 +65,12 @@ export function HomePage() {
         activeRoles={filters.role}
         query={filters.query}
         onCategoryChange={(id) => {
-          if (id === null) return patchFilters({ topic: [], practice: [] });
-          const key = isPracticeTopic(id) ? "practice" : "topic";
-          const current = filters[key];
+          if (id === null) return patchFilters({ topic: [], practice: [] })
+          const key = isPracticeTopic(id) ? "practice" : "topic"
+          const current = filters[key]
           patchFilters({
-            [key]: current.includes(id)
-              ? current.filter((item) => item !== id)
-              : [...current, id],
-          } as Parameters<typeof patchFilters>[0]);
+            [key]: current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+          } as Parameters<typeof patchFilters>[0])
         }}
         onResetFilters={resetFilters}
         onJoin={openJoin}
@@ -86,5 +78,5 @@ export function HomePage() {
 
       <JoinCta onJoin={openJoin} />
     </>
-  );
+  )
 }

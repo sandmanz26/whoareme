@@ -48,16 +48,23 @@ export function parseVideoUrl(raw: string): ParsedVideo | null {
         : url.pathname.startsWith("/shorts/") || url.pathname.startsWith("/embed/")
           ? url.pathname.split("/")[2]
           : null
-    return id ? { provider: "youtube", embedUrl: `https://www.youtube-nocookie.com/embed/${id}` } : null
+    return id
+      ? { provider: "youtube", embedUrl: `https://www.youtube-nocookie.com/embed/${id}` }
+      : null
   }
 
   if (host === "youtu.be") {
     const id = url.pathname.split("/").filter(Boolean)[0]
-    return id ? { provider: "youtube", embedUrl: `https://www.youtube-nocookie.com/embed/${id}` } : null
+    return id
+      ? { provider: "youtube", embedUrl: `https://www.youtube-nocookie.com/embed/${id}` }
+      : null
   }
 
   if (host === "vimeo.com" || host === "player.vimeo.com") {
-    const id = url.pathname.split("/").filter(Boolean).find((part) => /^\d+$/.test(part))
+    const id = url.pathname
+      .split("/")
+      .filter(Boolean)
+      .find((part) => /^\d+$/.test(part))
     return id ? { provider: "vimeo", embedUrl: `https://player.vimeo.com/video/${id}` } : null
   }
 

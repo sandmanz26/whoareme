@@ -147,7 +147,6 @@ export function Combobox(props: ComboboxProps) {
     // not a search result, and matching it against the query reads as a bug.
     if (needle === "") pushOption({ value: "", label: emptyLabel })
 
-
     if (groups) {
       for (const group of groups) {
         const kept = group.options.filter(keep)
@@ -186,9 +185,7 @@ export function Combobox(props: ComboboxProps) {
     setPlacement({
       left: rect.left,
       width: rect.width,
-      ...(dropDown
-        ? { top: rect.bottom + 8 }
-        : { bottom: window.innerHeight - rect.top + 8 }),
+      ...(dropDown ? { top: rect.bottom + 8 } : { bottom: window.innerHeight - rect.top + 8 }),
       listMax: Math.max(96, Math.min(256, dropDown ? below : above)),
     })
   }
@@ -382,95 +379,97 @@ export function Combobox(props: ComboboxProps) {
          * subtree removes the whole class of problem.
          */
         createPortal(
-        <div
-          ref={popRef}
-          style={{
-            left: placement.left,
-            width: Math.max(placement.width, 224),
-            ...(placement.top !== undefined
-              ? { top: placement.top }
-              : { bottom: placement.bottom }),
-          }}
-          className={cn(
-            "fixed z-50 overflow-hidden rounded-card",
-            "border border-ink/15 bg-card shadow-[0_24px_60px_-28px_rgba(11,11,15,0.45)]",
-          )}
-        >
-          {searchable && (
-            <div className="relative border-b border-line">
-              <Search
-                size={15}
-                className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-muted"
-              />
-              <input
-                ref={searchRef}
-                type="text"
-                role="searchbox"
-                value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value)
-                  setActiveIndex(0)
-                }}
-                onKeyDown={onKeyDown}
-                aria-controls={listId}
-                aria-activedescendant={activeId}
-                aria-label="Filter the options"
-                placeholder="Type to filter"
-                className="h-11 w-full bg-transparent pr-3 pl-9 text-sm text-ink placeholder:text-muted focus:outline-none"
-              />
-            </div>
-          )}
-
-          <ul
-            ref={listRef}
-            id={listId}
-            role="listbox"
-            aria-multiselectable={multiple || undefined}
-            style={{ maxHeight: placement.listMax }}
-            className="overflow-y-auto py-1.5"
+          <div
+            ref={popRef}
+            style={{
+              left: placement.left,
+              width: Math.max(placement.width, 224),
+              ...(placement.top !== undefined
+                ? { top: placement.top }
+                : { bottom: placement.bottom }),
+            }}
+            className={cn(
+              "fixed z-50 overflow-hidden rounded-card",
+              "border border-ink/15 bg-card shadow-[0_24px_60px_-28px_rgba(11,11,15,0.45)]",
+            )}
           >
-            {selectable.length === 0 && (
-              <li className="px-3.5 py-3 text-sm text-muted">No match for “{query.trim()}”</li>
+            {searchable && (
+              <div className="relative border-b border-line">
+                <Search
+                  size={15}
+                  className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-muted"
+                />
+                <input
+                  ref={searchRef}
+                  type="text"
+                  role="searchbox"
+                  value={query}
+                  onChange={(event) => {
+                    setQuery(event.target.value)
+                    setActiveIndex(0)
+                  }}
+                  onKeyDown={onKeyDown}
+                  aria-controls={listId}
+                  aria-activedescendant={activeId}
+                  aria-label="Filter the options"
+                  placeholder="Type to filter"
+                  className="h-11 w-full bg-transparent pr-3 pl-9 text-sm text-ink placeholder:text-muted focus:outline-none"
+                />
+              </div>
             )}
 
-            {rows.map((row, index) =>
-              row.kind === "group" ? (
-                <li
-                  key={`group-${row.label}-${index}`}
-                  role="presentation"
-                  className="mt-1.5 px-3.5 pt-2 pb-1 font-display text-[0.6875rem] font-medium tracking-[0.12em] text-muted uppercase first:mt-0 first:pt-0"
-                >
-                  {row.label}
-                </li>
-              ) : (
-                <li key={`option-${row.value}-${index}`}>
-                  <button
-                    type="button"
-                    id={`${listId}-${row.optionIndex}`}
-                    role="option"
-                    aria-selected={row.value !== undefined && isSelected(row.value)}
-                    data-option-index={row.optionIndex}
-                    onClick={() => commit(row.value ?? "")}
-                    onMouseMove={() => setActiveIndex(row.optionIndex ?? 0)}
-                    className={cn(
-                      "flex w-full cursor-pointer items-center justify-between gap-3 px-3.5 py-2 text-left",
-                      "font-display text-sm transition-colors duration-150",
-                      row.optionIndex === activeIndex ? "bg-paper-2 text-ink" : "text-ink-2",
-                      row.value !== undefined && isSelected(row.value) && "font-semibold text-ink",
-                    )}
+            <ul
+              ref={listRef}
+              id={listId}
+              role="listbox"
+              aria-multiselectable={multiple || undefined}
+              style={{ maxHeight: placement.listMax }}
+              className="overflow-y-auto py-1.5"
+            >
+              {selectable.length === 0 && (
+                <li className="px-3.5 py-3 text-sm text-muted">No match for “{query.trim()}”</li>
+              )}
+
+              {rows.map((row, index) =>
+                row.kind === "group" ? (
+                  <li
+                    key={`group-${row.label}-${index}`}
+                    role="presentation"
+                    className="mt-1.5 px-3.5 pt-2 pb-1 font-display text-[0.6875rem] font-medium tracking-[0.12em] text-muted uppercase first:mt-0 first:pt-0"
                   >
-                    <span className="truncate">{row.label}</span>
-                    {row.value !== undefined && isSelected(row.value) && (
-                      <Check size={15} className="shrink-0" />
-                    )}
-                  </button>
-                </li>
-              ),
-            )}
-          </ul>
-        </div>,
-        document.body,
-      )}
+                    {row.label}
+                  </li>
+                ) : (
+                  <li key={`option-${row.value}-${index}`}>
+                    <button
+                      type="button"
+                      id={`${listId}-${row.optionIndex}`}
+                      role="option"
+                      aria-selected={row.value !== undefined && isSelected(row.value)}
+                      data-option-index={row.optionIndex}
+                      onClick={() => commit(row.value ?? "")}
+                      onMouseMove={() => setActiveIndex(row.optionIndex ?? 0)}
+                      className={cn(
+                        "flex w-full cursor-pointer items-center justify-between gap-3 px-3.5 py-2 text-left",
+                        "font-display text-sm transition-colors duration-150",
+                        row.optionIndex === activeIndex ? "bg-paper-2 text-ink" : "text-ink-2",
+                        row.value !== undefined &&
+                          isSelected(row.value) &&
+                          "font-semibold text-ink",
+                      )}
+                    >
+                      <span className="truncate">{row.label}</span>
+                      {row.value !== undefined && isSelected(row.value) && (
+                        <Check size={15} className="shrink-0" />
+                      )}
+                    </button>
+                  </li>
+                ),
+              )}
+            </ul>
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }

@@ -33,7 +33,15 @@ interface WorkEditorProps {
   onDelete?: () => void
 }
 
-function Fieldset({ title, intro, children }: { title: string; intro?: string; children: ReactNode }) {
+function Fieldset({
+  title,
+  intro,
+  children,
+}: {
+  title: string
+  intro?: string
+  children: ReactNode
+}) {
   return (
     <fieldset className="rounded-card border border-line bg-card p-5 sm:p-6">
       <legend className="px-1 font-display text-sm font-semibold tracking-tight text-ink">
@@ -121,7 +129,8 @@ export function WorkEditor({
         const names = overQuota.map((t) => CATEGORIES.find((c) => c.id === t)?.label).join(", ")
         found.topics = `You already have ${TOPIC_QUOTA} published entries in ${names}. Revert one to draft, or choose another topic.`
       }
-      if (state.skills.length === 0) found.skills = "Add at least one skill - the home filter uses these."
+      if (state.skills.length === 0)
+        found.skills = "Add at least one skill - the home filter uses these."
       const unfinished = (state.figures ?? []).filter(
         (figure) => !figure.alt.trim() || !figure.caption.trim(),
       ).length
@@ -328,7 +337,9 @@ export function WorkEditor({
               variant="ghost"
               onClick={() => {
                 onSave({ ...state, published: false }, false)
-                setSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
+                setSavedAt(
+                  new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                )
               }}
             >
               Revert to draft
@@ -360,14 +371,14 @@ export function WorkEditor({
         <PublishReadiness items={readiness} published={state.published} />
 
         <div>
-        <p className="eyebrow">Preview</p>
-        <div className="mt-4 flex min-w-0">
-          <WorkCard work={preview} author={author} index={0} />
-        </div>
-        <p className="mt-3 text-xs leading-relaxed text-muted">
-          Without an upload the cover is drawn from your craft and headline result - so an entry
-          under NDA is never penalised for having no screenshot.
-        </p>
+          <p className="eyebrow">Preview</p>
+          <div className="mt-4 flex min-w-0">
+            <WorkCard work={preview} author={author} index={0} />
+          </div>
+          <p className="mt-3 text-xs leading-relaxed text-muted">
+            Without an upload the cover is drawn from your craft and headline result - so an entry
+            under NDA is never penalised for having no screenshot.
+          </p>
         </div>
       </aside>
     </div>
@@ -406,7 +417,9 @@ function TopicQuotaGroup({
               type="button"
               aria-pressed={isSelected}
               disabled={atCap}
-              title={atCap ? `${TOPIC_QUOTA} published entries already in ${category.label}` : undefined}
+              title={
+                atCap ? `${TOPIC_QUOTA} published entries already in ${category.label}` : undefined
+              }
               onClick={() => onToggle(category.id)}
               className={cn(
                 "flex cursor-pointer items-center gap-2 rounded-pill border px-4 py-2.5",
@@ -426,8 +439,8 @@ function TopicQuotaGroup({
         })}
       </div>
       <p className="text-xs text-muted">
-        Two published entries per topic. It keeps the directory readable and forces you to lead
-        with your best two.
+        Two published entries per topic. It keeps the directory readable and forces you to lead with
+        your best two.
       </p>
       {error && (
         <p role="alert" className="text-xs font-medium text-pop-pink">

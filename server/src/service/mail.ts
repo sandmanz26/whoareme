@@ -11,9 +11,7 @@ interface MailPayload {
   html: string
 }
 
-type MailResult =
-  | { sent: true; transport: string }
-  | { sent: false; reason: string }
+type MailResult = { sent: true; transport: string } | { sent: false; reason: string }
 
 export async function sendMail(payload: MailPayload): Promise<MailResult> {
   if (env.MAIL_TRANSPORT === "log") {

@@ -81,7 +81,14 @@ function Motif({ role, stroke }: { role: RoleId; stroke: string }) {
         <g {...common}>
           {[0, 1, 2].map((row) =>
             [0, 1, 2, 3].map((col) => (
-              <rect key={`${row}-${col}`} x={38 + col * 34} y={54 + row * 34} width="24" height="24" rx="6" />
+              <rect
+                key={`${row}-${col}`}
+                x={38 + col * 34}
+                y={54 + row * 34}
+                width="24"
+                height="24"
+                rx="6"
+              />
             )),
           )}
           <path d="M92 106 l12 12 24 -30" strokeWidth={2.5} />
@@ -93,7 +100,15 @@ function Motif({ role, stroke }: { role: RoleId; stroke: string }) {
           <path d="M16 148 C 62 148, 96 130, 122 96 S 164 44, 188 36" strokeWidth={2} />
           <path d="M164 38 L188 36 L184 60" />
           {[46, 82, 118, 154].map((x, i) => (
-            <rect key={x} x={x} y={150 - (i + 1) * 22} width="14" height={(i + 1) * 22} rx="4" strokeDasharray="3 5" />
+            <rect
+              key={x}
+              x={x}
+              y={150 - (i + 1) * 22}
+              width="14"
+              height={(i + 1) * 22}
+              rx="4"
+              strokeDasharray="3 5"
+            />
           ))}
         </g>
       )
@@ -105,7 +120,10 @@ function Motif({ role, stroke }: { role: RoleId; stroke: string }) {
           <circle cx="100" cy="112" r="7" />
           <circle cx="46" cy="136" r="7" />
           <circle cx="156" cy="130" r="7" />
-          <path d="M62 66 L100 112 L140 58 M100 112 L46 136 M100 112 L156 130" strokeDasharray="4 5" />
+          <path
+            d="M62 66 L100 112 L140 58 M100 112 L46 136 M100 112 L156 130"
+            strokeDasharray="4 5"
+          />
         </g>
       )
   }

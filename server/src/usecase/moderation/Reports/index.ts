@@ -18,13 +18,13 @@ export const ModerationReportsUsecase = {
     if (!report) throw notFound("Report")
 
     await ModerationAction.create({
-      action:      "dismiss" as ModerationActionId,
-      targetKind:  report.targetKind as ModerationTargetKind,
-      targetId:    report.targetId as unknown as Types.ObjectId,
+      action: "dismiss" as ModerationActionId,
+      targetKind: report.targetKind as ModerationTargetKind,
+      targetId: report.targetId as unknown as Types.ObjectId,
       targetLabel: "Report closed",
       reason,
-      actorId:     actor.id,
-      actorSlug:   actor.slug,
+      actorId: actor.id,
+      actorSlug: actor.slug,
     })
   },
 }

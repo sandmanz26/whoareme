@@ -29,11 +29,7 @@ function Layout() {
         <Outlet />
       </main>
       <Footer />
-      <JoinModal
-        open={joinOpen}
-        onClose={closeJoin}
-        onOpenPanel={() => navigate("/panel")}
-      />
+      <JoinModal open={joinOpen} onClose={closeJoin} onOpenPanel={() => navigate("/panel")} />
       <ReportModal
         open={reportOf !== null}
         onClose={closeReport}

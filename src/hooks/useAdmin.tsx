@@ -1,13 +1,6 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAccount } from "@/hooks/useAccount";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useAccount } from "@/hooks/useAccount"
 import {
   EMPTY_MODERATION,
   type AuditEntry,
@@ -19,10 +12,10 @@ import {
   type SiteContact,
   type Target,
   type TargetKind,
-} from "@/data/admin";
-import { copySlotById } from "@/data/siteCopy";
-import type { RoleId } from "@/data/taxonomy";
-import { QUERY_KEYS } from "@/lib/api/queryKeys";
+} from "@/data/admin"
+import { copySlotById } from "@/data/siteCopy"
+import type { RoleId } from "@/data/taxonomy"
+import { QUERY_KEYS } from "@/lib/api/queryKeys"
 import {
   fetchReports,
   fetchAppeals,
@@ -38,14 +31,14 @@ import {
   type ApiModerationReport,
   type ApiModerationAppeal,
   type ApiModerationLogEntry,
-} from "@/lib/api/endpoints/moderation";
+} from "@/lib/api/endpoints/moderation"
 import {
   fetchUserNotices,
   postMarkNoticeRead,
   postAppealNotice,
   postReport,
   type ApiUserNotice,
-} from "@/lib/api/endpoints/notices";
+} from "@/lib/api/endpoints/notices"
 
 function mapReport(r: ApiModerationReport): Report {
   return {
@@ -57,7 +50,7 @@ function mapReport(r: ApiModerationReport): Report {
     reason: r.reason as Report["reason"],
     note: r.note ?? "",
     createdAt: r.createdAt,
-  };
+  }
 }
 
 function mapAppeal(a: ApiModerationAppeal): Notice {
@@ -68,9 +61,7 @@ function mapAppeal(a: ApiModerationAppeal): Notice {
     target:
       a.targetKind && a.targetId
         ? {
-            kind: (a.targetKind === "user"
-              ? "person"
-              : a.targetKind) as TargetKind,
+            kind: (a.targetKind === "user" ? "person" : a.targetKind) as TargetKind,
             id: a.targetId,
           }
         : null,
@@ -87,7 +78,7 @@ function mapAppeal(a: ApiModerationAppeal): Notice {
           decidedAt: a.appeal.decidedAt ?? null,
         }
       : null,
-  };
+  }
 }
 
 function mapUserNotice(n: ApiUserNotice): Notice {
@@ -98,9 +89,7 @@ function mapUserNotice(n: ApiUserNotice): Notice {
     target:
       n.targetKind && n.targetId
         ? {
-            kind: (n.targetKind === "user"
-              ? "person"
-              : n.targetKind) as TargetKind,
+            kind: (n.targetKind === "user" ? "person" : n.targetKind) as TargetKind,
             id: n.targetId,
           }
         : null,
@@ -117,7 +106,7 @@ function mapUserNotice(n: ApiUserNotice): Notice {
           decidedAt: n.appeal.decidedAt ?? null,
         }
       : null,
-  };
+  }
 }
 
 function mapLogEntry(l: ApiModerationLogEntry): AuditEntry {
@@ -127,9 +116,7 @@ function mapLogEntry(l: ApiModerationLogEntry): AuditEntry {
     target:
       l.targetKind && l.targetId
         ? {
-            kind: (l.targetKind === "user"
-              ? "person"
-              : l.targetKind) as TargetKind,
+            kind: (l.targetKind === "user" ? "person" : l.targetKind) as TargetKind,
             id: l.targetId,
           }
         : null,
@@ -137,46 +124,37 @@ function mapLogEntry(l: ApiModerationLogEntry): AuditEntry {
     reason: l.reason,
     at: l.createdAt,
     by: l.actorSlug ?? "Moderator",
-  };
+  }
 }
 
 interface AdminContextValue {
-  state: ModerationState;
-  isWorkHidden: (workId: string) => boolean;
-  isPersonSuspended: (personId: string) => boolean;
-  isRoleDisabled: (role: RoleId) => boolean;
-  copy: (slotId: string) => string;
-  report: (target: Target, reason: ReportReasonId, note: string) => void;
+  state: ModerationState
+  isWorkHidden: (workId: string) => boolean
+  isPersonSuspended: (personId: string) => boolean
+  isRoleDisabled: (role: RoleId) => boolean
+  copy: (slotId: string) => string
+  report: (target: Target, reason: ReportReasonId, note: string) => void
   setWorkHidden: (
     workId: string,
     hidden: boolean,
     label: string,
     reason: string,
     authorId?: string,
-  ) => void;
-  setPersonSuspended: (
-    personId: string,
-    suspended: boolean,
-    label: string,
-    reason: string,
-  ) => void;
-  noticesFor: (personId: string) => Notice[];
-  markNoticeRead: (noticeId: string) => void;
-  appealNotice: (noticeId: string, text: string) => void;
-  decideAppeal: (
-    noticeId: string,
-    outcome: "upheld" | "overturned",
-    reason: string,
-  ) => void;
-  dismiss: (key: string, label: string, reason: string) => void;
-  resolveReport: (reportId: string, reason: string) => void;
-  setRoleDisabled: (role: RoleId, disabled: boolean, label: string) => void;
-  setContact: (contact: SiteContact) => void;
-  setCopy: (slotId: string, value: string) => void;
-  resetAll: () => void;
+  ) => void
+  setPersonSuspended: (personId: string, suspended: boolean, label: string, reason: string) => void
+  noticesFor: (personId: string) => Notice[]
+  markNoticeRead: (noticeId: string) => void
+  appealNotice: (noticeId: string, text: string) => void
+  decideAppeal: (noticeId: string, outcome: "upheld" | "overturned", reason: string) => void
+  dismiss: (key: string, label: string, reason: string) => void
+  resolveReport: (reportId: string, reason: string) => void
+  setRoleDisabled: (role: RoleId, disabled: boolean, label: string) => void
+  setContact: (contact: SiteContact) => void
+  setCopy: (slotId: string, value: string) => void
+  resetAll: () => void
 }
 
-const AdminContext = createContext<AdminContextValue | null>(null);
+const AdminContext = createContext<AdminContextValue | null>(null)
 
 /**
  * Moderation decisions and site settings, sourced from the API.
@@ -192,46 +170,46 @@ const AdminContext = createContext<AdminContextValue | null>(null);
  * `isAuth("moderator")` checks the access level on a verified token.
  */
 export function AdminProvider({ children }: { children: ReactNode }) {
-  const { account } = useAccount();
-  const queryClient = useQueryClient();
-  const isMod = account?.access === "moderator" || account?.access === "admin";
+  const { account } = useAccount()
+  const queryClient = useQueryClient()
+  const isMod = account?.access === "moderator" || account?.access === "admin"
 
-  const [reviewed, setReviewed] = useState<string[]>([]);
+  const [reviewed, setReviewed] = useState<string[]>([])
 
   const { data: apiReports = [] } = useQuery({
     queryKey: QUERY_KEYS.moderationReports,
     queryFn: fetchReports,
     enabled: isMod,
     staleTime: 60 * 1000,
-  });
+  })
 
   const { data: apiAppeals = [] } = useQuery({
     queryKey: QUERY_KEYS.moderationAppeals,
     queryFn: fetchAppeals,
     enabled: isMod,
     staleTime: 60 * 1000,
-  });
+  })
 
   const { data: apiLog = [] } = useQuery({
     queryKey: QUERY_KEYS.moderationLog,
     queryFn: fetchAuditLog,
     enabled: isMod,
     staleTime: 60 * 1000,
-  });
+  })
 
   const { data: apiSettings = null } = useQuery({
     queryKey: QUERY_KEYS.moderationSettings,
     queryFn: fetchSettings,
     enabled: isMod,
     staleTime: 5 * 60 * 1000,
-  });
+  })
 
   const { data: apiUserNotices = [] } = useQuery({
     queryKey: QUERY_KEYS.userNotices,
     queryFn: fetchUserNotices,
     enabled: !!account,
     staleTime: 60 * 1000,
-  });
+  })
 
   const state = useMemo<ModerationState>(
     () => ({
@@ -246,157 +224,135 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       copy: apiSettings?.copy ?? {},
     }),
     [reviewed, apiReports, apiAppeals, apiLog, apiSettings],
-  );
+  )
 
   const invalidateModeration = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["moderation"] });
-  }, [queryClient]);
+    queryClient.invalidateQueries({ queryKey: ["moderation"] })
+  }, [queryClient])
 
   const setWorkHidden = useCallback(
     async (workId: string, hidden: boolean, _label: string, reason: string) => {
-      if (hidden) await unpublishWork(workId, reason);
-      else await republishWork(workId, reason);
-      queryClient.invalidateQueries({ queryKey: ["work", "list"] });
-      queryClient.invalidateQueries({ queryKey: ["people", "list"] });
-      invalidateModeration();
+      if (hidden) await unpublishWork(workId, reason)
+      else await republishWork(workId, reason)
+      queryClient.invalidateQueries({ queryKey: ["work", "list"] })
+      queryClient.invalidateQueries({ queryKey: ["people", "list"] })
+      invalidateModeration()
     },
     [queryClient, invalidateModeration],
-  );
+  )
 
   const setPersonSuspended = useCallback(
-    async (
-      personId: string,
-      suspended: boolean,
-      _label: string,
-      reason: string,
-    ) => {
-      if (suspended) await suspendPerson(personId, reason);
-      else await reinstatePerson(personId, reason);
-      queryClient.invalidateQueries({ queryKey: ["people", "list"] });
-      queryClient.invalidateQueries({ queryKey: ["work", "list"] });
-      invalidateModeration();
+    async (personId: string, suspended: boolean, _label: string, reason: string) => {
+      if (suspended) await suspendPerson(personId, reason)
+      else await reinstatePerson(personId, reason)
+      queryClient.invalidateQueries({ queryKey: ["people", "list"] })
+      queryClient.invalidateQueries({ queryKey: ["work", "list"] })
+      invalidateModeration()
     },
     [queryClient, invalidateModeration],
-  );
+  )
 
   const resolveReport = useCallback(
     async (reportId: string, reason: string) => {
-      await apiResolveReport(reportId, reason);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationReports });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationLog });
+      await apiResolveReport(reportId, reason)
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationReports })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationLog })
     },
     [queryClient],
-  );
+  )
 
   const decideAppeal = useCallback(
-    async (
-      noticeId: string,
-      outcome: "upheld" | "overturned",
-      reason: string,
-    ) => {
-      await apiDecideAppeal(noticeId, outcome, reason);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationAppeals });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationLog });
+    async (noticeId: string, outcome: "upheld" | "overturned", reason: string) => {
+      await apiDecideAppeal(noticeId, outcome, reason)
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationAppeals })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationLog })
       if (outcome === "overturned") {
-        queryClient.invalidateQueries({ queryKey: ["work", "list"] });
-        queryClient.invalidateQueries({ queryKey: ["people", "list"] });
+        queryClient.invalidateQueries({ queryKey: ["work", "list"] })
+        queryClient.invalidateQueries({ queryKey: ["people", "list"] })
       }
     },
     [queryClient],
-  );
+  )
 
   const dismiss = useCallback((key: string) => {
-    setReviewed((cur) => [...new Set([...cur, key])]);
-  }, []);
+    setReviewed((cur) => [...new Set([...cur, key])])
+  }, [])
 
   const setRoleDisabled = useCallback(
     async (role: RoleId, disabled: boolean, label: string) => {
-      const current = (apiSettings?.disabledRoles ?? []) as RoleId[];
-      const next = disabled
-        ? [...new Set([...current, role])]
-        : current.filter((r) => r !== role);
+      const current = (apiSettings?.disabledRoles ?? []) as RoleId[]
+      const next = disabled ? [...new Set([...current, role])] : current.filter((r) => r !== role)
       await updateSettings(
         { disabledRoles: next },
         disabled
           ? `Hidden from browse controls: ${label}`
           : `Shown in browse controls again: ${label}`,
-      );
+      )
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.moderationSettings,
-      });
+      })
     },
     [queryClient, apiSettings],
-  );
+  )
 
   const setContact = useCallback(
     async (contact: SiteContact) => {
-      await updateSettings(
-        { contact },
-        `Contact updated: ${contact.email}, ${contact.location}`,
-      );
+      await updateSettings({ contact }, `Contact updated: ${contact.email}, ${contact.location}`)
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.moderationSettings,
-      });
+      })
     },
     [queryClient],
-  );
+  )
 
   const setCopy = useCallback(
     async (slotId: string, value: string) => {
-      const currentCopy = { ...(apiSettings?.copy ?? {}) };
-      const fallback = copySlotById(slotId)?.defaultValue ?? "";
-      if (value.trim() === "" || value === fallback) delete currentCopy[slotId];
-      else currentCopy[slotId] = value;
+      const currentCopy = { ...(apiSettings?.copy ?? {}) }
+      const fallback = copySlotById(slotId)?.defaultValue ?? ""
+      if (value.trim() === "" || value === fallback) delete currentCopy[slotId]
+      else currentCopy[slotId] = value
       await updateSettings(
         { copy: currentCopy },
-        currentCopy[slotId]
-          ? "Copy edited"
-          : "Copy reset to the shipped default",
-      );
+        currentCopy[slotId] ? "Copy edited" : "Copy reset to the shipped default",
+      )
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.moderationSettings,
-      });
+      })
     },
     [queryClient, apiSettings],
-  );
+  )
 
   const resetAll = useCallback(() => {
-    setReviewed([]);
-  }, []);
+    setReviewed([])
+  }, [])
 
-  const report = useCallback(
-    (target: Target, reason: ReportReasonId, note: string) => {
-      postReport(
-        target.kind === "person" ? "user" : target.kind,
-        target.id,
-        reason,
-        note,
-      ).catch(() => {});
-    },
-    [],
-  );
+  const report = useCallback((target: Target, reason: ReportReasonId, note: string) => {
+    postReport(target.kind === "person" ? "user" : target.kind, target.id, reason, note).catch(
+      () => {},
+    )
+  }, [])
 
   const noticesFor = useCallback(
     (_personId: string) => apiUserNotices.map(mapUserNotice),
     [apiUserNotices],
-  );
+  )
 
   const markNoticeRead = useCallback(
     async (noticeId: string) => {
-      await postMarkNoticeRead(noticeId);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userNotices });
+      await postMarkNoticeRead(noticeId)
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userNotices })
     },
     [queryClient],
-  );
+  )
 
   const appealNotice = useCallback(
     async (noticeId: string, text: string) => {
-      await postAppealNotice(noticeId, text);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userNotices });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationAppeals });
+      await postAppealNotice(noticeId, text)
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userNotices })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationAppeals })
     },
     [queryClient],
-  );
+  )
 
   const value = useMemo<AdminContextValue>(
     () => ({
@@ -404,8 +360,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       isWorkHidden: () => false,
       isPersonSuspended: () => false,
       isRoleDisabled: (role) => state.disabledRoles.includes(role),
-      copy: (slotId) =>
-        state.copy[slotId] ?? copySlotById(slotId)?.defaultValue ?? "",
+      copy: (slotId) => state.copy[slotId] ?? copySlotById(slotId)?.defaultValue ?? "",
       report,
       setWorkHidden,
       setPersonSuspended,
@@ -436,15 +391,13 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       setCopy,
       resetAll,
     ],
-  );
+  )
 
-  return (
-    <AdminContext.Provider value={value}>{children}</AdminContext.Provider>
-  );
+  return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>
 }
 
 export function useAdmin(): AdminContextValue {
-  const value = useContext(AdminContext);
-  if (!value) throw new Error("useAdmin must be used inside <AdminProvider>");
-  return value;
+  const value = useContext(AdminContext)
+  if (!value) throw new Error("useAdmin must be used inside <AdminProvider>")
+  return value
 }

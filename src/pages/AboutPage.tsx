@@ -13,10 +13,10 @@ const RULES = [
   },
   {
     rule: "Every entry states the problem, the decisions, and what changed",
-    why: "\"It never shipped\" is a valid outcome, and the seeded directory includes cancelled projects and accepted regressions on purpose. A portfolio where everything succeeded is not credible.",
+    why: '"It never shipped" is a valid outcome, and the seeded directory includes cancelled projects and accepted regressions on purpose. A portfolio where everything succeeded is not credible.',
   },
   {
-    rule: "Proof points are labelled \"Results claimed\"",
+    rule: 'Proof points are labelled "Results claimed"',
     why: "We cannot verify a number. Presenting claimed figures as verified facts would be the single most damaging thing this product could do.",
   },
   {
@@ -31,7 +31,10 @@ const RULES = [
 
 const NOT_BUILT = [
   ["Messaging, shortlists, job posts", "A two-sided hiring flow is a different product."],
-  ["Likes, follows, feeds", "Popularity ranking reintroduces exactly the dynamic this exists to avoid."],
+  [
+    "Likes, follows, feeds",
+    "Popularity ranking reintroduces exactly the dynamic this exists to avoid.",
+  ],
   ["Verification badges", "Attractive, and hard. Doing it badly is worse than not doing it."],
   ["AI-written case studies", "The form's whole value is that a person answered the questions."],
 ]
@@ -42,7 +45,8 @@ export function AboutPage() {
   useEffect(() => {
     return applyMeta({
       title: "About",
-      description: "Why a portfolio should be segmented by craft and evidenced by outcome, and the rules that make it hard to publish anything else.",
+      description:
+        "Why a portfolio should be segmented by craft and evidenced by outcome, and the rules that make it hard to publish anything else.",
     })
   }, [])
 
@@ -57,12 +61,11 @@ export function AboutPage() {
       <Prose>
         <Section title="Why it exists">
           <p>
-            Hiring evidence in tech barely exists in portable form. A CV compresses three years
-            into six bullets and a job title that reflects one company's levelling. LinkedIn
-            optimises for keywords, so everyone converges on the same vocabulary. Dribbble and
-            Behance show what work <em>looked like</em> - a reviewer cannot tell whether it shipped
-            or what changed. GitHub is real evidence for exactly one craft, and only for public
-            code.
+            Hiring evidence in tech barely exists in portable form. A CV compresses three years into
+            six bullets and a job title that reflects one company's levelling. LinkedIn optimises
+            for keywords, so everyone converges on the same vocabulary. Dribbble and Behance show
+            what work <em>looked like</em> - a reviewer cannot tell whether it shipped or what
+            changed. GitHub is real evidence for exactly one craft, and only for public code.
           </p>
           <p>
             A reviewer wants three facts in ten seconds: what was the problem, what did this person
@@ -88,8 +91,8 @@ export function AboutPage() {
         <Section title="Three axes, and why the third one is not an industry">
           <p>
             Work is filed by <strong>craft</strong> (what you do), <strong>topic</strong> (where it
-            shipped) and <strong>business model</strong> (how the thing made money). Craft is set per
-            entry rather than per person: a designer who shipped a routing engine files it as
+            shipped) and <strong>business model</strong> (how the thing made money). Craft is set
+            per entry rather than per person: a designer who shipped a routing engine files it as
             developer work, and the interface says so.
           </p>
           <p>

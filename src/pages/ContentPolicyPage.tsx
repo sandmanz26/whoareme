@@ -35,7 +35,7 @@ const NOT_REMOVED = [
   },
   {
     what: "Unflattering detail about a company",
-    why: "\"The estimate tripled and we stopped\" is a fact about a project. Criticism is not defamation, and we do not remove entries because a company would prefer they were gone.",
+    why: '"The estimate tripled and we stopped" is a fact about a project. Criticism is not defamation, and we do not remove entries because a company would prefer they were gone.',
   },
   {
     what: "A thin entry",
@@ -101,12 +101,10 @@ export function ContentPolicyPage() {
 
         <Section title="How to report something">
           <p>
-            Every case study and every profile carries a <strong className="font-semibold text-ink">
-              Report this
-            </strong>{" "}
-            link. No account is needed: the reports worth having often come from someone who
-            happens to know a claim is false, and requiring them to sign up first would mean we
-            never hear it.
+            Every case study and every profile carries a{" "}
+            <strong className="font-semibold text-ink">Report this</strong> link. No account is
+            needed: the reports worth having often come from someone who happens to know a claim is
+            false, and requiring them to sign up first would mean we never hear it.
           </p>
           <p>
             Tell us which part is wrong and why. "The headline figure does not match the outcome

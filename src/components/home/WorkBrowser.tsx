@@ -1,25 +1,25 @@
-import { useState } from "react";
-import { Container } from "@/components/layout/Container";
-import { SectionHeading } from "./SectionHeading";
-import { FilterBar, type Filters } from "./FilterBar";
-import { WorkCard } from "@/components/work/WorkCard";
-import { Button } from "@/components/ui/Button";
-import { ArrowUpRight, Search } from "@/components/ui/Icon";
-import { useNavigate } from "react-router-dom";
-import type { Work } from "@/data/work";
-import type { Author } from "@/lib/authors";
-import { useAdmin } from "@/hooks/useAdmin";
+import { useState } from "react"
+import { Container } from "@/components/layout/Container"
+import { SectionHeading } from "./SectionHeading"
+import { FilterBar, type Filters } from "./FilterBar"
+import { WorkCard } from "@/components/work/WorkCard"
+import { Button } from "@/components/ui/Button"
+import { ArrowUpRight, Search } from "@/components/ui/Icon"
+import { useNavigate } from "react-router-dom"
+import type { Work } from "@/data/work"
+import type { Author } from "@/lib/authors"
+import { useAdmin } from "@/hooks/useAdmin"
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 6
 
 interface WorkBrowserProps {
-  work: Work[];
-  authors: Map<string, Author>;
-  filters: Filters;
-  skillFacets: string[];
-  onFilterChange: (patch: Partial<Filters>) => void;
-  onResetFilters: () => void;
-  onJoin: () => void;
+  work: Work[]
+  authors: Map<string, Author>
+  filters: Filters
+  skillFacets: string[]
+  onFilterChange: (patch: Partial<Filters>) => void
+  onResetFilters: () => void
+  onJoin: () => void
 }
 
 /**
@@ -36,9 +36,9 @@ export function WorkBrowser({
   onResetFilters,
   onJoin,
 }: WorkBrowserProps) {
-  const navigate = useNavigate();
-  const { copy } = useAdmin();
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const navigate = useNavigate()
+  const { copy } = useAdmin()
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   // Every filter belongs in the signature. Leave one out and paging silently
   // keeps the old offset when that filter changes.
@@ -53,20 +53,17 @@ export function WorkBrowser({
   ]
     .map((values) => values.join(","))
     .concat(filters.query)
-    .join("|");
-  const [lastSignature, setLastSignature] = useState(signature);
+    .join("|")
+  const [lastSignature, setLastSignature] = useState(signature)
   if (signature !== lastSignature) {
-    setLastSignature(signature);
-    setVisibleCount(PAGE_SIZE);
+    setLastSignature(signature)
+    setVisibleCount(PAGE_SIZE)
   }
 
-  const visible = work.slice(0, visibleCount);
+  const visible = work.slice(0, visibleCount)
 
   return (
-    <section
-      id="work"
-      className="scroll-mt-24 border-t border-line py-20 sm:py-28"
-    >
+    <section id="work" className="scroll-mt-24 border-t border-line py-20 sm:py-28">
       <Container>
         <SectionHeading
           title={
@@ -100,11 +97,7 @@ export function WorkBrowser({
             <ul className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {visible.map((item, index) => (
                 <li key={item.id} className="flex min-w-0">
-                  <WorkCard
-                    work={item}
-                    author={authors.get(item.authorId)}
-                    index={index}
-                  />
+                  <WorkCard work={item} author={authors.get(item.authorId)} index={index} />
                 </li>
               ))}
             </ul>
@@ -128,8 +121,8 @@ export function WorkBrowser({
             </span>
             <h3 className="display mt-5 text-xl">No case studies here yet</h3>
             <p className="mt-2 max-w-sm text-sm text-muted">
-              Nothing matches this craft and topic combination. Widen the
-              filters - or publish the first one.
+              Nothing matches this craft and topic combination. Widen the filters - or publish the
+              first one.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Button variant="outline" onClick={onResetFilters}>
@@ -141,5 +134,5 @@ export function WorkBrowser({
         )}
       </Container>
     </section>
-  );
+  )
 }

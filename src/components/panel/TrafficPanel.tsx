@@ -65,12 +65,7 @@ function StatCard({
         <Bars values={series} days={days} label={`${label} over the last ${WINDOW} days`} />
         <div className="mt-2 flex items-center justify-between text-[0.6875rem] text-muted">
           <span>{WINDOW} days ago</span>
-          <span
-            className={cn(
-              "font-display font-medium",
-              trend.up ? "text-ink" : "text-muted",
-            )}
-          >
+          <span className={cn("font-display font-medium", trend.up ? "text-ink" : "text-muted")}>
             {trend.text}
           </span>
           <span>today</span>
@@ -151,9 +146,9 @@ export function TrafficPanel({
       </section>
 
       <p className="rounded-card border border-dashed border-ink/20 px-5 py-4 text-xs leading-relaxed text-muted">
-        <span className="font-display font-semibold text-ink">How these numbers work.</span>{" "}
-        Profile views and portfolio opens are counted when other people visit — your own visits
-        are excluded. Numbers update within a few minutes.
+        <span className="font-display font-semibold text-ink">How these numbers work.</span> Profile
+        views and portfolio opens are counted when other people visit — your own visits are
+        excluded. Numbers update within a few minutes.
       </p>
     </div>
   )

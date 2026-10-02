@@ -105,9 +105,7 @@ export function RoleGrid({ counts, activeRoles, onSelect }: RoleGridProps) {
                       {role.blurb}
                       <br />
                       <span className="font-display font-medium">
-                        {soon
-                          ? "Opening next"
-                          : plural(counts[role.id] ?? 0, "person", "people")}
+                        {soon ? "Opening next" : plural(counts[role.id] ?? 0, "person", "people")}
                       </span>
                     </span>
                     {!soon && (

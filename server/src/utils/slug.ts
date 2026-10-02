@@ -2,8 +2,9 @@ function slugify(input: string): string {
   return input
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
-    .replace(/[øæœłđðþß]/g, (c) =>
-      ({ ø: "o", æ: "ae", œ: "oe", ł: "l", đ: "d", ð: "d", þ: "th", ß: "ss" }[c] ?? c),
+    .replace(
+      /[øæœłđðþß]/g,
+      (c) => ({ ø: "o", æ: "ae", œ: "oe", ł: "l", đ: "d", ð: "d", þ: "th", ß: "ss" })[c] ?? c,
     )
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")

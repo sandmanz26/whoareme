@@ -72,9 +72,7 @@ function NoticeRow({
           {actionLabel(notice.action)}
         </Badge>
         <span className="font-display text-sm font-semibold">{notice.targetLabel}</span>
-        {!notice.readAt && (
-          <Badge className="border-ink/20 bg-pop-lime text-ink">New</Badge>
-        )}
+        {!notice.readAt && <Badge className="border-ink/20 bg-pop-lime text-ink">New</Badge>}
         <span className="ml-auto font-display text-xs text-paper/50">
           {new Date(notice.at).toLocaleString()}
         </span>
@@ -102,7 +100,8 @@ function NoticeRow({
       {decided && (
         <div className="mt-4 rounded-xl bg-paper/10 p-3">
           <p className="font-display text-xs font-semibold text-paper">
-            Appeal {decided === "overturned" ? "upheld, decision reversed" : "reviewed, decision stands"}
+            Appeal{" "}
+            {decided === "overturned" ? "upheld, decision reversed" : "reviewed, decision stands"}
           </p>
           <p className="mt-1.5 text-sm leading-relaxed text-paper/75">
             {notice.appeal?.outcomeReason}

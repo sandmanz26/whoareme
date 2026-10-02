@@ -84,12 +84,17 @@ export function JoinCta({ onJoin }: { onJoin: () => void }) {
 
             <ol className="flex flex-col gap-8">
               {STEPS.map((step) => (
-                <li key={step.number} className="flex gap-5 border-b border-paper/10 pb-8 last:border-0 last:pb-0">
+                <li
+                  key={step.number}
+                  className="flex gap-5 border-b border-paper/10 pb-8 last:border-0 last:pb-0"
+                >
                   <span className="font-display text-sm font-semibold tracking-wide text-pop-lime">
                     {step.number}
                   </span>
                   <div>
-                    <h3 className="font-display text-lg font-semibold tracking-tight">{step.title}</h3>
+                    <h3 className="font-display text-lg font-semibold tracking-tight">
+                      {step.title}
+                    </h3>
                     <p className="mt-2 text-sm leading-relaxed text-paper/60">{step.body}</p>
                   </div>
                 </li>

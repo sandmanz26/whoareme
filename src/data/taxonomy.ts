@@ -67,14 +67,32 @@ export const CATEGORIES = [
   { id: "mobility", label: "Transportation", tint: "bg-pop-sky", kind: "industry" },
   // Everything below the fold of the tab rail, revealed by "See more".
   { id: "healthtech", label: "Health Tech", tint: "bg-pop-pink", kind: "industry", extra: true },
-  { id: "gaming", label: "Gaming", tint: "bg-pop-violet text-paper", kind: "industry", extra: true },
+  {
+    id: "gaming",
+    label: "Gaming",
+    tint: "bg-pop-violet text-paper",
+    kind: "industry",
+    extra: true,
+  },
   { id: "climate", label: "Climate", tint: "bg-pop-lime", kind: "industry", extra: true },
   { id: "security", label: "Cybersecurity", tint: "bg-ink", kind: "industry", extra: true },
   // ── Practice ──────────────────────────────────────────────────────
   { id: "design-ops", label: "Design Ops", tint: "bg-pop-pink", kind: "practice", extra: true },
   { id: "devex", label: "Developer Experience", tint: "bg-pop-sky", kind: "practice", extra: true },
-  { id: "accessibility", label: "Accessibility", tint: "bg-pop-lime", kind: "practice", extra: true },
-  { id: "hiring", label: "Hiring & Teams", tint: "bg-pop-tangerine", kind: "practice", extra: true },
+  {
+    id: "accessibility",
+    label: "Accessibility",
+    tint: "bg-pop-lime",
+    kind: "practice",
+    extra: true,
+  },
+  {
+    id: "hiring",
+    label: "Hiring & Teams",
+    tint: "bg-pop-tangerine",
+    kind: "practice",
+    extra: true,
+  },
   { id: "reliability", label: "Reliability", tint: "bg-ink", kind: "practice", extra: true },
 ] as const
 

@@ -107,10 +107,7 @@ function Figure({
       </div>
 
       <figcaption
-        className={cn(
-          "text-sm leading-relaxed text-muted",
-          tall ? "lg:flex-1 lg:pt-1" : "mt-3",
-        )}
+        className={cn("text-sm leading-relaxed text-muted", tall ? "lg:flex-1 lg:pt-1" : "mt-3")}
       >
         {figure.caption}
       </figcaption>
@@ -163,7 +160,9 @@ function Lightbox({ figure, onClose }: { figure: WorkFigure; onClose: () => void
         alt={figure.alt}
         className="max-h-[78vh] max-w-full rounded-2xl object-contain"
       />
-      <p className="max-w-2xl text-center text-sm leading-relaxed text-paper/75">{figure.caption}</p>
+      <p className="max-w-2xl text-center text-sm leading-relaxed text-paper/75">
+        {figure.caption}
+      </p>
 
       {/* Click-away sits behind the content so the image itself is not a target. */}
       <button

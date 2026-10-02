@@ -28,7 +28,9 @@ export function unauthorized(message = "Unauthorized. Please sign in."): ApiErro
   return new ApiError(401, "unauthorized", message)
 }
 
-export function forbidden(message = "You do not have permission to perform this action."): ApiError {
+export function forbidden(
+  message = "You do not have permission to perform this action.",
+): ApiError {
   return new ApiError(403, "forbidden", message)
 }
 

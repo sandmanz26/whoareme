@@ -25,7 +25,18 @@ export const NoticesUsecase = {
   async Appeal(userId: string, noticeId: string, text: string) {
     const result = await Notice.findOneAndUpdate(
       { _id: noticeId, userId, appeal: null },
-      { $set: { appeal: { text, createdAt: new Date(), outcome: null, outcomeReason: "", decidedAt: null, decidedBy: null } } },
+      {
+        $set: {
+          appeal: {
+            text,
+            createdAt: new Date(),
+            outcome: null,
+            outcomeReason: "",
+            decidedAt: null,
+            decidedBy: null,
+          },
+        },
+      },
       { new: true },
     ).lean()
 

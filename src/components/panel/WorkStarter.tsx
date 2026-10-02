@@ -84,7 +84,9 @@ export function WorkStarter({
                 >
                   {option.blurb}
                 </span>
-                <span className={cn("text-xs leading-relaxed", active ? "text-paper/65" : "text-muted")}>
+                <span
+                  className={cn("text-xs leading-relaxed", active ? "text-paper/65" : "text-muted")}
+                >
                   {option.detail}
                 </span>
               </button>
@@ -115,7 +117,9 @@ export function WorkStarter({
                   className={cn(
                     "group relative flex h-full w-full cursor-pointer flex-col gap-2 overflow-hidden rounded-card border p-5 text-left",
                     "transition-all duration-250 ease-pop hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-26px_rgba(11,11,15,0.45)]",
-                    active ? "border-ink bg-ink text-paper" : "border-line bg-card hover:border-ink/35",
+                    active
+                      ? "border-ink bg-ink text-paper"
+                      : "border-line bg-card hover:border-ink/35",
                   )}
                 >
                   <span
@@ -167,10 +171,12 @@ export function WorkStarter({
           two unanswered questions at once. */}
       {role && mode === "template" && (
         <section>
-          <h2 className="display text-xl">What kind of {roleById(role).label.toLowerCase()} work?</h2>
+          <h2 className="display text-xl">
+            What kind of {roleById(role).label.toLowerCase()} work?
+          </h2>
           <p className="mt-2 max-w-lg text-sm text-muted">
-            A shipped feature and a design system are both design, and almost nothing they should
-            be asked about is the same. Pick the closest shape - you can change it later.
+            A shipped feature and a design system are both design, and almost nothing they should be
+            asked about is the same. Pick the closest shape - you can change it later.
           </p>
 
           <ul className="mt-6 grid gap-3 sm:grid-cols-2">

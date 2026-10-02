@@ -37,9 +37,17 @@ export function PublishReadiness({
         </span>
       </div>
 
-      <div className={cn("mt-3 h-1.5 overflow-hidden rounded-pill", ready ? "bg-paper/20" : "bg-paper-2")}>
+      <div
+        className={cn(
+          "mt-3 h-1.5 overflow-hidden rounded-pill",
+          ready ? "bg-paper/20" : "bg-paper-2",
+        )}
+      >
         <div
-          className={cn("h-full rounded-pill transition-[width] duration-500 ease-pop", ready ? "bg-pop-lime" : "bg-ink")}
+          className={cn(
+            "h-full rounded-pill transition-[width] duration-500 ease-pop",
+            ready ? "bg-pop-lime" : "bg-ink",
+          )}
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -77,7 +85,9 @@ export function PublishReadiness({
                 {item.label}
               </span>
               {!item.done && item.hint && (
-                <span className={cn("mt-0.5 block text-xs", ready ? "text-paper/50" : "text-muted")}>
+                <span
+                  className={cn("mt-0.5 block text-xs", ready ? "text-paper/50" : "text-muted")}
+                >
                   {item.hint}
                 </span>
               )}

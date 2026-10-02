@@ -1,46 +1,38 @@
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { isAxiosError } from "axios";
-import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
-import {
-  Field,
-  PasswordInput,
-  SelectInput,
-  TextInput,
-} from "@/components/ui/Field";
-import { ArrowRight, Check } from "@/components/ui/Icon";
-import { track } from "@/lib/analytics";
-import { initialsOf } from "@/lib/utils";
-import { ROLE_OPTIONS } from "./joinForm";
-import type { RoleId } from "@/data/taxonomy";
-import { useAccount } from "@/hooks/useAccount";
-import {
-  registerSchema,
-  type RegisterValues,
-} from "@/lib/validation/authSchemas";
+import { useEffect } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { isAxiosError } from "axios"
+import { Modal } from "@/components/ui/Modal"
+import { Button } from "@/components/ui/Button"
+import { Field, PasswordInput, SelectInput, TextInput } from "@/components/ui/Field"
+import { ArrowRight, Check } from "@/components/ui/Icon"
+import { track } from "@/lib/analytics"
+import { initialsOf } from "@/lib/utils"
+import { ROLE_OPTIONS } from "./joinForm"
+import type { RoleId } from "@/data/taxonomy"
+import { useAccount } from "@/hooks/useAccount"
+import { registerSchema, type RegisterValues } from "@/lib/validation/authSchemas"
 
 interface JoinModalProps {
-  open: boolean;
-  onClose: () => void;
-  onOpenPanel: () => void;
+  open: boolean
+  onClose: () => void
+  onOpenPanel: () => void
 }
 
 export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
-  const { register: registerAccount } = useAccount();
+  const { register: registerAccount } = useAccount()
   const form = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: { name: "", email: "", role: "", password: "" },
-  });
+  })
   const {
     formState: { errors, isSubmitting, isSubmitSuccessful },
-  } = form;
-  const values = form.watch();
+  } = form
+  const values = form.watch()
 
   useEffect(() => {
-    if (open) track("signup_opened");
-  }, [open]);
+    if (open) track("signup_opened")
+  }, [open])
 
   async function onSubmit(data: RegisterValues) {
     try {
@@ -58,24 +50,23 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
           photo: "",
         },
         data.password,
-      );
-      track("signup_completed");
+      )
+      track("signup_completed")
     } catch (err) {
       const msg = isAxiosError(err)
-        ? ((err.response?.data as { message?: string })?.message ??
-          "Something went wrong.")
-        : "Something went wrong. Please try again.";
-      form.setError("root", { message: msg });
-      throw err; // re-throw so RHF marks isSubmitSuccessful as false
+        ? ((err.response?.data as { message?: string })?.message ?? "Something went wrong.")
+        : "Something went wrong. Please try again."
+      form.setError("root", { message: msg })
+      throw err // re-throw so RHF marks isSubmitSuccessful as false
     }
   }
 
   function handleClose() {
-    onClose();
-    window.setTimeout(() => form.reset(), 200);
+    onClose()
+    window.setTimeout(() => form.reset(), 200)
   }
 
-  const serverError = form.formState.errors.root?.message;
+  const serverError = form.formState.errors.root?.message
 
   return (
     <Modal
@@ -93,9 +84,9 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
           values={values}
           onClose={handleClose}
           onOpenPanel={() => {
-            onClose();
-            onOpenPanel();
-            window.setTimeout(() => form.reset(), 200);
+            onClose()
+            onOpenPanel()
+            window.setTimeout(() => form.reset(), 200)
           }}
         />
       ) : (
@@ -165,9 +156,7 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
                     value: o.id,
                     label: o.label,
                   }))}
-                  onChange={(next) =>
-                    form.setValue("role", next, { shouldValidate: true })
-                  }
+                  onChange={(next) => form.setValue("role", next, { shouldValidate: true })}
                 />
               )}
             </Field>
@@ -214,7 +203,7 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
         </form>
       )}
     </Modal>
-  );
+  )
 }
 
 /* ── Success state ────────────────────────────────────────────────────── */
@@ -224,11 +213,11 @@ function SuccessState({
   onClose,
   onOpenPanel,
 }: {
-  values: RegisterValues;
-  onClose: () => void;
-  onOpenPanel: () => void;
+  values: RegisterValues
+  onClose: () => void
+  onOpenPanel: () => void
 }) {
-  const role = ROLE_OPTIONS.find((o) => o.id === values.role);
+  const role = ROLE_OPTIONS.find((o) => o.id === values.role)
 
   return (
     <div className="animate-fade-up flex flex-col items-center text-center">
@@ -236,12 +225,10 @@ function SuccessState({
         <Check size={26} />
       </span>
 
-      <h3 className="display mt-5 text-2xl">
-        Profile ready, {values.name.split(" ")[0]}
-      </h3>
+      <h3 className="display mt-5 text-2xl">Profile ready, {values.name.split(" ")[0]}</h3>
       <p className="mt-2 max-w-sm text-sm text-muted">
-        Add your title, location, a portfolio link and a bio from your panel -
-        then add real work. Your panel has a different form for every craft.
+        Add your title, location, a portfolio link and a bio from your panel - then add real work.
+        Your panel has a different form for every craft.
       </p>
 
       <div className="mt-7 w-full rounded-card border border-line bg-paper p-5 text-left">
@@ -250,9 +237,7 @@ function SuccessState({
             {initialsOf(values.name)}
           </span>
           <div className="min-w-0">
-            <p className="truncate font-display text-base font-semibold text-ink">
-              {values.name}
-            </p>
+            <p className="truncate font-display text-base font-semibold text-ink">{values.name}</p>
             <p className="truncate text-sm text-ink-2">Add your title</p>
           </div>
         </div>
@@ -276,5 +261,5 @@ function SuccessState({
         </Button>
       </div>
     </div>
-  );
+  )
 }

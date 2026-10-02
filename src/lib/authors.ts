@@ -57,7 +57,13 @@ export function personFromAccount(account: Account, skills: string[]): Person {
     open: true,
     photo: account.photo ?? "",
     links: account.portfolio
-      ? [{ platform: "website", href: account.portfolio, handle: account.portfolio.replace(/^https?:\/\//, "") }]
+      ? [
+          {
+            platform: "website",
+            href: account.portfolio,
+            handle: account.portfolio.replace(/^https?:\/\//, ""),
+          },
+        ]
       : linksFor(account.role, account.id),
     languages: languagesFor(account.location),
     bio: account.pitch ?? "",
@@ -94,22 +100,25 @@ export function authorIndex(account: Account | null): Map<string, Author> {
 }
 
 /** Build an author index from a live people list (API-sourced). */
-export function authorIndexFromPeople(people: readonly Person[], viewerId: string | null): Map<string, Author> {
+export function authorIndexFromPeople(
+  people: readonly Person[],
+  viewerId: string | null,
+): Map<string, Author> {
   return new Map(
     people.map((p) => [
       p.id,
       {
-        id:        p.id,
-        name:      p.name,
-        title:     p.title,
-        company:   p.company,
-        location:  p.location,
-        role:      p.role,
-        years:     p.years,
+        id: p.id,
+        name: p.name,
+        title: p.title,
+        company: p.company,
+        location: p.location,
+        role: p.role,
+        years: p.years,
         languages: p.languages,
-        photo:     p.photo,
-        links:     p.links,
-        isViewer:  p.id === viewerId,
+        photo: p.photo,
+        links: p.links,
+        isViewer: p.id === viewerId,
       },
     ]),
   )

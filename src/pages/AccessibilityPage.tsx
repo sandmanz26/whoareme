@@ -4,9 +4,9 @@ import { Badge } from "@/components/ui/Badge"
 const DONE = [
   "Every control is reachable and operable by keyboard, including the dropdowns, the dialog and the moderation console.",
   "The dialog traps focus, restores it on close, and closes on Escape.",
-  "Dropdowns are a real combobox: `role=\"combobox\"` on the trigger, `role=\"listbox\"` on the popover, arrow keys, Home and End, type-ahead filtering above six options.",
+  'Dropdowns are a real combobox: `role="combobox"` on the trigger, `role="listbox"` on the popover, arrow keys, Home and End, type-ahead filtering above six options.',
   "Form and filter controls carry visible labels, not placeholder text standing in for one.",
-  "Errors are announced through `role=\"alert\"` and tied to their field with `aria-describedby`.",
+  'Errors are announced through `role="alert"` and tied to their field with `aria-describedby`.',
   "Text contrast was fixed at the ramp rather than the palette, and a CI check stops it regressing.",
   "All motion stops under `prefers-reduced-motion`, through one global rule.",
   "No horizontal scrolling at 360, 390, 768, 1024 or 1440 pixels wide, checked on every route.",
@@ -32,7 +32,7 @@ const NOT_DONE = [
   {
     what: "No formal conformance claim",
     detail:
-      "We have not run a full WCAG 2.2 AA audit, so we are not claiming conformance. Saying \"WCAG AA compliant\" without the audit behind it is the kind of statement this product exists to argue against.",
+      'We have not run a full WCAG 2.2 AA audit, so we are not claiming conformance. Saying "WCAG AA compliant" without the audit behind it is the kind of statement this product exists to argue against.',
   },
 ]
 

@@ -15,7 +15,9 @@ async function main() {
     $or: [{ languages: { $exists: false } }, { languages: { $size: 0 } }],
     location: { $nin: ["", null] },
     deletedAt: null,
-  }).select("_id location").lean()
+  })
+    .select("_id location")
+    .lean()
 
   let usersFixed = 0
   for (const u of usersWithoutLanguages) {
@@ -28,15 +30,23 @@ async function main() {
   // Fill missing author.years and author.languages on works
   const worksToFix = await Work.find({
     $or: [
-      { "author.years":     { $exists: false } },
+      { "author.years": { $exists: false } },
       { "author.languages": { $exists: false } },
       { "author.languages": { $size: 0 } },
     ],
     deletedAt: null,
-  }).select("_id authorId").lean()
+  })
+    .select("_id authorId")
+    .lean()
 
-  const authorIds = [...new Set(worksToFix.map((w) => (w as { authorId: mongoose.Types.ObjectId }).authorId.toString()))]
-  const authors = await User.find({ _id: { $in: authorIds } }).select("_id years languages").lean()
+  const authorIds = [
+    ...new Set(
+      worksToFix.map((w) => (w as { authorId: mongoose.Types.ObjectId }).authorId.toString()),
+    ),
+  ]
+  const authors = await User.find({ _id: { $in: authorIds } })
+    .select("_id years languages")
+    .lean()
   const authorMap = new Map(
     (authors as { _id: mongoose.Types.ObjectId; years: number; languages: string[] }[]).map((a) => [
       a._id.toString(),
@@ -52,7 +62,13 @@ async function main() {
 
     await Work.updateOne(
       { _id: w._id },
-      { $set: { "author.years": author.years, "author.languages": author.languages, updatedAt: now } },
+      {
+        $set: {
+          "author.years": author.years,
+          "author.languages": author.languages,
+          updatedAt: now,
+        },
+      },
     )
     worksFixed++
   }

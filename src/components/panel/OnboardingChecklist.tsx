@@ -57,7 +57,9 @@ export function OnboardingChecklist({
         aria-label="Hide the getting-started checklist"
         className={cn(
           "absolute top-4 right-4 grid size-9 cursor-pointer place-items-center rounded-pill transition-colors duration-200",
-          complete ? "text-paper/50 hover:bg-paper/10 hover:text-paper" : "text-muted hover:bg-paper hover:text-ink",
+          complete
+            ? "text-paper/50 hover:bg-paper/10 hover:text-paper"
+            : "text-muted hover:bg-paper hover:text-ink",
         )}
       >
         <Close size={16} />
@@ -71,14 +73,24 @@ export function OnboardingChecklist({
           ? `You are live, ${firstName}`
           : `One published entry is the whole game, ${firstName}`}
       </h2>
-      <p className={cn("mt-2 max-w-xl text-sm leading-relaxed", complete ? "text-paper/70" : "text-muted")}>
+      <p
+        className={cn(
+          "mt-2 max-w-xl text-sm leading-relaxed",
+          complete ? "text-paper/70" : "text-muted",
+        )}
+      >
         {complete
           ? "Your profile and your first entry are published. Everything from here is refinement."
           : "A profile on its own is a business card. The teams browsing this directory are reading case studies, so the goal is one good entry - not a finished profile."}
       </p>
 
       <div className="mt-5 flex items-center gap-3">
-        <div className={cn("h-1.5 flex-1 overflow-hidden rounded-pill", complete ? "bg-paper/20" : "bg-paper-2")}>
+        <div
+          className={cn(
+            "h-1.5 flex-1 overflow-hidden rounded-pill",
+            complete ? "bg-paper/20" : "bg-paper-2",
+          )}
+        >
           <div
             className={cn(
               "h-full rounded-pill transition-[width] duration-700 ease-pop",
@@ -87,7 +99,12 @@ export function OnboardingChecklist({
             style={{ width: `${percent}%` }}
           />
         </div>
-        <span className={cn("font-display text-xs font-medium", complete ? "text-paper/70" : "text-muted")}>
+        <span
+          className={cn(
+            "font-display text-xs font-medium",
+            complete ? "text-paper/70" : "text-muted",
+          )}
+        >
           {done} of {steps.length}
         </span>
       </div>
@@ -124,7 +141,12 @@ export function OnboardingChecklist({
                   {step.label}
                 </p>
                 {!step.done && (
-                  <p className={cn("mt-0.5 text-xs leading-relaxed", complete ? "text-paper/60" : "text-muted")}>
+                  <p
+                    className={cn(
+                      "mt-0.5 text-xs leading-relaxed",
+                      complete ? "text-paper/60" : "text-muted",
+                    )}
+                  >
                     {step.payoff}
                   </p>
                 )}

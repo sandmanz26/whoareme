@@ -86,40 +86,40 @@ export interface ApiWork {
 
 export function mapAccount(u: ApiUser): Account {
   return {
-    id:           u.slug,
-    name:         u.name,
-    email:        u.email ?? "",
-    location:     u.location,
-    role:         u.role as RoleId,
-    title:        u.title,
-    years:        String(u.years),
-    topics:       u.topics as CategoryId[],
-    portfolio:    u.portfolioUrl,
-    pitch:        u.pitch,
-    photo:        u.photoUrl,
-    passwordHash:    "",
+    id: u.slug,
+    name: u.name,
+    email: u.email ?? "",
+    location: u.location,
+    role: u.role as RoleId,
+    title: u.title,
+    years: String(u.years),
+    topics: u.topics as CategoryId[],
+    portfolio: u.portfolioUrl,
+    pitch: u.pitch,
+    photo: u.photoUrl,
+    passwordHash: "",
     emailVerifiedAt: u.emailVerifiedAt,
-    access:          u.access ?? "member",
-    createdAt:       u.createdAt,
+    access: u.access ?? "member",
+    createdAt: u.createdAt,
   }
 }
 
 export function mapPerson(u: ApiUser): Person {
   return {
-    id:         u.slug,
-    name:       u.name,
-    title:      u.title,
-    company:    u.company,
-    role:       u.role as RoleId,
+    id: u.slug,
+    name: u.name,
+    title: u.title,
+    company: u.company,
+    role: u.role as RoleId,
     categories: u.topics as CategoryId[],
-    location:   u.location,
-    skills:     u.skills,
-    years:      u.years,
-    open:       u.openToWork,
-    photo:      u.photoUrl,
-    languages:  u.languages,
-    links:      linksFor(u.role as RoleId, u.slug),
-    bio:        u.pitch,
+    location: u.location,
+    skills: u.skills,
+    years: u.years,
+    open: u.openToWork,
+    photo: u.photoUrl,
+    languages: u.languages,
+    links: linksFor(u.role as RoleId, u.slug),
+    bio: u.pitch,
   }
 }
 
@@ -150,57 +150,60 @@ export interface ApiWorkCard {
 
 export function mapWorkCard(w: ApiWorkCard): Work {
   return {
-    id:        w.slug,
-    authorId:  w.author.slug,
-    role:      w.role as RoleId,
-    topics:    w.topics as CategoryId[],
-    model:     (w.model ?? undefined) as BusinessModelId | undefined,
-    title:     w.title,
-    summary:   w.summary,
-    year:      w.year,
-    duration:  "",
-    scope:     "",
-    problem:   "",
-    approach:  "",
-    outcome:   "",
-    stack:     [],
-    skills:    w.skills,
-    links:     [],
-    details:   w.details,
-    sections:  undefined,
+    id: w.slug,
+    authorId: w.author.slug,
+    role: w.role as RoleId,
+    topics: w.topics as CategoryId[],
+    model: (w.model ?? undefined) as BusinessModelId | undefined,
+    title: w.title,
+    summary: w.summary,
+    year: w.year,
+    duration: "",
+    scope: "",
+    problem: "",
+    approach: "",
+    outcome: "",
+    stack: [],
+    skills: w.skills,
+    links: [],
+    details: w.details,
+    sections: undefined,
     thumbnail: w.thumbnailPath ?? undefined,
-    figures:   undefined,
+    figures: undefined,
   }
 }
 
 export function mapWork(w: ApiWork): Work {
   return {
-    id:        w.slug,
-    authorId:  w.author.slug,
-    role:      w.role as RoleId,
-    template:  w.template,
-    topics:    w.topics as CategoryId[],
-    model:     (w.model ?? undefined) as BusinessModelId | undefined,
-    title:     w.title,
-    summary:   w.summary,
-    year:      w.year,
-    duration:  w.duration,
-    scope:     w.scope,
-    problem:   w.problem,
-    approach:  w.approach,
-    outcome:   w.outcome,
-    stack:     w.stack,
-    skills:    w.skills,
-    links:     w.links,
-    details:   w.details,
-    sections:  w.sections.length > 0 ? w.sections : undefined,
+    id: w.slug,
+    authorId: w.author.slug,
+    role: w.role as RoleId,
+    template: w.template,
+    topics: w.topics as CategoryId[],
+    model: (w.model ?? undefined) as BusinessModelId | undefined,
+    title: w.title,
+    summary: w.summary,
+    year: w.year,
+    duration: w.duration,
+    scope: w.scope,
+    problem: w.problem,
+    approach: w.approach,
+    outcome: w.outcome,
+    stack: w.stack,
+    skills: w.skills,
+    links: w.links,
+    details: w.details,
+    sections: w.sections.length > 0 ? w.sections : undefined,
     thumbnail: undefined,
-    figures:   undefined,
+    figures: undefined,
   }
 }
 
 function splitTags(value: string): string[] {
-  return value.split(",").map((p) => p.trim()).filter(Boolean)
+  return value
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean)
 }
 
 function labelForUrl(href: string, fallback: string): string {
@@ -214,24 +217,24 @@ function labelForUrl(href: string, fallback: string): string {
 
 /** Convert a backend mine entry into the local WorkDraft shape. */
 export function mapApiWorkMineToDraft(w: ApiWorkMine): WorkDraft {
-  const role     = w.role as RoleId
-  const mode     = w.mode as WorkMode
+  const role = w.role as RoleId
+  const mode = w.mode as WorkMode
   const template = w.template ?? defaultTemplateId(role)
 
   const values: Record<string, string> = {
-    title:    w.title,
-    summary:  w.summary,
-    year:     String(w.year),
+    title: w.title,
+    summary: w.summary,
+    year: String(w.year),
     duration: w.duration,
-    scope:    w.scope,
-    problem:  w.problem,
+    scope: w.scope,
+    problem: w.problem,
     approach: w.approach,
-    outcome:  w.outcome,
-    model:    w.model ?? "",
+    outcome: w.outcome,
+    model: w.model ?? "",
   }
 
   if (mode === "template") {
-    const skillSet  = new Set(w.skills)
+    const skillSet = new Set(w.skills)
     const stackOnly = w.stack.filter((s) => !skillSet.has(s))
 
     for (const field of fieldsForTemplate(role, template)) {
@@ -251,27 +254,27 @@ export function mapApiWorkMineToDraft(w: ApiWorkMine): WorkDraft {
       : [{ label: "", value: "" }]
 
   return {
-    id:        w._id,
+    id: w._id,
     role,
     template,
     mode,
-    topics:    w.topics as CategoryId[],
-    skills:    w.skills,
+    topics: w.topics as CategoryId[],
+    skills: w.skills,
     values,
-    links:     w.links,
+    links: w.links,
     sections:
       w.sections.length > 0
         ? w.sections
         : mode === "custom"
           ? [
-              { heading: "Context",    body: "" },
+              { heading: "Context", body: "" },
               { heading: "What I did", body: "" },
-              { heading: "Result",     body: "" },
+              { heading: "Result", body: "" },
             ]
           : [],
     metrics,
     thumbnail: w.thumbnailPath ?? undefined,
-    figures:   [],
+    figures: [],
     updatedAt: w.updatedAt ?? w.createdAt,
     published: w.status === "published",
   }
@@ -291,8 +294,14 @@ export function draftToApiBody(draft: WorkDraft) {
     for (const field of fieldsForTemplate(draft.role, draft.template)) {
       const raw = val(field.name)
       if (!raw) continue
-      if (field.kind === "url")  { links.push({ label: labelForUrl(raw, field.label), href: raw }); continue }
-      if (field.kind === "tags") { stack.push(...splitTags(raw)); continue }
+      if (field.kind === "url") {
+        links.push({ label: labelForUrl(raw, field.label), href: raw })
+        continue
+      }
+      if (field.kind === "tags") {
+        stack.push(...splitTags(raw))
+        continue
+      }
       details.push({ label: field.label, value: raw, proof: field.proof ?? false })
     }
   } else {
@@ -303,23 +312,24 @@ export function draftToApiBody(draft: WorkDraft) {
   }
 
   return {
-    mode:     draft.mode,
-    role:     draft.role,
+    mode: draft.mode,
+    role: draft.role,
     template: draft.template,
-    topics:   draft.topics.slice(0, 4),
-    model:    val("model") || null,
-    skills:   draft.skills,
-    title:    val("title") || "Untitled",
-    summary:  val("summary"),
-    year:     Number(val("year")) || new Date().getFullYear(),
+    topics: draft.topics.slice(0, 4),
+    model: val("model") || null,
+    skills: draft.skills,
+    title: val("title") || "Untitled",
+    summary: val("summary"),
+    year: Number(val("year")) || new Date().getFullYear(),
     duration: val("duration"),
-    scope:    val("scope"),
-    problem:  draft.mode === "template" ? val("problem") : "",
+    scope: val("scope"),
+    problem: draft.mode === "template" ? val("problem") : "",
     approach: draft.mode === "template" ? val("approach") : "",
-    outcome:  draft.mode === "template" ? val("outcome") : "",
-    sections: draft.mode === "custom"
-      ? draft.sections.filter((s) => s.heading.trim() && s.body.trim())
-      : [],
+    outcome: draft.mode === "template" ? val("outcome") : "",
+    sections:
+      draft.mode === "custom"
+        ? draft.sections.filter((s) => s.heading.trim() && s.body.trim())
+        : [],
     details,
     links,
     stack: [...new Set([...stack, ...draft.skills])],

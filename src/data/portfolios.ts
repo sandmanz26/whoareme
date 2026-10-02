@@ -59,7 +59,10 @@ const CORE_WORK: Work[] = [
       { label: "Reliability", value: "Order loss 4.1% → 0.2% of sessions", proof: true },
       { label: "Scale", value: "61,000 warung, 2.8M orders/month", proof: true },
       { label: "Ownership", value: "Sync protocol, conflict resolution, idempotency window" },
-      { label: "Honest bit", value: "Per-order merge shipped first and was wrong; rebuilt per-line" },
+      {
+        label: "Honest bit",
+        value: "Per-order merge shipped first and was wrong; rebuilt per-line",
+      },
     ],
   },
   {
@@ -83,11 +86,16 @@ const CORE_WORK: Work[] = [
         section: "approach",
       },
       {
-        src: barCompare("Activation outside Java", { label: "Before", value: 29 }, { label: "After", value: 64 }),
+        src: barCompare(
+          "Activation outside Java",
+          { label: "Before", value: 29 },
+          { label: "After", value: 64 },
+        ),
         width: 1200,
         height: 675,
         alt: "Bar chart: activation outside Java rising from 29 percent to 64 percent.",
-        caption: "The regional gap closed by more than half. Jakarta barely moved, which is the point.",
+        caption:
+          "The regional gap closed by more than half. Jakarta barely moved, which is the point.",
         section: "outcome",
       },
     ],
@@ -140,7 +148,10 @@ const CORE_WORK: Work[] = [
     details: [
       { label: "Primary metric", value: "New tax regime 14 weeks → 9 days", proof: true },
       { label: "Business impact", value: "Unblocked 3 markets, $2.1M contracted ARR", proof: true },
-      { label: "Deliberately kept", value: "PH withholding stayed special-cased - it does not generalise" },
+      {
+        label: "Deliberately kept",
+        value: "PH withholding stayed special-cased - it does not generalise",
+      },
       { label: "Sequencing", value: "Migrated the simplest regime first to prove the abstraction" },
     ],
   },
@@ -169,7 +180,10 @@ const CORE_WORK: Work[] = [
       { label: "Result vs control", value: "Ramadan churn 8.9% → 3.4% (n = 41k)", proof: true },
       { label: "Efficiency", value: "Send volume down 60%, revenue per send up 4.1x", proof: true },
       { label: "Timing", value: "Sends moved to post-Isya; open rate 11% → 31%" },
-      { label: "Honest bit", value: "Three prior years of 'seasonal churn' were largely our own doing" },
+      {
+        label: "Honest bit",
+        value: "Three prior years of 'seasonal churn' were largely our own doing",
+      },
     ],
   },
   {
@@ -194,8 +208,16 @@ const CORE_WORK: Work[] = [
     stack: ["Playwright", "pdf.js", "GitHub Actions"],
     links: [{ label: "Fixture set", href: "https://example.com/siam-ledger/i18n-fixtures" }],
     details: [
-      { label: "Escape rate", value: "Script-rendering defects 9/quarter → 0 in 2 quarters", proof: true },
-      { label: "Found on arrival", value: "3 unreported rendering bugs customers had worked around", proof: true },
+      {
+        label: "Escape rate",
+        value: "Script-rendering defects 9/quarter → 0 in 2 quarters",
+        proof: true,
+      },
+      {
+        label: "Found on arrival",
+        value: "3 unreported rendering bugs customers had worked around",
+        proof: true,
+      },
       { label: "Coverage", value: "Thai, Lao and Khmer fixtures across 240 document templates" },
       { label: "Frameworks", value: "Playwright · visual assertion on rendered PDF" },
     ],
@@ -265,7 +287,11 @@ const CORE_WORK: Work[] = [
     links: [{ label: "Ledger design record", href: "https://example.com/pintar-bayar/adr-22" }],
     details: [
       { label: "Settlement", value: "T+2 → same day for 81% of merchant volume", proof: true },
-      { label: "Correctness", value: "0 unexplained breaks across 74M settled transactions", proof: true },
+      {
+        label: "Correctness",
+        value: "0 unexplained breaks across 74M settled transactions",
+        proof: true,
+      },
       { label: "Trade-off", value: "No same-day under 60 days tenure - we accepted the churn" },
       { label: "Ownership", value: "Ledger, float accounting and the BI-FAST reconciliation" },
     ],
@@ -276,7 +302,8 @@ const CORE_WORK: Work[] = [
     figures: [
       {
         src: phoneMock("Scan", "list"),
-        width: 600, height: 1100,
+        width: 600,
+        height: 1100,
         alt: "Step one: the camera view with the QR frame.",
         caption: "1. Scan. The merchant name comes straight from the QR payload.",
         section: "approach",
@@ -284,25 +311,31 @@ const CORE_WORK: Work[] = [
       },
       {
         src: phoneMock("Confirm", "list"),
-        width: 600, height: 1100,
+        width: 600,
+        height: 1100,
         alt: "Step two: the confirmation screen showing trading name and neighbourhood.",
-        caption: "2. Confirm. Trading name and neighbourhood, because that is what a person standing in the shop can verify.",
+        caption:
+          "2. Confirm. Trading name and neighbourhood, because that is what a person standing in the shop can verify.",
         section: "approach",
         display: "slider",
       },
       {
         src: phoneMock("Amount", "list"),
-        width: 600, height: 1100,
+        width: 600,
+        height: 1100,
         alt: "Step three: entering the amount, with an irreversibility notice.",
-        caption: "3. Amount. 'This cannot be reversed' tested better than any softer wording we tried.",
+        caption:
+          "3. Amount. 'This cannot be reversed' tested better than any softer wording we tried.",
         section: "approach",
         display: "slider",
       },
       {
         src: phoneMock("Done", "tiles", "#d6ff4f"),
-        width: 600, height: 1100,
+        width: 600,
+        height: 1100,
         alt: "Step four: the receipt screen.",
-        caption: "4. Receipt. The merchant name is repeated here so a wrong payment is caught in seconds, not days.",
+        caption:
+          "4. Receipt. The merchant name is repeated here so a wrong payment is caught in seconds, not days.",
         section: "approach",
         display: "slider",
       },
@@ -355,7 +388,11 @@ const CORE_WORK: Work[] = [
     links: [{ label: "Transfer core", href: "https://example.com/saigon-rails/transfer-core" }],
     details: [
       { label: "Correctness", value: "~900 manual duplicate refunds/month → 0", proof: true },
-      { label: "Found on arrival", value: "2,400 historical duplicates, refunded proactively", proof: true },
+      {
+        label: "Found on arrival",
+        value: "2,400 historical duplicates, refunded proactively",
+        proof: true,
+      },
       { label: "Performance", value: "p99 transfer 240ms → 310ms - accepted for correctness" },
       { label: "Ownership", value: "Idempotency model and the 18-month backfill" },
     ],
@@ -382,8 +419,16 @@ const CORE_WORK: Work[] = [
     stack: ["Kubernetes", "Terraform", "Prometheus", "k6"],
     links: [{ label: "Game day writeup", href: "https://example.com/saigon-rails/tet-2025" }],
     details: [
-      { label: "Reliability", value: "Tết peak handled at 9.4x baseline, zero incidents", proof: true },
-      { label: "On-call load", value: "Whole-team war room → 2 people, no escalations", proof: true },
+      {
+        label: "Reliability",
+        value: "Tết peak handled at 9.4x baseline, zero incidents",
+        proof: true,
+      },
+      {
+        label: "On-call load",
+        value: "Whole-team war room → 2 people, no escalations",
+        proof: true,
+      },
       { label: "Cost", value: "~$9k of pre-scaled capacity for the peak week" },
       { label: "Method", value: "November game day at production-shaped load" },
     ],
@@ -411,7 +456,11 @@ const CORE_WORK: Work[] = [
     links: [{ label: "Model card", href: "https://example.com/bank-sahabat/thin-file" }],
     details: [
       { label: "Eval vs baseline", value: "Approval 32% → 59%, NPL 3.1% → 3.4%", proof: true },
-      { label: "Fairness", value: "Dropped 2 features that failed province-level review", proof: true },
+      {
+        label: "Fairness",
+        value: "Dropped 2 features that failed province-level review",
+        proof: true,
+      },
       { label: "Method", value: "6-month shadow run before the model decided anything" },
       { label: "Consent", value: "Explicit opt-in with a working withdrawal path" },
     ],
@@ -466,9 +515,20 @@ const CORE_WORK: Work[] = [
     stack: ["Java", "Kafka", "Postgres"],
     links: [{ label: "Team structure writeup", href: "https://example.com/selat-pay/pod-model" }],
     details: [
-      { label: "Delivery", value: "Corridor lead time 6 weeks → 2 weeks, 3 shipping in parallel instead of 1", proof: true },
-      { label: "Retention", value: "Zero regretted attrition in 18 months; both disengaged engineers re-committed", proof: true },
-      { label: "Mistake", value: "First split was by seniority, not by corridor - reversed after 6 weeks" },
+      {
+        label: "Delivery",
+        value: "Corridor lead time 6 weeks → 2 weeks, 3 shipping in parallel instead of 1",
+        proof: true,
+      },
+      {
+        label: "Retention",
+        value: "Zero regretted attrition in 18 months; both disengaged engineers re-committed",
+        proof: true,
+      },
+      {
+        label: "Mistake",
+        value: "First split was by seniority, not by corridor - reversed after 6 weeks",
+      },
       { label: "Scope", value: "11 engineers, 3 corridor pods, 1 shared platform pod" },
     ],
   },
@@ -496,7 +556,10 @@ const CORE_WORK: Work[] = [
     details: [
       { label: "Primary metric", value: "Verification failures 22% → 7%", proof: true },
       { label: "Risk held", value: "Confirmed fraud rate unchanged at 0.11%", proof: true },
-      { label: "Deliberately changed", value: "Renamed the metric - the label was hiding the problem" },
+      {
+        label: "Deliberately changed",
+        value: "Renamed the metric - the label was hiding the problem",
+      },
       { label: "Procurement", value: "Vendor accuracy-by-skin-tone reporting now contractual" },
     ],
   },
@@ -563,7 +626,10 @@ const CORE_WORK: Work[] = [
     details: [
       { label: "Risk", value: "Pre-harvest delinquency 19% → 6%", proof: true },
       { label: "Cost", value: "Collections cost per loan down 54%", proof: true },
-      { label: "Calibration", value: "Grace window used 18% of the time - our forecast error rate" },
+      {
+        label: "Calibration",
+        value: "Grace window used 18% of the time - our forecast error rate",
+      },
       { label: "Data", value: "Crop, district, planting date, BMKG rainfall" },
     ],
   },
@@ -615,7 +681,10 @@ const CORE_WORK: Work[] = [
       { label: "Adoption", value: "Dispatcher plan acceptance 41% → 89%", proof: true },
       { label: "Impact", value: "Overnight strandings 63/month → 8/month", proof: true },
       { label: "Performance", value: "Multi-modal plan for 400 shipments in 3.4s" },
-      { label: "Design choice", value: "Explainable over optimal - unexplained plans get overridden" },
+      {
+        label: "Design choice",
+        value: "Explainable over optimal - unexplained plans get overridden",
+      },
     ],
   },
   {
@@ -643,7 +712,10 @@ const CORE_WORK: Work[] = [
       { label: "Task success", value: "Pickup confirmation errors down 61%", proof: true },
       { label: "Seasonality", value: "Wet-season error spike 2.4x → 1.1x baseline", proof: true },
       { label: "Process", value: "2 weeks riding along before any design work" },
-      { label: "Accessibility", value: "One target, gloved-touch tested, voice in Bahasa Indonesia" },
+      {
+        label: "Accessibility",
+        value: "One target, gloved-touch tested, voice in Bahasa Indonesia",
+      },
     ],
   },
   {
@@ -696,8 +768,16 @@ const CORE_WORK: Work[] = [
     stack: ["Amplitude", "Metabase", "Figma"],
     links: [{ label: "Launch retrospective", href: "https://example.com/kalesa/supply" }],
     details: [
-      { label: "Supply", value: "Active drivers 0 → 6,400 in 5 months on 3 corridors", proof: true },
-      { label: "Retention", value: "Driver 90-day retention 74% vs 31% category benchmark", proof: true },
+      {
+        label: "Supply",
+        value: "Active drivers 0 → 6,400 in 5 months on 3 corridors",
+        proof: true,
+      },
+      {
+        label: "Retention",
+        value: "Driver 90-day retention 74% vs 31% category benchmark",
+        proof: true,
+      },
       { label: "Cost", value: "₱41M guarantee, replacing a larger and less durable subsidy" },
       { label: "Sequencing", value: "Corridor by corridor, not city-wide" },
     ],
@@ -725,7 +805,11 @@ const CORE_WORK: Work[] = [
     links: [{ label: "Offline architecture", href: "https://example.com/kalesa/offline" }],
     details: [
       { label: "Reliability", value: "Jobs completable with no network 0% → 96%", proof: true },
-      { label: "Field-tested", value: "Held through 2 typhoons, 71 hours of degraded coverage", proof: true },
+      {
+        label: "Field-tested",
+        value: "Held through 2 typhoons, 71 hours of degraded coverage",
+        proof: true,
+      },
       { label: "Ownership", value: "Local-first store, tile caching, Bluetooth hand-off" },
       { label: "Surprise", value: "Hand-off is used mostly in ordinary congestion, not disasters" },
     ],
@@ -739,7 +823,8 @@ const CORE_WORK: Work[] = [
     role: "quality",
     topics: ["mobility"],
     title: "The Burmese text bug that was two bugs",
-    summary: "Half our users type Zawgyi, half type Unicode, and the bytes look similar enough to fool everyone.",
+    summary:
+      "Half our users type Zawgyi, half type Unicode, and the bytes look similar enough to fool everyone.",
     year: 2025,
     duration: "5 months",
     scope: "Solo QA · embedded with 2 squads",
@@ -750,7 +835,9 @@ const CORE_WORK: Work[] = [
     outcome:
       "Undeliverable-address complaints fell sharply. The conversion layer is not perfect - a handful of mixed-encoding strings are genuinely ambiguous, and those now go to a human instead of to a courier.",
     stack: ["Playwright", "Python", "ICU"],
-    links: [{ label: "Encoding fixtures", href: "https://example.com/yangon-commerce/mm-fixtures" }],
+    links: [
+      { label: "Encoding fixtures", href: "https://example.com/yangon-commerce/mm-fixtures" },
+    ],
     details: [
       { label: "Escape rate", value: "Address-encoding defects 31/month → 2/month", proof: true },
       { label: "Impact", value: "Undeliverable-address complaints down 68%", proof: true },
@@ -780,7 +867,11 @@ const CORE_WORK: Work[] = [
     stack: ["PyTorch", "Label Studio", "Weights & Biases"],
     links: [{ label: "Eval methodology", href: "https://example.com/tanya-ai/sea-evals" }],
     details: [
-      { label: "Eval vs baseline", value: "Aggregate 0.87 hid Vietnamese 0.61, Burmese 0.54", proof: true },
+      {
+        label: "Eval vs baseline",
+        value: "Aggregate 0.87 hid Vietnamese 0.61, Burmese 0.54",
+        proof: true,
+      },
       { label: "Production", value: "Per-language scorecard now a release gate", proof: true },
       { label: "Cost finding", value: "Indonesian queries cost 2.3x English in tokens" },
       { label: "Decision", value: "Held 2 markets back a quarter" },
@@ -808,7 +899,11 @@ const CORE_WORK: Work[] = [
     stack: ["Rust", "SentencePiece", "vLLM", "Kubernetes"],
     links: [{ label: "Serving notes", href: "https://example.com/tanya-ai/tokenizer" }],
     details: [
-      { label: "Cost", value: "Indonesian cost/conversation down 44%, Burmese down 58%", proof: true },
+      {
+        label: "Cost",
+        value: "Indonesian cost/conversation down 44%, Burmese down 58%",
+        proof: true,
+      },
       { label: "Performance", value: "p95 first token 780ms → 410ms", proof: true },
       { label: "Quality", value: "Eval up 1.2 points - not the goal, and partly luck" },
       { label: "Ownership", value: "Vocabulary extension and per-language KV sizing" },
@@ -864,8 +959,16 @@ const CORE_WORK: Work[] = [
     stack: ["Python", "Label Studio", "HuggingFace"],
     links: [{ label: "Benchmark and paper", href: "https://example.com/tanya-ai/sea-bench" }],
     details: [
-      { label: "Adoption", value: "4,200 items, 5 languages, used by 3 external labs", proof: true },
-      { label: "Downstream", value: "Our own Vietnamese score 0.61 → 0.79 in two quarters", proof: true },
+      {
+        label: "Adoption",
+        value: "4,200 items, 5 languages, used by 3 external labs",
+        proof: true,
+      },
+      {
+        label: "Downstream",
+        value: "Our own Vietnamese score 0.61 → 0.79 in two quarters",
+        proof: true,
+      },
       { label: "Uncomfortable", value: "Published results where we came third" },
       { label: "Method", value: "Native-speaker annotation, not machine translation" },
     ],
@@ -894,7 +997,10 @@ const CORE_WORK: Work[] = [
     details: [
       { label: "Primary metric", value: "Turned-away referrals 23% → 6%", proof: true },
       { label: "Patient impact", value: "~4,100 avoided wasted trips in year one", proof: true },
-      { label: "Fragile bit", value: "Depends on hospitals maintaining data - incentive needs renewing" },
+      {
+        label: "Fragile bit",
+        value: "Depends on hospitals maintaining data - incentive needs renewing",
+      },
       { label: "Governance", value: "Through clinical governance, +2 months, deliberate" },
     ],
   },
@@ -921,7 +1027,11 @@ const CORE_WORK: Work[] = [
     links: [{ label: "Architecture note", href: "https://example.com/klinika/low-bandwidth" }],
     details: [
       { label: "Reliability", value: "Rural consultation completion 48% → 86%", proof: true },
-      { label: "Scale", value: "Works down to 64kbps; 31% of consults are audio-only", proof: true },
+      {
+        label: "Scale",
+        value: "Works down to 64kbps; 31% of consults are audio-only",
+        proof: true,
+      },
       { label: "Unexpected", value: "Pre-capture cut urban video consults by 4 minutes too" },
       { label: "Ownership", value: "Audio path, store-and-forward, degradation signalling" },
     ],
@@ -979,7 +1089,10 @@ const CORE_WORK: Work[] = [
       { label: "Detection lag", value: "6 weeks → 4 days median", proof: true },
       { label: "Impact", value: "2 clusters caught early enough for vector response", proof: true },
       { label: "Coverage", value: "83% of stations - shown explicitly, never imputed" },
-      { label: "Design choice", value: "SMS, not an app - power and connectivity are not assumptions" },
+      {
+        label: "Design choice",
+        value: "SMS, not an app - power and connectivity are not assumptions",
+      },
     ],
   },
   {
@@ -1005,7 +1118,11 @@ const CORE_WORK: Work[] = [
     links: [{ label: "Method and audit trail", href: "https://example.com/sawit/eudr" }],
     details: [
       { label: "Business impact", value: "Retained €18M of EU contracts at risk", proof: true },
-      { label: "Coverage", value: "94% of supply traced to plot, 11% graded 'unknown'", proof: true },
+      {
+        label: "Coverage",
+        value: "94% of supply traced to plot, 11% graded 'unknown'",
+        proof: true,
+      },
       { label: "Design choice", value: "Confidence grades, not a binary compliant flag" },
       { label: "Data", value: "Sentinel-2 change detection + 24,000 GPS plot boundaries" },
     ],
@@ -1033,7 +1150,11 @@ const CORE_WORK: Work[] = [
     links: [{ label: "Service blueprint", href: "https://example.com/ombak/catch-log" }],
     details: [
       { label: "Adoption", value: "Catch logging compliance 4% → 71%", proof: true },
-      { label: "Data quality", value: "Weight entry error 22% → 1.8% via scale integration", proof: true },
+      {
+        label: "Data quality",
+        value: "Weight entry error 22% → 1.8% via scale integration",
+        proof: true,
+      },
       { label: "Method", value: "A week at sea, then a decision to leave the boat alone" },
       { label: "Honest bit", value: "Two previous apps failed doing it the obvious way" },
     ],
@@ -1047,7 +1168,8 @@ const CORE_WORK: Work[] = [
     role: "research",
     topics: ["climate"],
     title: "The reef data that changed who we were building for",
-    summary: "We were designing for marine scientists. The people with the knowledge were the fishers.",
+    summary:
+      "We were designing for marine scientists. The people with the knowledge were the fishers.",
     year: 2024,
     duration: "7 months",
     scope: "Lead researcher · 6 villages, 2 provinces",
@@ -1060,7 +1182,11 @@ const CORE_WORK: Work[] = [
     stack: ["Dovetail", "Miro", "ODK"],
     links: [{ label: "Research report", href: "https://example.com/ombak/coastal-study" }],
     details: [
-      { label: "Decision changed", value: "Primary user redefined from researchers to fishers", proof: true },
+      {
+        label: "Decision changed",
+        value: "Primary user redefined from researchers to fishers",
+        proof: true,
+      },
       { label: "Downstream", value: "Reef observations 340/year → 11,000/year", proof: true },
       { label: "Method", value: "6 villages, 3 lunar cycles, council co-design of data terms" },
       { label: "Cost", value: "4 months negotiating terms - non-negotiable in hindsight" },
@@ -1089,7 +1215,11 @@ const CORE_WORK: Work[] = [
     links: [{ label: "Residency architecture", href: "https://example.com/nusantara/residency" }],
     details: [
       { label: "Cost", value: "~40% of the projected three-stack cost", proof: true },
-      { label: "Reliability", value: "4 cross-border data leaks caught before shipping", proof: true },
+      {
+        label: "Reliability",
+        value: "4 cross-border data leaks caught before shipping",
+        proof: true,
+      },
       { label: "Scope", value: "29 services, 3 jurisdictions, 1 Terraform module" },
       { label: "Unpopular bit", value: "Data classification required on every service manifest" },
     ],
@@ -1117,7 +1247,11 @@ const CORE_WORK: Work[] = [
     links: [{ label: "Cost attribution model", href: "https://example.com/nusantara/egress" }],
     details: [
       { label: "Cost", value: "$380k/year, egress from 31% → 9% of the bill", proof: true },
-      { label: "Reliability", value: "p95 cross-service latency 180ms → 40ms as a side effect", proof: true },
+      {
+        label: "Reliability",
+        value: "p95 cross-service latency 180ms → 40ms as a side effect",
+        proof: true,
+      },
       { label: "Method", value: "Made cost visible per service before asking for changes" },
       { label: "Trade-off", value: "Co-location and a replica over a year-long rewrite" },
     ],
@@ -1144,8 +1278,16 @@ const CORE_WORK: Work[] = [
     stack: ["Syft", "Sigstore", "GitHub Actions", "Python"],
     links: [{ label: "SBOM pipeline", href: "https://example.com/bakau/sbom" }],
     details: [
-      { label: "Response time", value: "'Which services include X?' 11 days → 45 seconds", proof: true },
-      { label: "Coverage", value: "40 repos, 9 countries, 100% of production artefacts", proof: true },
+      {
+        label: "Response time",
+        value: "'Which services include X?' 11 days → 45 seconds",
+        proof: true,
+      },
+      {
+        label: "Coverage",
+        value: "40 repos, 9 countries, 100% of production artefacts",
+        proof: true,
+      },
       { label: "Sequencing", value: "Six months of accuracy before any blocking policy" },
       { label: "Provenance", value: "Every artefact traceable to commit and runner" },
     ],
@@ -1228,8 +1370,16 @@ const CORE_WORK: Work[] = [
     stack: ["Amplitude", "BigQuery", "Statsig"],
     links: [{ label: "Economy readout", href: "https://example.com/gunung/economy" }],
     details: [
-      { label: "Result vs control", value: "Revenue per player +34% over 24 weeks (n = 220k)", proof: true },
-      { label: "Retention held", value: "D30 unchanged at 41% - the thing we refused to trade", proof: true },
+      {
+        label: "Result vs control",
+        value: "Revenue per player +34% over 24 weeks (n = 220k)",
+        proof: true,
+      },
+      {
+        label: "Retention held",
+        value: "D30 unchanged at 41% - the thing we refused to trade",
+        proof: true,
+      },
       { label: "Reframe", value: "2-year LTV, not 30-day ARPU" },
       { label: "Pricing", value: "Local price points, small and frequent, not one premium tier" },
     ],
@@ -1285,13 +1435,16 @@ const CORE_WORK: Work[] = [
     links: [{ label: "Channel readout", href: "https://example.com/mekong-freight/zalo" }],
     details: [
       { label: "Efficiency", value: "CAC ₫2.9M → ₫840k, below regional average", proof: true },
-      { label: "Result vs control", value: "Activation 27% → 61% with in-chat onboarding", proof: true },
+      {
+        label: "Result vs control",
+        value: "Activation 27% → 61% with in-chat onboarding",
+        proof: true,
+      },
       { label: "Method", value: "Geo holdouts, not platform-reported attribution" },
       { label: "Finding", value: "Removing the app install beat the media shift" },
     ],
   },
 ]
-
 
 /**
  * The directory reads one list. `CORE_WORK` is the original breadth across many

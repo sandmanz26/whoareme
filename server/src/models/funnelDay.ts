@@ -4,7 +4,7 @@ import { auditFields } from "../utils/model.js"
 
 const FunnelDaySchema = new Schema<IFunnelDay>(
   {
-    _id:    { type: String },
+    _id: { type: String },
     counts: { type: Map, of: Number, default: {} },
 
     ...auditFields,

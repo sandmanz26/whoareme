@@ -10,15 +10,17 @@ export function NotFoundPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    return applyMeta({ title: "Page not found", description: "Nothing lives at that address.", noindex: true })
+    return applyMeta({
+      title: "Page not found",
+      description: "Nothing lives at that address.",
+      noindex: true,
+    })
   }, [])
 
   return (
     <Container className="flex min-h-[70vh] max-w-xl flex-col justify-center py-20">
       <p className="eyebrow">404</p>
-      <h1 className="display mt-3 text-[clamp(2rem,6vw,3.25rem)]">
-        Nothing lives at that address
-      </h1>
+      <h1 className="display mt-3 text-[clamp(2rem,6vw,3.25rem)]">Nothing lives at that address</h1>
       <p className="mt-4 text-base leading-relaxed text-muted">
         <code className="rounded bg-paper-2 px-1.5 py-0.5 text-sm">{pathname}</code> is not a page
         here. Entries and profiles keep their addresses, so a link that used to work has usually

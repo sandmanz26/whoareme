@@ -15,7 +15,8 @@ const LAYOUT_EXPLAINER: Record<ReturnType<typeof layoutFor>, string> = {
   square: "Inset and centred, capped so it does not swamp the text.",
   pair: "Side by side, because two figures under one heading is a before and after.",
   grid: "A grid - three or more reads as a set.",
-  slider: "One at a time, stepped through. Right for a sequence, wrong for evidence meant to be compared.",
+  slider:
+    "One at a time, stepped through. Right for a sequence, wrong for evidence meant to be compared.",
 }
 
 interface FigureEditorProps {
@@ -183,7 +184,10 @@ export function FigureEditor({
             const video = figure.kind === "video" ? parseVideoUrl(figure.src) : null
             const thumb = figure.kind === "video" ? videoThumbnail(figure.src) : null
             return (
-              <li key={`${index}-${figure.src.slice(-16)}`} className="rounded-2xl border border-line bg-paper p-4">
+              <li
+                key={`${index}-${figure.src.slice(-16)}`}
+                className="rounded-2xl border border-line bg-paper p-4"
+              >
                 <div className="flex flex-col gap-4 sm:flex-row">
                   <div className="shrink-0">
                     {figure.kind === "video" ? (
@@ -348,7 +352,10 @@ export function FigureEditor({
         </div>
         <div className="mt-1.5 h-1.5 overflow-hidden rounded-pill bg-paper-2">
           <div
-            className={cn("h-full rounded-pill transition-[width] duration-300", percent > 85 ? "bg-pop-pink" : "bg-ink")}
+            className={cn(
+              "h-full rounded-pill transition-[width] duration-300",
+              percent > 85 ? "bg-pop-pink" : "bg-ink",
+            )}
             style={{ width: `${percent}%` }}
           />
         </div>

@@ -1,32 +1,32 @@
-import { useEffect, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Container } from "@/components/layout/Container";
-import { Avatar } from "@/components/ui/Avatar";
-import { SocialLinks } from "@/components/ui/SocialLinks";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { ArrowRight, ArrowUpRight, Chart, Pin } from "@/components/ui/Icon";
-import { WorkCover } from "@/components/work/WorkCover";
-import { WorkFigures } from "@/components/work/WorkFigures";
-import { Reveal } from "@/components/work/Reveal";
-import { useReadingProgress } from "@/hooks/useReveal";
-import { templateById } from "@/data/workTemplates";
-import { WorkCard } from "@/components/work/WorkCard";
-import { headlineProof, proofOf, type WorkFigure } from "@/data/work";
-import { figuresFor, orphanFigures } from "@/lib/figures";
-import { categoryById, roleById } from "@/data/taxonomy";
-import { businessModelById } from "@/data/businessModels";
-import { moreFromAuthor, similarWork } from "@/lib/similar";
-import { ReportButton } from "@/components/admin/ReportModal";
-import { useAccount } from "@/hooks/useAccount";
-import { useBrowse } from "@/context/BrowseContext";
-import { useTrafficSummary } from "@/hooks/useTrafficSummary";
-import { applyMeta, clamp } from "@/lib/head";
-import { track } from "@/lib/analytics";
-import { fetchWorkBySlug } from "@/lib/api/endpoints/work";
-import { mapWork } from "@/lib/api/mappers";
-import { QUERY_KEYS } from "@/lib/api/queryKeys";
+import { useEffect, useMemo } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { useQuery } from "@tanstack/react-query"
+import { Container } from "@/components/layout/Container"
+import { Avatar } from "@/components/ui/Avatar"
+import { SocialLinks } from "@/components/ui/SocialLinks"
+import { Badge } from "@/components/ui/Badge"
+import { Button } from "@/components/ui/Button"
+import { ArrowRight, ArrowUpRight, Chart, Pin } from "@/components/ui/Icon"
+import { WorkCover } from "@/components/work/WorkCover"
+import { WorkFigures } from "@/components/work/WorkFigures"
+import { Reveal } from "@/components/work/Reveal"
+import { useReadingProgress } from "@/hooks/useReveal"
+import { templateById } from "@/data/workTemplates"
+import { WorkCard } from "@/components/work/WorkCard"
+import { headlineProof, proofOf, type WorkFigure } from "@/data/work"
+import { figuresFor, orphanFigures } from "@/lib/figures"
+import { categoryById, roleById } from "@/data/taxonomy"
+import { businessModelById } from "@/data/businessModels"
+import { moreFromAuthor, similarWork } from "@/lib/similar"
+import { ReportButton } from "@/components/admin/ReportModal"
+import { useAccount } from "@/hooks/useAccount"
+import { useBrowse } from "@/context/BrowseContext"
+import { useTrafficSummary } from "@/hooks/useTrafficSummary"
+import { applyMeta, clamp } from "@/lib/head"
+import { track } from "@/lib/analytics"
+import { fetchWorkBySlug } from "@/lib/api/endpoints/work"
+import { mapWork } from "@/lib/api/mappers"
+import { QUERY_KEYS } from "@/lib/api/queryKeys"
 
 function Chapter({
   title,
@@ -34,70 +34,60 @@ function Chapter({
   figures = [],
   delay = 0,
 }: {
-  title: string;
-  body: string;
-  figures?: readonly WorkFigure[];
-  delay?: number;
+  title: string
+  body: string
+  figures?: readonly WorkFigure[]
+  delay?: number
 }) {
-  if (!body.trim() && figures.length === 0) return null;
+  if (!body.trim() && figures.length === 0) return null
   return (
     <Reveal delay={delay}>
       <section>
-        <h2 className="display text-[clamp(1.25rem,2.4vw,1.625rem)]">
-          {title}
-        </h2>
-        {body.trim() && (
-          <p className="mt-4 text-base leading-[1.75] text-ink-2">{body}</p>
-        )}
+        <h2 className="display text-[clamp(1.25rem,2.4vw,1.625rem)]">{title}</h2>
+        {body.trim() && <p className="mt-4 text-base leading-[1.75] text-ink-2">{body}</p>}
         <WorkFigures figures={figures} />
       </section>
     </Reveal>
-  );
+  )
 }
 
 export function WorkPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { allWork, authors, addSkillFilter, openReport } = useBrowse();
-  const { account } = useAccount();
-  const { opensBySlug } = useTrafficSummary();
-  const { ref: progressRef, progress } = useReadingProgress<HTMLElement>();
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const { allWork, authors, addSkillFilter, openReport } = useBrowse()
+  const { account } = useAccount()
+  const { opensBySlug } = useTrafficSummary()
+  const { ref: progressRef, progress } = useReadingProgress<HTMLElement>()
 
   const { data: work, isPending } = useQuery({
     queryKey: QUERY_KEYS.workDetail(id ?? ""),
     queryFn: async () => {
-      const { work } = await fetchWorkBySlug(id!);
-      return mapWork(work);
+      const { work } = await fetchWorkBySlug(id!)
+      return mapWork(work)
     },
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
-  });
+  })
 
-  const moreByAuthor = useMemo(
-    () => (work ? moreFromAuthor(work, allWork) : []),
-    [work, allWork],
-  );
-  const similar = useMemo(
-    () => (work ? similarWork(work, allWork) : []),
-    [work, allWork],
-  );
+  const moreByAuthor = useMemo(() => (work ? moreFromAuthor(work, allWork) : []), [work, allWork])
+  const similar = useMemo(() => (work ? similarWork(work, allWork) : []), [work, allWork])
 
   useEffect(() => {
-    if (work) track("case_study_opened");
-  }, [work]);
+    if (work) track("case_study_opened")
+  }, [work])
 
   useEffect(() => {
-    if (!work) return;
-    const author = authors.get(work.authorId);
+    if (!work) return
+    const author = authors.get(work.authorId)
     return applyMeta({
       title: author ? `${work.title}, by ${author.name}` : work.title,
       description: clamp(work.summary || work.problem),
       type: "article",
       image: work.thumbnail,
-    });
-  }, [work, authors]);
+    })
+  }, [work, authors])
 
-  if (isPending) return null;
+  if (isPending) return null
 
   if (!work) {
     return (
@@ -110,28 +100,25 @@ export function WorkPage() {
           Browse all portfolios
         </Button>
       </Container>
-    );
+    )
   }
 
-  const author = authors.get(work.authorId);
-  const isMine = account?.id === work.authorId;
-  const opens = isMine ? (opensBySlug[work.id] ?? 0) : null;
-  const headline = headlineProof(work);
-  const proof = proofOf(work);
-  const context = work.details.filter((detail) => !detail.proof);
+  const author = authors.get(work.authorId)
+  const isMine = account?.id === work.authorId
+  const opens = isMine ? (opensBySlug[work.id] ?? 0) : null
+  const headline = headlineProof(work)
+  const proof = proofOf(work)
+  const context = work.details.filter((detail) => !detail.proof)
   const chapterNames =
     work.sections && work.sections.length > 0
       ? work.sections.map((section) => section.heading)
-      : ["problem", "approach", "outcome"];
-  const orphans = orphanFigures(work, chapterNames);
-  const template = templateById(work.template);
+      : ["problem", "approach", "outcome"]
+  const orphans = orphanFigures(work, chapterNames)
+  const template = templateById(work.template)
 
   return (
     <article ref={progressRef} className="pb-24">
-      <div
-        aria-hidden="true"
-        className="sticky top-16 z-30 h-0.5 w-full bg-transparent sm:top-18"
-      >
+      <div aria-hidden="true" className="sticky top-16 z-30 h-0.5 w-full bg-transparent sm:top-18">
         <div
           className="h-full origin-left bg-ink transition-transform duration-150 ease-linear"
           style={{ transform: `scaleX(${progress})` }}
@@ -167,11 +154,7 @@ export function WorkPage() {
       <Container className="mt-4">
         {work.thumbnail ? (
           <div className="relative h-52 w-full overflow-hidden rounded-card sm:h-72">
-            <img
-              src={work.thumbnail}
-              alt=""
-              className="size-full object-cover"
-            />
+            <img src={work.thumbnail} alt="" className="size-full object-cover" />
             {headline && (
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/85 to-transparent p-6 pt-16 text-paper">
                 <p className="display text-[clamp(1.5rem,3.5vw,2.25rem)] leading-[1.05]">
@@ -198,22 +181,14 @@ export function WorkPage() {
         <div className="flex min-w-0 flex-col gap-10">
           <header>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge className="border-ink/20 bg-paper-2">
-                {roleById(work.role).label}
-              </Badge>
-              {template && (
-                <Badge className="border-dashed">{template.label}</Badge>
-              )}
+              <Badge className="border-ink/20 bg-paper-2">{roleById(work.role).label}</Badge>
+              {template && <Badge className="border-dashed">{template.label}</Badge>}
               {work.topics.map((topic) => (
                 <Badge key={topic}>{categoryById(topic).label}</Badge>
               ))}
             </div>
-            <h1 className="display mt-5 text-[clamp(2rem,5vw,3.25rem)]">
-              {work.title}
-            </h1>
-            <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted">
-              {work.summary}
-            </p>
+            <h1 className="display mt-5 text-[clamp(2rem,5vw,3.25rem)]">{work.title}</h1>
+            <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted">{work.summary}</p>
 
             {work.skills.length > 0 && (
               <ul className="mt-5 flex flex-wrap gap-1.5">
@@ -266,27 +241,21 @@ export function WorkPage() {
 
           {orphans.length > 0 && (
             <section>
-              <h2 className="display text-[clamp(1.25rem,2.4vw,1.625rem)]">
-                More evidence
-              </h2>
+              <h2 className="display text-[clamp(1.25rem,2.4vw,1.625rem)]">More evidence</h2>
               <WorkFigures figures={orphans} />
             </section>
           )}
 
           {context.length > 0 && (
             <section>
-              <h2 className="display text-[clamp(1.25rem,2.4vw,1.625rem)]">
-                Details
-              </h2>
+              <h2 className="display text-[clamp(1.25rem,2.4vw,1.625rem)]">Details</h2>
               <dl className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
                 {context.map((detail) => (
                   <div key={detail.label} className="border-t border-line pt-3">
                     <dt className="font-display text-xs font-medium tracking-wide text-muted">
                       {detail.label}
                     </dt>
-                    <dd className="mt-1 text-sm leading-relaxed text-ink">
-                      {detail.value}
-                    </dd>
+                    <dd className="mt-1 text-sm leading-relaxed text-ink">{detail.value}</dd>
                   </div>
                 ))}
               </dl>
@@ -310,9 +279,7 @@ export function WorkPage() {
                 <div className="min-w-0">
                   <p className="truncate font-display text-sm font-semibold text-ink transition-colors duration-200 group-hover:text-pop-violet">
                     {author.name}
-                    {author.isViewer && (
-                      <span className="ml-1 text-muted">· you</span>
-                    )}
+                    {author.isViewer && <span className="ml-1 text-muted">· you</span>}
                   </p>
                   <p className="truncate text-sm text-ink-2">{author.title}</p>
                   <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
@@ -363,16 +330,12 @@ export function WorkPage() {
             <dl className="space-y-3 text-sm">
               <div className="flex justify-between gap-4">
                 <dt className="text-muted">Year</dt>
-                <dd className="font-display font-medium text-ink">
-                  {work.year}
-                </dd>
+                <dd className="font-display font-medium text-ink">{work.year}</dd>
               </div>
               {work.duration && (
                 <div className="flex justify-between gap-4">
                   <dt className="text-muted">Duration</dt>
-                  <dd className="font-display font-medium text-ink">
-                    {work.duration}
-                  </dd>
+                  <dd className="font-display font-medium text-ink">{work.duration}</dd>
                 </div>
               )}
               {work.model && (
@@ -386,9 +349,7 @@ export function WorkPage() {
               {work.scope && (
                 <div className="flex justify-between gap-4 text-right">
                   <dt className="shrink-0 text-muted">Scope</dt>
-                  <dd className="font-display font-medium text-ink">
-                    {work.scope}
-                  </dd>
+                  <dd className="font-display font-medium text-ink">{work.scope}</dd>
                 </div>
               )}
             </dl>
@@ -438,19 +399,14 @@ export function WorkPage() {
               <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-muted">
                 <Chart size={14} className="mt-0.5 shrink-0" />
                 <span>
-                  Only you see this. Counts opens by others — your own visits
-                  are excluded.
+                  Only you see this. Counts opens by others — your own visits are excluded.
                 </span>
               </p>
             </div>
           )}
 
           <p className="text-center">
-            <ReportButton
-              onClick={() =>
-                openReport({ kind: "work", id: work.id }, work.title)
-              }
-            />
+            <ReportButton onClick={() => openReport({ kind: "work", id: work.id }, work.title)} />
           </p>
         </aside>
       </Container>
@@ -474,11 +430,7 @@ export function WorkPage() {
           <ul className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {moreByAuthor.map((item, index) => (
               <li key={item.id} className="flex min-w-0">
-                <WorkCard
-                  work={item}
-                  author={authors.get(item.authorId)}
-                  index={index}
-                />
+                <WorkCard work={item} author={authors.get(item.authorId)} index={index} />
               </li>
             ))}
           </ul>
@@ -488,14 +440,11 @@ export function WorkPage() {
       {similar.length > 0 && (
         <Container className="mt-20 border-t border-line pt-12">
           <h2 className="display text-2xl">
-            Similar{" "}
-            <span className="text-muted">
-              by skills, topic and business model
-            </span>
+            Similar <span className="text-muted">by skills, topic and business model</span>
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            Not "looks alike" - matched on the things that make two projects
-            actually comparable. Each card says why it surfaced.
+            Not "looks alike" - matched on the things that make two projects actually comparable.
+            Each card says why it surfaced.
           </p>
 
           <ul className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -507,9 +456,7 @@ export function WorkPage() {
                   index={index}
                 />
                 <p className="mt-2 flex flex-wrap items-center gap-1.5 px-1 text-xs text-muted">
-                  <span className="font-display font-medium text-ink-2">
-                    Shared:
-                  </span>
+                  <span className="font-display font-medium text-ink-2">Shared:</span>
                   {match.reasons.map((reason) => (
                     <span
                       key={reason}
@@ -525,5 +472,5 @@ export function WorkPage() {
         </Container>
       )}
     </article>
-  );
+  )
 }

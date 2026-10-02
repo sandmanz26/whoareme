@@ -61,7 +61,8 @@ export function WorkIndexPage() {
           Every case study <span className="text-muted">in the directory</span>
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted">
-          {allWork.length} entries from people who build technology. {copy("work.index.description")}
+          {allWork.length} entries from people who build technology.{" "}
+          {copy("work.index.description")}
         </p>
       </Container>
 
@@ -98,10 +99,10 @@ export function WorkIndexPage() {
           </div>
 
           <div className="flex items-center gap-1 rounded-pill border border-ink/12 bg-card p-1">
-            {([
+            {[
               { id: "grid" as const, icon: <Grid size={15} />, label: "Grid view" },
               { id: "list" as const, icon: <Rows size={15} />, label: "List view" },
-            ]).map((option) => (
+            ].map((option) => (
               <button
                 key={option.id}
                 type="button"
@@ -126,8 +127,8 @@ export function WorkIndexPage() {
             </span>
             <h2 className="display mt-5 text-xl">Nothing matches</h2>
             <p className="mt-2 max-w-sm text-sm text-muted">
-              Try widening the craft, topic or skills - or publish the first entry in this corner
-              of the directory.
+              Try widening the craft, topic or skills - or publish the first entry in this corner of
+              the directory.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Button variant="outline" onClick={resetFilters}>

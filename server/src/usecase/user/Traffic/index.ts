@@ -17,8 +17,8 @@ function lastDays(count: number, today = new Date()): string[] {
 export const TrafficUsecase = {
   async GetMySummary(userId: string, days = 30) {
     const range = lastDays(days)
-    const from  = range[0]!
-    const to    = range[range.length - 1]!
+    const from = range[0]!
+    const to = range[range.length - 1]!
 
     const [rows, titles] = await Promise.all([
       TrafficDaily.aggregate([
@@ -28,15 +28,18 @@ export const TrafficUsecase = {
       Work.find({ authorId: userId }, "slug title status").lean(),
     ])
 
-    const byDay   = new Map(rows.map((r) => [r.day as string, r]))
-    const series  = range.map((day) => ({
+    const byDay = new Map(rows.map((r) => [r.day as string, r]))
+    const series = range.map((day) => ({
       day,
       profile: (byDay.get(day)?.profile as number) ?? 0,
-      work:    (byDay.get(day)?.work    as number) ?? 0,
+      work: (byDay.get(day)?.work as number) ?? 0,
     }))
 
-    const titleById = new Map((titles as Array<{ _id: Types.ObjectId; slug: string; title: string; status: string }>)
-      .map((w) => [w._id.toString(), w]))
+    const titleById = new Map(
+      (titles as Array<{ _id: Types.ObjectId; slug: string; title: string; status: string }>).map(
+        (w) => [w._id.toString(), w],
+      ),
+    )
 
     const perWorkRows = await TrafficDaily.aggregate([
       { $match: { ownerId: userId, day: { $gte: from, $lte: to } } },
@@ -57,12 +60,12 @@ export const TrafficUsecase = {
       series,
       totals: {
         profileViews: series.reduce((s, d) => s + d.profile, 0),
-        workOpens:    series.reduce((s, d) => s + d.work, 0),
+        workOpens: series.reduce((s, d) => s + d.work, 0),
       },
       perWork: Object.entries(perWorkTotals).map(([workId, opens]) => ({
         workId,
-        slug:   titleById.get(workId)?.slug   ?? null,
-        title:  titleById.get(workId)?.title  ?? "Deleted entry",
+        slug: titleById.get(workId)?.slug ?? null,
+        title: titleById.get(workId)?.title ?? "Deleted entry",
         status: titleById.get(workId)?.status ?? "deleted",
         opens,
       })),

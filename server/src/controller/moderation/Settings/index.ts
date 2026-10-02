@@ -1,5 +1,8 @@
 import type { Request, Response } from "express"
-import { ModerationSettingsUsecase, settingsPatchSchema } from "../../../usecase/moderation/Settings/index.js"
+import {
+  ModerationSettingsUsecase,
+  settingsPatchSchema,
+} from "../../../usecase/moderation/Settings/index.js"
 import { sendResponse } from "../../../utils/express.js"
 
 export const ModerationSettingsController = {

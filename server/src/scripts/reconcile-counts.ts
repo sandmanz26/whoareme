@@ -28,7 +28,13 @@ async function main() {
 
     await User.updateOne(
       { _id: row._id },
-      { $set: { "counts.publishedWorks": row.publishedWorks, "counts.topicUsage": topicUsage, updatedAt: now } },
+      {
+        $set: {
+          "counts.publishedWorks": row.publishedWorks,
+          "counts.topicUsage": topicUsage,
+          updatedAt: now,
+        },
+      },
     )
     updated++
   }

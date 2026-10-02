@@ -15,7 +15,11 @@ function makeStorage(dir: string) {
   })
 }
 
-function fileFilter(_req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback): void {
+function fileFilter(
+  _req: Express.Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback,
+): void {
   if (["image/jpeg", "image/png", "image/webp"].includes(file.mimetype)) {
     cb(null, true)
   } else {

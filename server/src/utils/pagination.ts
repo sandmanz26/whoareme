@@ -13,7 +13,7 @@ export interface PageMeta {
 }
 
 export function parsePagination(query: Record<string, unknown>, defaultLimit = 24): Pagination {
-  const page  = Math.max(1, Number(query["page"])  || 1)
+  const page = Math.max(1, Number(query["page"]) || 1)
   const limit = Math.min(100, Math.max(1, Number(query["limit"]) || defaultLimit))
   return { page, limit }
 }

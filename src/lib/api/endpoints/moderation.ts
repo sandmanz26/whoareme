@@ -103,6 +103,9 @@ export async function updateSettings(
   patch: Partial<Pick<ApiModerationSettings, "contact" | "copy" | "disabledRoles">>,
   reason: string,
 ): Promise<ApiModerationSettings> {
-  const res = await api.put<Wrap<ApiModerationSettings>>("/moderation/settings", { ...patch, reason })
+  const res = await api.put<Wrap<ApiModerationSettings>>("/moderation/settings", {
+    ...patch,
+    reason,
+  })
   return res.data.data
 }

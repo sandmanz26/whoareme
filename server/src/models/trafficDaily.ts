@@ -5,10 +5,10 @@ import { auditFields } from "../utils/model.js"
 const TrafficDailySchema = new Schema<ITrafficDaily>(
   {
     ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    day:     { type: String, required: true },
+    day: { type: String, required: true },
     profile: { type: Number, default: 0 },
-    work:    { type: Map, of: Number, default: {} },
-    total:   { type: Number, default: 0 },
+    work: { type: Map, of: Number, default: {} },
+    total: { type: Number, default: 0 },
 
     ...auditFields,
   },

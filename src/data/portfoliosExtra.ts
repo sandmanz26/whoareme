@@ -96,8 +96,16 @@ export const EXTRA_WORK: Work[] = [
     stack: ["Java", "Resilience4j", "Grafana", "k6"],
     links: [{ label: "Public postmortem", href: "https://example.com/pintar-bayar/pm-2024-11" }],
     details: [
-      { label: "Reliability", value: "2 subsequent upstream degradations, zero customer impact", proof: true },
-      { label: "Root cause", value: "Stacked retries multiplied load on a degraded dependency 27x", proof: true },
+      {
+        label: "Reliability",
+        value: "2 subsequent upstream degradations, zero customer impact",
+        proof: true,
+      },
+      {
+        label: "Root cause",
+        value: "Stacked retries multiplied load on a degraded dependency 27x",
+        proof: true,
+      },
       { label: "Durable change", value: "Load test for a slow dependency, not just a dead one" },
       { label: "Culture", value: "Postmortem named no team - the gap was the global view" },
     ],
@@ -152,7 +160,11 @@ export const EXTRA_WORK: Work[] = [
     stack: ["Go", "OR-Tools", "Postgres"],
     links: [{ label: "Solver notes", href: "https://example.com/jangkar/slotting" }],
     details: [
-      { label: "Performance", value: "Picker walking distance 14km → 6.2km per shift", proof: true },
+      {
+        label: "Performance",
+        value: "Picker walking distance 14km → 6.2km per shift",
+        proof: true,
+      },
       { label: "Throughput", value: "Picks per hour 62 → 104", proof: true },
       { label: "Method", value: "Supervisors vetoed ~20% of suggestions, all correctly" },
       { label: "Lesson", value: "The solver was half the work; the floor walk was the other half" },
@@ -180,8 +192,16 @@ export const EXTRA_WORK: Work[] = [
     stack: ["Python", "PyTorch Geometric", "Neo4j", "Airflow"],
     links: [{ label: "Model card", href: "https://example.com/bank-sahabat/mule-graph" }],
     details: [
-      { label: "Eval vs baseline", value: "Ring recall 0.08 → 0.63 at fixed precision", proof: true },
-      { label: "Production", value: "~Rp 31B of layered funds held within the recovery window", proof: true },
+      {
+        label: "Eval vs baseline",
+        value: "Ring recall 0.08 → 0.63 at fixed precision",
+        proof: true,
+      },
+      {
+        label: "Production",
+        value: "~Rp 31B of layered funds held within the recovery window",
+        proof: true,
+      },
       { label: "Guardrail", value: "Human review before any freeze; 11% of flags cleared" },
       { label: "Method", value: "Chronological hold-out - random split leaked ~8 points" },
     ],
@@ -208,7 +228,11 @@ export const EXTRA_WORK: Work[] = [
     stack: ["Python", "Ragas", "Weaviate", "Label Studio"],
     links: [{ label: "Eval harness", href: "https://example.com/tanya-ai/rag-eval" }],
     details: [
-      { label: "Eval vs baseline", value: "Honest recall@5 0.88 claimed → 0.61 measured → 0.79 fixed", proof: true },
+      {
+        label: "Eval vs baseline",
+        value: "Honest recall@5 0.88 claimed → 0.61 measured → 0.79 fixed",
+        proof: true,
+      },
       { label: "Production", value: "Wrong-document tickets down 64%", proof: true },
       { label: "Data", value: "1,200 real queries including 360 known failures" },
       { label: "Method", value: "Reported by query type - the aggregate was the problem" },
@@ -238,7 +262,10 @@ export const EXTRA_WORK: Work[] = [
     details: [
       { label: "Hiring", value: "Applicant drop-out during checks 54% → 12%", proof: true },
       { label: "Speed", value: "Time to first job 9 days → 26 hours", proof: true },
-      { label: "Residual risk", value: "2 provisional drivers failed later checks, removed in <24h" },
+      {
+        label: "Residual risk",
+        value: "2 provisional drivers failed later checks, removed in <24h",
+      },
       { label: "Design", value: "Restricted job set is what made provisional status defensible" },
     ],
   },
@@ -264,7 +291,11 @@ export const EXTRA_WORK: Work[] = [
     stack: ["Backstage", "Kubernetes", "Terraform", "Go"],
     links: [{ label: "Catalogue design", href: "https://example.com/nusantara/catalogue" }],
     details: [
-      { label: "Accuracy", value: "Still accurate at 24 months; the wiki version lasted 6 weeks", proof: true },
+      {
+        label: "Accuracy",
+        value: "Still accurate at 24 months; the wiki version lasted 6 weeks",
+        proof: true,
+      },
       { label: "Delivery", value: "'Who owns this?' from a Slack thread to a lookup", proof: true },
       { label: "Restraint", value: "One new required field. Twelve were requested." },
       { label: "Design", value: "Generated from artefacts teams already maintain" },
@@ -323,7 +354,10 @@ export const EXTRA_WORK: Work[] = [
       { label: "Adoption", value: "Booking uptake 4% → 47% across 6 puskesmas", proof: true },
       { label: "Patient impact", value: "Median wait 6.1h → 1.4h", proof: true },
       { label: "Sequencing", value: "Fixed slot-holding operationally before touching the app" },
-      { label: "Deliberately kept", value: "Paper queue retained - excluding the phone-less is not an option" },
+      {
+        label: "Deliberately kept",
+        value: "Paper queue retained - excluding the phone-less is not an option",
+      },
     ],
   },
   {
@@ -348,7 +382,11 @@ export const EXTRA_WORK: Work[] = [
     stack: ["Rules engine", "Postgres", "Metabase"],
     links: [{ label: "Traceability model", href: "https://example.com/rantai/halal" }],
     details: [
-      { label: "Business impact", value: "Audit prep 3 weeks → 2 days for design partners", proof: true },
+      {
+        label: "Business impact",
+        value: "Audit prep 3 weeks → 2 days for design partners",
+        proof: true,
+      },
       { label: "Adoption", value: "Parallel spreadsheets retired at 5 of 5 partners", proof: true },
       { label: "Method", value: "Propagating batch property, not a certificate field" },
       { label: "Learning", value: "The 2 partners who failed an audit taught us most" },
@@ -376,7 +414,11 @@ export const EXTRA_WORK: Work[] = [
     stack: ["Go", "Postgres", "Kafka", "k6"],
     links: [{ label: "Rollback postmortem", href: "https://example.com/saigon-rails/ledger-pm" }],
     details: [
-      { label: "Rollback", value: "60% of traffic reverted in under a day, zero data loss", proof: true },
+      {
+        label: "Rollback",
+        value: "60% of traffic reverted in under a day, zero data loss",
+        proof: true,
+      },
       { label: "Second attempt", value: "Shipped 6 months later; close 9h → 22min", proof: true },
       { label: "Root cause", value: "Load-tested the write path, never the monthly close" },
       { label: "What saved it", value: "Old path kept warm; historical data not yet migrated" },
@@ -406,7 +448,10 @@ export const EXTRA_WORK: Work[] = [
     details: [
       { label: "Consistency", value: "Cross-app gesture conflicts 14 → 0", proof: true },
       { label: "Delivery", value: "Driver-facing screen build time down 45%", proof: true },
-      { label: "Idea that lasted", value: "In-motion variants: bigger targets, faster motion, no destructive actions" },
+      {
+        label: "Idea that lasted",
+        value: "In-motion variants: bigger targets, faster motion, no destructive actions",
+      },
       { label: "Enforcement", value: "In the component, not in a guideline" },
     ],
   },

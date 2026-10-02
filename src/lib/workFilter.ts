@@ -60,8 +60,7 @@ export function filterWork(
     return (
       // Empty list means no opinion; otherwise any one of the values will do.
       (filters.role.length === 0 || filters.role.includes(item.role)) &&
-      (filters.topic.length === 0 ||
-        filters.topic.some((topic) => item.topics.includes(topic))) &&
+      (filters.topic.length === 0 || filters.topic.some((topic) => item.topics.includes(topic))) &&
       (filters.practice.length === 0 ||
         filters.practice.some((practice) => item.topics.includes(practice))) &&
       (filters.model.length === 0 ||

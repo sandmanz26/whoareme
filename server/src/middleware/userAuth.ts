@@ -20,12 +20,20 @@ declare global {
 }
 
 /** Try to authenticate but never block the request. Sets req.user when valid. */
-export const isOptionalAuth = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+export const isOptionalAuth = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const authHeader = req.headers.authorization
     const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : null
     if (token) {
-      try { jwt.verify(token, env.JWT_SECRET) } catch { return next() }
+      try {
+        jwt.verify(token, env.JWT_SECRET)
+      } catch {
+        return next()
+      }
       const user = await User.findOne({ token, status: "active" }).select("_id slug role access")
       if (user) {
         req.user = {
@@ -36,7 +44,9 @@ export const isOptionalAuth = async (req: Request, _res: Response, next: NextFun
         }
       }
     }
-  } catch { /* silently skip — optional auth never fails the request */ }
+  } catch {
+    /* silently skip — optional auth never fails the request */
+  }
   next()
 }
 
@@ -48,14 +58,17 @@ export const isOptionalAuth = async (req: Request, _res: Response, next: NextFun
  * logout invalidation is immediate because clearing the token field
  * revokes access with no extra state.
  */
-export const isAuth = (requiredAccess?: "moderator" | "admin") =>
+export const isAuth =
+  (requiredAccess?: "moderator" | "admin") =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const authHeader = req.headers.authorization
       const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : null
 
       if (!token) {
-        res.status(401).json({ success: false, data: null, message: "Unauthorized. Please sign in." })
+        res
+          .status(401)
+          .json({ success: false, data: null, message: "Unauthorized. Please sign in." })
         return
       }
 

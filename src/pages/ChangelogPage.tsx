@@ -26,7 +26,8 @@ const RELEASES: Release[] = [
   {
     version: "1.0-rc.1",
     date: "18 September 2026",
-    summary: "The three things that were blocking a public launch, and the risks named alongside them.",
+    summary:
+      "The three things that were blocking a public launch, and the risks named alongside them.",
     entries: [
       {
         kind: "changed",
@@ -61,7 +62,8 @@ const RELEASES: Release[] = [
   {
     version: "0.9",
     date: "18 September 2026",
-    summary: "Launching four crafts instead of eight, and the legal pages a platform that removes things is obliged to publish.",
+    summary:
+      "Launching four crafts instead of eight, and the legal pages a platform that removes things is obliged to publish.",
     entries: [
       {
         kind: "changed",
@@ -88,7 +90,8 @@ const RELEASES: Release[] = [
   {
     version: "0.8",
     date: "18 September 2026",
-    summary: "A dialog bug that made the sign-up form almost unusable, and two things the panel should always have had.",
+    summary:
+      "A dialog bug that made the sign-up form almost unusable, and two things the panel should always have had.",
     entries: [
       {
         kind: "added",

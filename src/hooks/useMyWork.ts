@@ -50,13 +50,13 @@ export function useMyWork() {
       const serverDraft = mapApiWorkMineToDraft(work)
       resolved = {
         ...serverDraft,
-        values:   draft.values,
-        links:    draft.links,
+        values: draft.values,
+        links: draft.links,
         sections: draft.sections,
-        metrics:  draft.metrics,
-        skills:   draft.skills,
-        topics:   draft.topics,
-        figures:  draft.figures,
+        metrics: draft.metrics,
+        skills: draft.skills,
+        topics: draft.topics,
+        figures: draft.figures,
       }
     } else {
       await putWork(draft.id, body)
@@ -71,7 +71,7 @@ export function useMyWork() {
     if (resolved.thumbnail?.startsWith("data:")) {
       try {
         const blob = await fetch(resolved.thumbnail).then((r) => r.blob())
-        const ext  = blob.type.split("/")[1] ?? "jpg"
+        const ext = blob.type.split("/")[1] ?? "jpg"
         const file = new File([blob], `thumbnail.${ext}`, { type: blob.type })
         const { thumbnailPath } = await postWorkThumbnail(resolved.id, file)
         resolved = { ...resolved, thumbnail: thumbnailPath }
@@ -83,7 +83,7 @@ export function useMyWork() {
     }
 
     // Handle publish state change
-    const prev        = draftsRef.current.find((d) => d.id === draft.id || d.id === resolved.id)
+    const prev = draftsRef.current.find((d) => d.id === draft.id || d.id === resolved.id)
     const wasPublished = prev?.published ?? false
 
     if (resolved.published && !wasPublished) {
@@ -104,7 +104,7 @@ export function useMyWork() {
     // Update cache: remove old local-id entry if id changed, then upsert
     queryClient.setQueryData<WorkDraft[]>(QUERY_KEYS.workMineList, (current = []) => {
       const without = current.filter((d) => d.id !== draft.id)
-      const exists  = without.some((d) => d.id === resolved.id)
+      const exists = without.some((d) => d.id === resolved.id)
       return exists
         ? without.map((d) => (d.id === resolved.id ? resolved : d))
         : [resolved, ...without]

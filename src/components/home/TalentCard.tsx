@@ -1,26 +1,26 @@
-import { Avatar } from "@/components/ui/Avatar";
-import { Badge } from "@/components/ui/Badge";
-import { ArrowUpRight, Pin } from "@/components/ui/Icon";
-import type { Person } from "@/data/people";
-import { roleById } from "@/data/taxonomy";
-import type { CSSVars } from "@/lib/css";
-import { useNavigate } from "react-router-dom";
+import { Avatar } from "@/components/ui/Avatar"
+import { Badge } from "@/components/ui/Badge"
+import { ArrowUpRight, Pin } from "@/components/ui/Icon"
+import type { Person } from "@/data/people"
+import { roleById } from "@/data/taxonomy"
+import type { CSSVars } from "@/lib/css"
+import { useNavigate } from "react-router-dom"
 
 interface TalentCardProps {
-  person: Person;
+  person: Person
   /** Position in the grid, used to stagger the entrance animation. */
-  index: number;
+  index: number
   /** Reported so a person can see their own profile views in the panel. */
-  onView: (personId: string) => void;
+  onView: (personId: string) => void
 }
 
 export function TalentCard({ person, index, onView }: TalentCardProps) {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   // Counting the view and routing are one action from the reader's side, so
   // they stay one function rather than two things a caller can forget to pair.
   function open() {
-    onView(person.id);
-    navigate(`/people/${person.id}`);
+    onView(person.id)
+    navigate(`/people/${person.id}`)
   }
 
   return (
@@ -61,9 +61,7 @@ export function TalentCard({ person, index, onView }: TalentCardProps) {
 
       <ul className="mt-5 flex flex-wrap gap-1.5">
         <li>
-          <Badge className="border-ink/20 bg-paper-2">
-            {roleById(person.role).label}
-          </Badge>
+          <Badge className="border-ink/20 bg-paper-2">{roleById(person.role).label}</Badge>
         </li>
         {person.skills.slice(0, 3).map((skill) => (
           <li key={skill}>
@@ -91,5 +89,5 @@ export function TalentCard({ person, index, onView }: TalentCardProps) {
         </button>
       </div>
     </article>
-  );
+  )
 }

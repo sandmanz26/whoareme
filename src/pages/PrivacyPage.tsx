@@ -3,15 +3,18 @@ import { PageIntro, Prose, Section } from "@/components/layout/PageIntro"
 const STORAGE_KEYS = [
   {
     key: "whoareyou:account",
-    holds: "Your name, title, location, years of experience, craft, topics, portrait and bio - whatever you typed into the sign-up form and the profile panel, plus a PBKDF2 hash of your password. The password itself is never stored.",
+    holds:
+      "Your name, title, location, years of experience, craft, topics, portrait and bio - whatever you typed into the sign-up form and the profile panel, plus a PBKDF2 hash of your password. The password itself is never stored.",
   },
   {
     key: "whoareyou:drafts",
-    holds: "Every portfolio entry you have written, published or not, including any cover image you uploaded (downscaled to 960px and stored as text inside this key).",
+    holds:
+      "Every portfolio entry you have written, published or not, including any cover image you uploaded (downscaled to 960px and stored as text inside this key).",
   },
   {
     key: "whoareyou:funnel",
-    holds: "Counters for named steps, such as how many times the entry form was opened and how many entries were published. No identifier, no timestamps, no paths. It records that a step happened, never who did it.",
+    holds:
+      "Counters for named steps, such as how many times the entry form was opened and how many entries were published. No identifier, no timestamps, no paths. It records that a step happened, never who did it.",
   },
   {
     key: "whoareyou:session",
@@ -69,22 +72,21 @@ export function PrivacyPage() {
           <p>
             <code>randomuser.me</code> serves the seeded profile portraits, so your browser makes a
             request to that domain and it can see your IP address and user agent the way any image
-            host would. Nothing identifying you is attached. If those images fail to load -
-            offline, blocked, or an ad blocker - the interface falls back to a tinted monogram and
-            works normally.
+            host would. Nothing identifying you is attached. If those images fail to load - offline,
+            blocked, or an ad blocker - the interface falls back to a tinted monogram and works
+            normally.
           </p>
           <p>
-            The two typefaces used to come from the Google Fonts CDN, which meant every visitor's
-            IP address reached a third party before the page rendered. They are now served from
-            this site, so that request is gone.
+            The two typefaces used to come from the Google Fonts CDN, which meant every visitor's IP
+            address reached a third party before the page rendered. They are now served from this
+            site, so that request is gone.
           </p>
           <p>
             There are no analytics scripts, no tag managers, no advertising pixels and no cookies.
             The site sets no cookie at all. We do count how often a few named steps happen - the
-            entry form opened, an entry published - because the one thing we need to know is
-            whether people can finish. Those are counters in your own browser, not a record of
-            your session: there is no identifier attached and no way to tell two people apart in
-            them.
+            entry form opened, an entry published - because the one thing we need to know is whether
+            people can finish. Those are counters in your own browser, not a record of your session:
+            there is no identifier attached and no way to tell two people apart in them.
           </p>
         </Section>
 
@@ -92,10 +94,10 @@ export function PrivacyPage() {
           <p>
             The repository contains an API that this interface is not yet using. Stating its design
             now, so the change is not a surprise later: passwords would be stored only as scrypt
-            hashes; refresh tokens would be stored only as SHA-256 digests, so a database leak
-            would not hand over live sessions; and traffic de-duplication would use a salted daily
-            hash of IP and user agent that identifies nobody and is rotated every day so it cannot
-            be joined across dates.
+            hashes; refresh tokens would be stored only as SHA-256 digests, so a database leak would
+            not hand over live sessions; and traffic de-duplication would use a salted daily hash of
+            IP and user agent that identifies nobody and is rotated every day so it cannot be joined
+            across dates.
           </p>
           <p>
             Traffic figures would remain visible only to the person they belong to. There is no

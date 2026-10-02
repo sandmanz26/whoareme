@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Container } from "@/components/layout/Container";
-import { Button } from "@/components/ui/Button";
-import { Field, PasswordInput, TextInput } from "@/components/ui/Field";
-import { useAccount } from "@/hooks/useAccount";
-import { applyMeta } from "@/lib/head";
-import { postForgotPassword } from "@/lib/api/endpoints/auth";
+import { useEffect, useState } from "react"
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Container } from "@/components/layout/Container"
+import { Button } from "@/components/ui/Button"
+import { Field, PasswordInput, TextInput } from "@/components/ui/Field"
+import { useAccount } from "@/hooks/useAccount"
+import { applyMeta } from "@/lib/head"
+import { postForgotPassword } from "@/lib/api/endpoints/auth"
 import {
   loginSchema,
   forgotPasswordSchema,
@@ -15,79 +15,57 @@ import {
   type LoginValues,
   type ForgotPasswordValues,
   type ResetPasswordValues,
-} from "@/lib/validation/authSchemas";
+} from "@/lib/validation/authSchemas"
 
-type Mode = "signin" | "request" | "confirm";
+type Mode = "signin" | "request" | "confirm"
 
 export function SignInPage() {
-  const { pathname } = useLocation();
-  const [params] = useSearchParams();
-  const navigate = useNavigate();
+  const { pathname } = useLocation()
+  const [params] = useSearchParams()
+  const navigate = useNavigate()
 
-  const resetToken = params.get("token");
-  const mode: Mode = pathname.startsWith("/reset")
-    ? resetToken
-      ? "confirm"
-      : "request"
-    : "signin";
+  const resetToken = params.get("token")
+  const mode: Mode = pathname.startsWith("/reset") ? (resetToken ? "confirm" : "request") : "signin"
 
   useEffect(() => {
-    if (mode === "confirm")
-      return applyMeta({ title: "Set a new password", noindex: true });
-    if (mode === "request")
-      return applyMeta({ title: "Forgot your password?", noindex: true });
+    if (mode === "confirm") return applyMeta({ title: "Set a new password", noindex: true })
+    if (mode === "request") return applyMeta({ title: "Forgot your password?", noindex: true })
     return applyMeta({
       title: "Sign in",
       description: "Back to your panel, your entries and your traffic.",
       noindex: true,
-    });
-  }, [mode]);
+    })
+  }, [mode])
 
   if (mode === "confirm") {
-    return (
-      <ResetConfirmView
-        token={resetToken!}
-        onSuccess={() => navigate("/panel")}
-      />
-    );
+    return <ResetConfirmView token={resetToken!} onSuccess={() => navigate("/panel")} />
   }
   if (mode === "request") {
-    return <ForgotPasswordView onBack={() => navigate("/signin")} />;
+    return <ForgotPasswordView onBack={() => navigate("/signin")} />
   }
-  return (
-    <SignInView
-      onSuccess={() => navigate("/panel")}
-      onForgot={() => navigate("/reset")}
-    />
-  );
+  return <SignInView onSuccess={() => navigate("/panel")} onForgot={() => navigate("/reset")} />
 }
 
 /* ── Sign-in form ─────────────────────────────────────────────────────── */
 
-function SignInView({
-  onSuccess,
-  onForgot,
-}: {
-  onSuccess: () => void;
-  onForgot: () => void;
-}) {
-  const { signIn } = useAccount();
+function SignInView({ onSuccess, onForgot }: { onSuccess: () => void; onForgot: () => void }) {
+  const { signIn } = useAccount()
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-  });
+  })
   const {
     formState: { errors, isSubmitting },
-  } = form;
-  const [serverError, setServerError] = useState<string | null>(null);
+  } = form
+  const [serverError, setServerError] = useState<string | null>(null)
 
   async function onSubmit(data: LoginValues) {
-    setServerError(null);
-    const result = await signIn(data.email, data.password);
+    setServerError(null)
+    const result = await signIn(data.email, data.password)
     if (!result.ok) {
-      setServerError(result.reason);
-      return;
+      setServerError(result.reason)
+      return
     }
-    onSuccess();
+    onSuccess()
   }
 
   return (
@@ -97,10 +75,7 @@ function SignInView({
         Back to your panel, your entries and your traffic.
       </p>
 
-      <form
-        className="mt-8 flex flex-col gap-5"
-        onSubmit={form.handleSubmit(onSubmit)}
-      >
+      <form className="mt-8 flex flex-col gap-5" onSubmit={form.handleSubmit(onSubmit)}>
         <Field label="Email" required error={errors.email?.message}>
           {({ id, describedBy, invalid }) => (
             <TextInput
@@ -157,42 +132,39 @@ function SignInView({
         </div>
       </form>
     </Container>
-  );
+  )
 }
 
 /* ── Forgot-password form ─────────────────────────────────────────────── */
 
 function ForgotPasswordView({ onBack }: { onBack: () => void }) {
-  const [sent, setSent] = useState(false);
-  const [sentEmail, setSentEmail] = useState("");
+  const [sent, setSent] = useState(false)
+  const [sentEmail, setSentEmail] = useState("")
   const form = useForm<ForgotPasswordValues>({
     resolver: zodResolver(forgotPasswordSchema),
-  });
+  })
   const {
     formState: { errors, isSubmitting },
-  } = form;
+  } = form
 
   async function onSubmit(data: ForgotPasswordValues) {
     try {
-      await postForgotPassword(data.email);
-      setSentEmail(data.email);
-      setSent(true);
+      await postForgotPassword(data.email)
+      setSentEmail(data.email)
+      setSent(true)
     } catch {
       form.setError("email", {
         message: "Could not send reset link — try again.",
-      });
+      })
     }
   }
 
   if (sent) {
     return (
       <Container className="flex min-h-[70vh] max-w-md flex-col justify-center py-16">
-        <h1 className="display text-[clamp(1.875rem,5vw,2.75rem)]">
-          Check your inbox
-        </h1>
+        <h1 className="display text-[clamp(1.875rem,5vw,2.75rem)]">Check your inbox</h1>
         <p className="mt-3 text-base leading-relaxed text-muted">
-          We sent a reset link to <strong>{sentEmail}</strong>. It expires in 1
-          hour.
+          We sent a reset link to <strong>{sentEmail}</strong>. It expires in 1 hour.
         </p>
         <button
           type="button"
@@ -202,22 +174,17 @@ function ForgotPasswordView({ onBack }: { onBack: () => void }) {
           Back to sign in
         </button>
       </Container>
-    );
+    )
   }
 
   return (
     <Container className="flex min-h-[70vh] max-w-md flex-col justify-center py-16">
-      <h1 className="display text-[clamp(1.875rem,5vw,2.75rem)]">
-        Forgot your password?
-      </h1>
+      <h1 className="display text-[clamp(1.875rem,5vw,2.75rem)]">Forgot your password?</h1>
       <p className="mt-3 text-base leading-relaxed text-muted">
         Enter your email and we'll send a reset link.
       </p>
 
-      <form
-        className="mt-8 flex flex-col gap-5"
-        onSubmit={form.handleSubmit(onSubmit)}
-      >
+      <form className="mt-8 flex flex-col gap-5" onSubmit={form.handleSubmit(onSubmit)}>
         <Field label="Email" required error={errors.email?.message}>
           {({ id, describedBy, invalid }) => (
             <TextInput
@@ -251,50 +218,39 @@ function ForgotPasswordView({ onBack }: { onBack: () => void }) {
         </div>
       </form>
     </Container>
-  );
+  )
 }
 
 /* ── Reset-confirm form ───────────────────────────────────────────────── */
 
-function ResetConfirmView({
-  token,
-  onSuccess,
-}: {
-  token: string;
-  onSuccess: () => void;
-}) {
-  const { confirmPasswordReset } = useAccount();
+function ResetConfirmView({ token, onSuccess }: { token: string; onSuccess: () => void }) {
+  const { confirmPasswordReset } = useAccount()
   const form = useForm<ResetPasswordValues>({
     resolver: zodResolver(resetPasswordSchema),
-  });
+  })
   const {
     formState: { errors, isSubmitting },
-  } = form;
-  const [serverError, setServerError] = useState<string | null>(null);
+  } = form
+  const [serverError, setServerError] = useState<string | null>(null)
 
   async function onSubmit(data: ResetPasswordValues) {
-    setServerError(null);
-    const result = await confirmPasswordReset(token, data.password);
+    setServerError(null)
+    const result = await confirmPasswordReset(token, data.password)
     if (!result.ok) {
-      setServerError(result.reason);
-      return;
+      setServerError(result.reason)
+      return
     }
-    onSuccess();
+    onSuccess()
   }
 
   return (
     <Container className="flex min-h-[70vh] max-w-md flex-col justify-center py-16">
-      <h1 className="display text-[clamp(1.875rem,5vw,2.75rem)]">
-        Set a new password
-      </h1>
+      <h1 className="display text-[clamp(1.875rem,5vw,2.75rem)]">Set a new password</h1>
       <p className="mt-3 text-base leading-relaxed text-muted">
         Choose a new password for your account.
       </p>
 
-      <form
-        className="mt-8 flex flex-col gap-5"
-        onSubmit={form.handleSubmit(onSubmit)}
-      >
+      <form className="mt-8 flex flex-col gap-5" onSubmit={form.handleSubmit(onSubmit)}>
         <Field label="New password" required error={errors.password?.message}>
           {({ id, describedBy, invalid }) => (
             <PasswordInput
@@ -313,11 +269,7 @@ function ResetConfirmView({
           )}
         </Field>
 
-        <Field
-          label="Repeat new password"
-          required
-          error={errors.confirmPassword?.message}
-        >
+        <Field label="Repeat new password" required error={errors.confirmPassword?.message}>
           {({ id, describedBy, invalid }) => (
             <PasswordInput
               id={id}
@@ -345,5 +297,5 @@ function ResetConfirmView({
         </Button>
       </form>
     </Container>
-  );
+  )
 }

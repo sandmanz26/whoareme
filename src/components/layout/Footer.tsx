@@ -118,7 +118,9 @@ export function Footer() {
         </div>
 
         <div className="mt-14 flex flex-col gap-3 border-t border-line pt-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} whoareyou. A front-end demo - no data leaves your browser.</p>
+          <p>
+            © {new Date().getFullYear()} whoareyou. A front-end demo - no data leaves your browser.
+          </p>
           <p className="font-display tracking-wide">Made for people who make things.</p>
         </div>
       </Container>

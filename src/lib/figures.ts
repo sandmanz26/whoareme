@@ -60,9 +60,7 @@ export function ratioLabel(figure: WorkFigure): string {
   // nothing at all.
   if (w > 32 || h > 32) {
     const ratio = figure.width / figure.height
-    return ratio >= 1
-      ? `${trim(ratio)}:1`
-      : `1:${trim(1 / ratio)}`
+    return ratio >= 1 ? `${trim(ratio)}:1` : `1:${trim(1 / ratio)}`
   }
   return `${w}:${h}`
 }

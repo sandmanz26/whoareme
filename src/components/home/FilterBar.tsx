@@ -177,7 +177,12 @@ export function FilterBar({
     values: readonly string[]
     display: (value: string) => string
   }> = [
-    { key: "role", label: "Craft", values: filters.role, display: (v) => roleById(v as RoleId).label },
+    {
+      key: "role",
+      label: "Craft",
+      values: filters.role,
+      display: (v) => roleById(v as RoleId).label,
+    },
     {
       key: "topic",
       label: "Industry",
@@ -212,7 +217,9 @@ export function FilterBar({
       label: facet.label,
       value: facet.display(value),
       clear: () =>
-        onChange({ [facet.key]: facet.values.filter((item) => item !== value) } as Partial<Filters>),
+        onChange({
+          [facet.key]: facet.values.filter((item) => item !== value),
+        } as Partial<Filters>),
     })),
   )
 
@@ -259,7 +266,10 @@ export function FilterBar({
       </div>
 
       <div
-        className={cn("mt-4 grid gap-3", showAll ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2")}
+        className={cn(
+          "mt-4 grid gap-3",
+          showAll ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2",
+        )}
       >
         <Field
           label="Craft"

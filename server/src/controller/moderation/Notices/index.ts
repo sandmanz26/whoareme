@@ -1,10 +1,14 @@
 import type { Request, Response } from "express"
-import { ModerationNoticesUsecase, appealDecisionSchema } from "../../../usecase/moderation/Notices/index.js"
+import {
+  ModerationNoticesUsecase,
+  appealDecisionSchema,
+} from "../../../usecase/moderation/Notices/index.js"
 import { sendResponse } from "../../../utils/express.js"
 import { badRequest } from "../../../middleware/error.js"
 
 function parseId(value: unknown): string {
-  if (typeof value !== "string" || !/^[a-f0-9]{24}$/i.test(value)) throw badRequest("That id is not valid.")
+  if (typeof value !== "string" || !/^[a-f0-9]{24}$/i.test(value))
+    throw badRequest("That id is not valid.")
   return value
 }
 

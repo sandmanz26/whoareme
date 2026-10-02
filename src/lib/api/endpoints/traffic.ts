@@ -6,7 +6,13 @@ export interface ApiTrafficSummary {
   range: { from: string; to: string; days: number }
   series: Array<{ day: string; profile: number; work: number }>
   totals: { profileViews: number; workOpens: number }
-  perWork: Array<{ workId: string; slug: string | null; title: string; status: string; opens: number }>
+  perWork: Array<{
+    workId: string
+    slug: string | null
+    title: string
+    status: string
+    opens: number
+  }>
 }
 
 export async function fetchTrafficSummary(days = 30) {

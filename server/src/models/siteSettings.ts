@@ -7,12 +7,12 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
     _id: { type: String, default: "site" },
 
     contact: {
-      email:        { type: String, default: "" },
-      location:     { type: String, default: "" },
+      email: { type: String, default: "" },
+      location: { type: String, default: "" },
       responseTime: { type: String, default: "" },
     },
 
-    copy:          { type: Map, of: String, default: {} },
+    copy: { type: Map, of: String, default: {} },
     disabledRoles: { type: [String], default: [] },
 
     ...auditFields,

@@ -1,6 +1,6 @@
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import type { Types } from "mongoose";
+import type { Types } from "mongoose"
 import mongoose from "mongoose"
 import { env } from "../config/index.js"
 import User from "../models/user.js"
@@ -53,18 +53,36 @@ interface WorkFixture {
   sections?: { heading: string; body: string }[]
 }
 
-function userSearchBlob(u: { name: string; title: string; company: string; location: string; skills: string[]; topics: string[] }) {
+function userSearchBlob(u: {
+  name: string
+  title: string
+  company: string
+  location: string
+  skills: string[]
+  topics: string[]
+}) {
   return buildSearchBlob([u.name, u.title, u.company, u.location, ...u.skills, ...u.topics])
 }
 
-function workSearchBlob(w: WorkFixture, author: { name: string; company: string; location: string }) {
+function workSearchBlob(
+  w: WorkFixture,
+  author: { name: string; company: string; location: string },
+) {
   return buildSearchBlob([
-    w.title, w.summary, w.problem, w.approach, w.outcome,
+    w.title,
+    w.summary,
+    w.problem,
+    w.approach,
+    w.outcome,
     ...(w.sections ?? []).flatMap((s) => [s.heading, s.body]),
     ...(w.details ?? []).flatMap((d) => [d.label, d.value]),
-    ...w.skills, ...(w.stack ?? []), ...w.topics,
+    ...w.skills,
+    ...(w.stack ?? []),
+    ...w.topics,
     w.model,
-    author.name, author.company, author.location,
+    author.name,
+    author.company,
+    author.location,
   ])
 }
 
@@ -73,7 +91,7 @@ async function main() {
   console.log("Connected to", env.MONGODB_DB)
 
   const people: PersonFixture[] = await readJson("people.json")
-  const works: WorkFixture[]    = await readJson("works.json")
+  const works: WorkFixture[] = await readJson("works.json")
 
   const now = new Date()
 
@@ -81,43 +99,50 @@ async function main() {
   const slugToId = new Map<string, Types.ObjectId>()
   for (const p of people) {
     const topics = p.categories as string[]
-    const blob = userSearchBlob({ name: p.name, title: p.title, company: p.company, location: p.location, skills: p.skills, topics })
+    const blob = userSearchBlob({
+      name: p.name,
+      title: p.title,
+      company: p.company,
+      location: p.location,
+      skills: p.skills,
+      topics,
+    })
 
     const result = await User.findOneAndUpdate(
       { slug: p.id },
       {
         $set: {
-          slug:            p.id,
-          name:            p.name,
-          title:           p.title,
-          company:         p.company,
-          role:            p.role,
+          slug: p.id,
+          name: p.name,
+          title: p.title,
+          company: p.company,
+          role: p.role,
           topics,
-          location:        p.location,
-          skills:          p.skills,
-          years:           p.years,
-          openToWork:      p.open,
-          photoUrl:        p.photo,
-          languages:       p.languages,
-          pitch:           p.bio,
-          seeded:          true,
-          status:          "active",
-          access:          "member",
+          location: p.location,
+          skills: p.skills,
+          years: p.years,
+          openToWork: p.open,
+          photoUrl: p.photo,
+          languages: p.languages,
+          pitch: p.bio,
+          seeded: true,
+          status: "active",
+          access: "member",
           emailVerifiedAt: now,
-          searchBlob:      blob,
-          updatedAt:       now,
+          searchBlob: blob,
+          updatedAt: now,
         },
         $setOnInsert: {
-          email:        null,
+          email: null,
           passwordHash: null,
-          token:        null,
+          token: null,
           portfolioUrl: "",
-          counts:       { publishedWorks: 0, topicUsage: {} },
-          createdAt:    now,
-          deletedAt:    null,
-          createdBy:    null,
-          updatedBy:    null,
-          deletedBy:    null,
+          counts: { publishedWorks: 0, topicUsage: {} },
+          createdAt: now,
+          deletedAt: null,
+          createdBy: null,
+          updatedBy: null,
+          deletedBy: null,
         },
       },
       { upsert: true, new: true },
@@ -141,47 +166,51 @@ async function main() {
     }
 
     const person = userMap.get(w.authorId)!
-    const blob = workSearchBlob(w, { name: person.name, company: person.company, location: person.location })
+    const blob = workSearchBlob(w, {
+      name: person.name,
+      company: person.company,
+      location: person.location,
+    })
 
     await Work.findOneAndUpdate(
       { slug: w.id },
       {
         $set: {
-          slug:      w.id,
+          slug: w.id,
           authorId,
           author: {
-            slug:      person.id,
-            name:      person.name,
-            title:     person.title,
-            company:   person.company,
-            photoUrl:  person.photo,
-            years:     person.years,
+            slug: person.id,
+            name: person.name,
+            title: person.title,
+            company: person.company,
+            photoUrl: person.photo,
+            years: person.years,
             languages: person.languages,
           },
           authorSuspended: false,
-          mode:     "template",
-          role:     w.role,
-          topics:   w.topics,
-          model:    w.model,
-          skills:   w.skills,
-          title:    w.title,
-          summary:  w.summary  ?? "",
-          year:     w.year,
+          mode: "template",
+          role: w.role,
+          topics: w.topics,
+          model: w.model,
+          skills: w.skills,
+          title: w.title,
+          summary: w.summary ?? "",
+          year: w.year,
           duration: w.duration ?? "",
-          scope:    w.scope    ?? "",
-          problem:  w.problem  ?? "",
+          scope: w.scope ?? "",
+          problem: w.problem ?? "",
           approach: w.approach ?? "",
-          outcome:  w.outcome  ?? "",
+          outcome: w.outcome ?? "",
           sections: w.sections ?? [],
-          details:  (w.details ?? []).map((d) => ({ ...d, proof: d.proof ?? false })),
-          links:    w.links ?? [],
-          stack:    w.stack ?? [],
+          details: (w.details ?? []).map((d) => ({ ...d, proof: d.proof ?? false })),
+          links: w.links ?? [],
+          stack: w.stack ?? [],
           thumbnailPath: null,
-          status:      "published" as const,
+          status: "published" as const,
           publishedAt: now,
-          metrics:     { opens: 0 },
-          searchBlob:  blob,
-          updatedAt:   now,
+          metrics: { opens: 0 },
+          searchBlob: blob,
+          updatedAt: now,
         },
         $setOnInsert: {
           createdAt: now,
@@ -218,7 +247,13 @@ async function main() {
 
     await User.updateOne(
       { _id: row._id },
-      { $set: { "counts.publishedWorks": row.publishedWorks, "counts.topicUsage": topicUsage, updatedAt: now } },
+      {
+        $set: {
+          "counts.publishedWorks": row.publishedWorks,
+          "counts.topicUsage": topicUsage,
+          updatedAt: now,
+        },
+      },
     )
   }
   console.log(`Reconciled counts for ${rows.length} users`)

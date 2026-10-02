@@ -17,8 +17,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // ── Assertion helpers ─────────────────────────────────────────────────────────
 
-let passed  = 0
-let failed  = 0
+let passed = 0
+let failed = 0
 
 function assert(label: string, ok: boolean, detail = "") {
   if (ok) {
@@ -31,7 +31,11 @@ function assert(label: string, ok: boolean, detail = "") {
 }
 
 function assertEq<T>(label: string, actual: T, expected: T) {
-  assert(label, actual === expected, `got ${JSON.stringify(actual)}, want ${JSON.stringify(expected)}`)
+  assert(
+    label,
+    actual === expected,
+    `got ${JSON.stringify(actual)}, want ${JSON.stringify(expected)}`,
+  )
 }
 
 // ── HTTP client ───────────────────────────────────────────────────────────────
@@ -57,29 +61,39 @@ async function api(
   return { status: res.status, json }
 }
 
-function get(base: string, path: string, token?: string)              { return api(base, "GET",    path, undefined, token) }
-function post(base: string, path: string, body: Json, token?: string) { return api(base, "POST",   path, body, token) }
-function put(base: string, path: string, body: Json, token?: string)  { return api(base, "PUT",    path, body, token) }
-function patch(base: string, path: string, body: Json, token?: string){ return api(base, "PATCH",  path, body, token) }
-function del(base: string, path: string, token?: string)              { return api(base, "DELETE", path, undefined, token) }
+function get(base: string, path: string, token?: string) {
+  return api(base, "GET", path, undefined, token)
+}
+function post(base: string, path: string, body: Json, token?: string) {
+  return api(base, "POST", path, body, token)
+}
+function put(base: string, path: string, body: Json, token?: string) {
+  return api(base, "PUT", path, body, token)
+}
+function patch(base: string, path: string, body: Json, token?: string) {
+  return api(base, "PATCH", path, body, token)
+}
+function del(base: string, path: string, token?: string) {
+  return api(base, "DELETE", path, undefined, token)
+}
 
 // ── Minimal work input that passes publishable validation ─────────────────────
 
 function makeWork(overrides: Partial<Record<string, unknown>> = {}): Json {
   return {
-    mode:     "template",
-    role:     "engineering",
-    topics:   ["saas"],
-    model:    "b2b-saas",
-    skills:   ["Go"],
-    title:    "Smoke test entry",
-    summary:  "A one-liner summary for testing.",
-    year:     2024,
+    mode: "template",
+    role: "engineering",
+    topics: ["saas"],
+    model: "b2b-saas",
+    skills: ["Go"],
+    title: "Smoke test entry",
+    summary: "A one-liner summary for testing.",
+    year: 2024,
     duration: "3 months",
-    scope:    "Solo",
-    problem:  "The test needed a publishable entry with enough length to pass validation.",
+    scope: "Solo",
+    problem: "The test needed a publishable entry with enough length to pass validation.",
     approach: "Wrote the minimum required text in each field to satisfy the schema.",
-    outcome:  "The smoke test creates and publishes this entry then tears it down.",
+    outcome: "The smoke test creates and publishes this entry then tears it down.",
     ...overrides,
   }
 }
@@ -92,26 +106,26 @@ async function main() {
   const uri = rs.getUri()
 
   // Set env vars before importing app modules that read process.env at import time
-  process.env["MONGODB_URI"]         = uri
-  process.env["MONGODB_DB"]          = "whoareyou_smoke"
-  process.env["JWT_SECRET"]          = "smoke-test-secret-at-least-sixteen"
-  process.env["JWT_EXPIRES_IN"]      = "30d"
-  process.env["VIEWER_HASH_SALT"]    = "smoke-salt-1234"
-  process.env["CORS_ORIGINS"]        = ""
-  process.env["NODE_ENV"]            = "test"
-  process.env["PORT"]                = "0"
-  process.env["LOG_LEVEL"]           = "error"
-  process.env["MAIL_TRANSPORT"]      = "none"
+  process.env["MONGODB_URI"] = uri
+  process.env["MONGODB_DB"] = "whoareyou_smoke"
+  process.env["JWT_SECRET"] = "smoke-test-secret-at-least-sixteen"
+  process.env["JWT_EXPIRES_IN"] = "30d"
+  process.env["VIEWER_HASH_SALT"] = "smoke-salt-1234"
+  process.env["CORS_ORIGINS"] = ""
+  process.env["NODE_ENV"] = "test"
+  process.env["PORT"] = "0"
+  process.env["LOG_LEVEL"] = "error"
+  process.env["MAIL_TRANSPORT"] = "none"
   process.env["MAX_THUMBNAIL_BYTES"] = "1500000"
-  process.env["APP_BASE_URL"]        = "http://localhost:9800"
+  process.env["APP_BASE_URL"] = "http://localhost:9800"
 
   // Build and start the Express app
-  const { default: express }      = await import("express")
-  const { default: helmet }       = await import("helmet")
-  const { default: cors }         = await import("cors")
+  const { default: express } = await import("express")
+  const { default: helmet } = await import("helmet")
+  const { default: cors } = await import("cors")
   const { connectDB, disconnectDB } = await import("../db/mongo.js")
-  const { errorHandler }          = await import("../middleware/error.js")
-  const { default: AppRouter }    = await import("../routes/index.js")
+  const { errorHandler } = await import("../middleware/error.js")
+  const { default: AppRouter } = await import("../routes/index.js")
 
   await connectDB()
 
@@ -128,7 +142,7 @@ async function main() {
   await new Promise<void>((resolve) => server.listen(0, resolve))
   const { port } = server.address() as AddressInfo
   const base = `http://localhost:${port}/api/v1/user`
-  const mod  = `http://localhost:${port}/api/v1/moderation`
+  const mod = `http://localhost:${port}/api/v1/moderation`
   console.log(`App listening on :${port}`)
 
   // ── Seed ─────────────────────────────────────────────────────────────────────
@@ -141,9 +155,9 @@ async function main() {
   {
     const r = await get(base, "/taxonomy")
     assertEq("GET /taxonomy → 200", r.status, 200)
-    assert("taxonomy has roles",  Array.isArray((r.json["data"] as Json)["roles"]))
+    assert("taxonomy has roles", Array.isArray((r.json["data"] as Json)["roles"]))
     assert("taxonomy has topics", Array.isArray((r.json["data"] as Json)["topics"]))
-    assert("taxonomy has quota",  typeof (r.json["data"] as Json)["topicQuota"] === "number")
+    assert("taxonomy has quota", typeof (r.json["data"] as Json)["topicQuota"] === "number")
   }
 
   // ── § 2 Settings ─────────────────────────────────────────────────────────────
@@ -156,25 +170,31 @@ async function main() {
   // ── § 3 Auth — register ───────────────────────────────────────────────────────
   console.log("\n§3 Auth")
   const reg = await post(base, "/auth/register", {
-    name:     "Smoke User",
-    email:    "smoke@test.local",
+    name: "Smoke User",
+    email: "smoke@test.local",
     password: "SmokePass123!",
     location: "Jakarta, ID",
-    role:     "engineering",
-    title:    "Senior Engineer",
-    years:    5,
-    topics:   ["saas"],
+    role: "engineering",
+    title: "Senior Engineer",
+    years: 5,
+    topics: ["saas"],
   })
   assertEq("POST /auth/register → 201", reg.status, 201)
-  assert("register returns token",   typeof (reg.json["data"] as Json)["token"] === "string")
-  assert("register returns user",    typeof (reg.json["data"] as Json)["user"] === "object")
+  assert("register returns token", typeof (reg.json["data"] as Json)["token"] === "string")
+  assert("register returns user", typeof (reg.json["data"] as Json)["user"] === "object")
 
   const userId = ((reg.json["data"] as Json)["user"] as Json)["slug"] as string
 
   // Duplicate registration
   const dup = await post(base, "/auth/register", {
-    name: "Smoke User", email: "smoke@test.local", password: "SmokePass123!",
-    location: "Jakarta, ID", role: "engineering", title: "SE", years: 5, topics: ["saas"],
+    name: "Smoke User",
+    email: "smoke@test.local",
+    password: "SmokePass123!",
+    location: "Jakarta, ID",
+    role: "engineering",
+    title: "SE",
+    years: 5,
+    topics: ["saas"],
   })
   assertEq("duplicate register → 409", dup.status, 409)
 
@@ -184,7 +204,10 @@ async function main() {
   assertEq("bad login success=false", badLogin.json["success"], false)
 
   // Good login
-  const login = await post(base, "/auth/login", { email: "smoke@test.local", password: "SmokePass123!" })
+  const login = await post(base, "/auth/login", {
+    email: "smoke@test.local",
+    password: "SmokePass123!",
+  })
   assertEq("good login → 200", login.status, 200)
   assert("login returns token", typeof (login.json["data"] as Json)["token"] === "string")
   const loginToken = (login.json["data"] as Json)["token"] as string
@@ -201,7 +224,11 @@ async function main() {
   // Update profile
   const up = await patch(base, "/auth/me", { title: "Staff Engineer", years: 6 }, loginToken)
   assertEq("PATCH /auth/me → 200", up.status, 200)
-  assertEq("profile title updated", ((up.json["data"] as Json)["user"] as Json)["title"], "Staff Engineer")
+  assertEq(
+    "profile title updated",
+    ((up.json["data"] as Json)["user"] as Json)["title"],
+    "Staff Engineer",
+  )
 
   // Email verify request (MAIL_TRANSPORT=none returns the token)
   const vreq = await post(base, "/auth/verify/request", {}, loginToken)
@@ -218,7 +245,7 @@ async function main() {
   {
     const r = await get(base, "/people")
     assertEq("GET /people → 200", r.status, 200)
-    assert("people items array",  Array.isArray((r.json["data"] as Json)["items"]))
+    assert("people items array", Array.isArray((r.json["data"] as Json)["items"]))
     assert("people meta present", typeof (r.json["data"] as Json)["meta"] === "object")
 
     const facets = await get(base, "/people/facets")
@@ -230,7 +257,10 @@ async function main() {
       const slug = items[0]!["slug"] as string
       const person = await get(base, `/people/${slug}`)
       assertEq(`GET /people/${slug} → 200`, person.status, 200)
-      assert("person has slug", typeof ((person.json["data"] as Json)["user"] as Json)["slug"] === "string")
+      assert(
+        "person has slug",
+        typeof ((person.json["data"] as Json)["user"] as Json)["slug"] === "string",
+      )
 
       // Person's work
       const pw = await get(base, `/people/${slug}/work`)
@@ -243,9 +273,9 @@ async function main() {
   {
     const r = await get(base, "/work")
     assertEq("GET /work → 200", r.status, 200)
-    assert("work items array",  Array.isArray((r.json["data"] as Json)["items"]))
+    assert("work items array", Array.isArray((r.json["data"] as Json)["items"]))
     assert("work facets present", typeof (r.json["data"] as Json)["facets"] === "object")
-    assert("work meta present",   typeof (r.json["data"] as Json)["meta"] === "object")
+    assert("work meta present", typeof (r.json["data"] as Json)["meta"] === "object")
 
     // Filtered by role
     const byRole = await get(base, "/work?role=engineering")
@@ -260,9 +290,13 @@ async function main() {
   // Create draft (requires email verified)
   const created = await post(base, "/work", makeWork(), loginToken)
   assertEq("POST /work (create draft) → 201", created.status, 201)
-  workId   = ((created.json["data"] as Json)["work"] as Json)["_id"] as string
+  workId = ((created.json["data"] as Json)["work"] as Json)["_id"] as string
   workSlug = ((created.json["data"] as Json)["work"] as Json)["slug"] as string
-  assertEq("new work status=draft", ((created.json["data"] as Json)["work"] as Json)["status"], "draft")
+  assertEq(
+    "new work status=draft",
+    ((created.json["data"] as Json)["work"] as Json)["status"],
+    "draft",
+  )
 
   // Mine list
   const mineList = await get(base, "/work/mine/list", loginToken)
@@ -278,14 +312,27 @@ async function main() {
   assertEq("GET /work/mine/:id no auth → 401", mineByIdNoAuth.status, 401)
 
   // Update
-  const updated = await put(base, `/work/${workId}`, makeWork({ title: "Updated smoke entry" }), loginToken)
+  const updated = await put(
+    base,
+    `/work/${workId}`,
+    makeWork({ title: "Updated smoke entry" }),
+    loginToken,
+  )
   assertEq("PUT /work/:id → 200", updated.status, 200)
-  assertEq("work title updated", ((updated.json["data"] as Json)["work"] as Json)["title"], "Updated smoke entry")
+  assertEq(
+    "work title updated",
+    ((updated.json["data"] as Json)["work"] as Json)["title"],
+    "Updated smoke entry",
+  )
 
   // Publish (email is now verified)
   const published = await post(base, `/work/${workId}/publish`, {}, loginToken)
   assertEq("POST /work/:id/publish → 200", published.status, 200)
-  assertEq("work status=published", ((published.json["data"] as Json)["work"] as Json)["status"], "published")
+  assertEq(
+    "work status=published",
+    ((published.json["data"] as Json)["work"] as Json)["status"],
+    "published",
+  )
 
   // Double-publish → 409
   const pubAgain = await post(base, `/work/${workId}/publish`, {}, loginToken)
@@ -294,8 +341,11 @@ async function main() {
   // Public detail
   const detail = await get(base, `/work/${workSlug}`)
   assertEq("GET /work/:slug → 200", detail.status, 200)
-  assert("work detail has moreByAuthor", Array.isArray((detail.json["data"] as Json)["moreByAuthor"]))
-  assert("work detail has similar",      Array.isArray((detail.json["data"] as Json)["similar"]))
+  assert(
+    "work detail has moreByAuthor",
+    Array.isArray((detail.json["data"] as Json)["moreByAuthor"]),
+  )
+  assert("work detail has similar", Array.isArray((detail.json["data"] as Json)["similar"]))
 
   // Unpublish
   const unp = await post(base, `/work/${workId}/unpublish`, {}, loginToken)
@@ -315,11 +365,19 @@ async function main() {
     assertEq("second saas entry publishes → 200", pub2.status, 200)
 
     // Third entry on saas → quota exceeded
-    const w3 = await post(base, "/work", makeWork({ title: "Quota entry 3 (should fail)" }), loginToken)
+    const w3 = await post(
+      base,
+      "/work",
+      makeWork({ title: "Quota entry 3 (should fail)" }),
+      loginToken,
+    )
     const w3id = ((w3.json["data"] as Json)["work"] as Json)["_id"] as string
     const pub3 = await post(base, `/work/${w3id}/publish`, {}, loginToken)
     assertEq("third saas entry → 409 quota", pub3.status, 409)
-    assert("quota error code present", (pub3.json["message"] as string ?? "").toLowerCase().includes("quota"))
+    assert(
+      "quota error code present",
+      ((pub3.json["message"] as string) ?? "").toLowerCase().includes("quota"),
+    )
 
     // Delete the extra entries (cleanup)
     await post(base, `/work/${workId}/unpublish`, {}, loginToken)
@@ -344,21 +402,21 @@ async function main() {
     // Get a published work to report
     const works = await get(base, "/work")
     const item = ((works.json["data"] as Json)["items"] as Json[])[0]
-    reportTargetId = item?.["_id"] as string ?? ""
+    reportTargetId = (item?.["_id"] as string) ?? ""
 
     if (reportTargetId) {
       const r = await post(base, "/reports", {
-        targetId:   reportTargetId,
+        targetId: reportTargetId,
         targetKind: "work",
-        reason:     "false-claim",
+        reason: "false-claim",
       })
       assertEq("POST /reports → 202", r.status, 202)
 
       // Duplicate report collapses silently (same hash)
       const r2 = await post(base, "/reports", {
-        targetId:   reportTargetId,
+        targetId: reportTargetId,
         targetKind: "work",
-        reason:     "false-claim",
+        reason: "false-claim",
       })
       assert("duplicate report does not error", r2.status < 500)
     } else {
@@ -371,18 +429,18 @@ async function main() {
 
   // Register a second user who will be the moderator
   const modReg = await post(base, "/auth/register", {
-    name:     "Smoke Mod",
-    email:    "mod@test.local",
+    name: "Smoke Mod",
+    email: "mod@test.local",
     password: "ModPass456!",
     location: "Singapore, SG",
-    role:     "product",
-    title:    "Product Lead",
-    years:    8,
-    topics:   ["saas"],
+    role: "product",
+    title: "Product Lead",
+    years: 8,
+    topics: ["saas"],
   })
   assertEq("moderator register → 201", modReg.status, 201)
   const modToken = (modReg.json["data"] as Json)["token"] as string
-  const modSlug  = ((modReg.json["data"] as Json)["user"] as Json)["slug"] as string
+  const modSlug = ((modReg.json["data"] as Json)["user"] as Json)["slug"] as string
 
   // Directly promote to moderator via DB (no admin API exists).
   // isAuth reads access from the DB record at middleware time, so the existing token
@@ -392,14 +450,23 @@ async function main() {
   // Reports queue (moderator-gated)
   const reports = await get(mod, "/reports", modToken)
   assertEq("GET /moderation/reports → 200", reports.status, 200)
-  assert("reports is array", Array.isArray((reports.json["data"] as Json)["items"] ?? reports.json["data"]))
+  assert(
+    "reports is array",
+    Array.isArray((reports.json["data"] as Json)["items"] ?? reports.json["data"]),
+  )
 
-  const reportItems = (reports.json["data"] as Json)["items"] as Json[] ?? reports.json["data"] as Json[]
-  const reportId    = reportItems?.[0]?.["_id"] as string | undefined
+  const reportItems =
+    ((reports.json["data"] as Json)["items"] as Json[]) ?? (reports.json["data"] as Json[])
+  const reportId = reportItems?.[0]?.["_id"] as string | undefined
 
   // Resolve report
   if (reportId) {
-    const resolved = await post(mod, `/reports/${reportId}/resolve`, { reason: "Reviewed and found no violation." }, modToken)
+    const resolved = await post(
+      mod,
+      `/reports/${reportId}/resolve`,
+      { reason: "Reviewed and found no violation." },
+      modToken,
+    )
     assertEq("POST /moderation/reports/:id/resolve → 200", resolved.status, 200)
   } else {
     assert("skipped resolve (no reports)", true)
@@ -414,31 +481,41 @@ async function main() {
 
   // Register a third user (the target for suspend/reinstate)
   const target = await post(base, "/auth/register", {
-    name:     "Smoke Target",
-    email:    "target@test.local",
+    name: "Smoke Target",
+    email: "target@test.local",
     password: "TargetPass789!",
     location: "Kuala Lumpur, MY",
-    role:     "design",
-    title:    "Product Designer",
-    years:    3,
-    topics:   ["saas"],
+    role: "design",
+    title: "Product Designer",
+    years: 3,
+    topics: ["saas"],
   })
   const targetToken = (target.json["data"] as Json)["token"] as string
-  const targetSlug  = ((target.json["data"] as Json)["user"] as Json)["slug"] as string
-  const targetUser  = await User.findOne({ slug: targetSlug }).select("_id").lean()
-  const targetId    = (targetUser as { _id: mongoose.Types.ObjectId })._id.toString()
+  const targetSlug = ((target.json["data"] as Json)["user"] as Json)["slug"] as string
+  const targetUser = await User.findOne({ slug: targetSlug }).select("_id").lean()
+  const targetId = (targetUser as { _id: mongoose.Types.ObjectId })._id.toString()
 
   // Create + publish a work as target user (need verified email first)
   const tvreq = await post(base, "/auth/verify/request", {}, targetToken)
   const tvtoken = (tvreq.json["data"] as Json)["token"] as string
   await post(base, "/auth/verify/confirm", { token: tvtoken })
 
-  const tw = await post(base, "/work", makeWork({ role: "design", title: "Target entry" }), targetToken)
+  const tw = await post(
+    base,
+    "/work",
+    makeWork({ role: "design", title: "Target entry" }),
+    targetToken,
+  )
   const twId = ((tw.json["data"] as Json)["work"] as Json)["_id"] as string
   await post(base, `/work/${twId}/publish`, {}, targetToken)
 
   // Moderation: unpublish work
-  const modUnpub = await post(mod, `/work/${twId}/unpublish`, { reason: "Violates community standards." }, modToken)
+  const modUnpub = await post(
+    mod,
+    `/work/${twId}/unpublish`,
+    { reason: "Violates community standards." },
+    modToken,
+  )
   assertEq("POST /moderation/work/:id/unpublish → 200", modUnpub.status, 200)
 
   // Check notice was created
@@ -454,38 +531,67 @@ async function main() {
   assertEq("POST /notices/:id/read → 200", markRead.status, 200)
 
   // Moderation: republish work
-  const modRepub = await post(mod, `/work/${twId}/republish`, { reason: "Reviewed, actually fine." }, modToken)
+  const modRepub = await post(
+    mod,
+    `/work/${twId}/republish`,
+    { reason: "Reviewed, actually fine." },
+    modToken,
+  )
   assertEq("POST /moderation/work/:id/republish → 200", modRepub.status, 200)
 
   // Moderation: suspend user
-  const suspend = await post(mod, `/people/${targetId}/suspend`, { reason: "Repeated violations." }, modToken)
+  const suspend = await post(
+    mod,
+    `/people/${targetId}/suspend`,
+    { reason: "Repeated violations." },
+    modToken,
+  )
   assertEq("POST /moderation/people/:id/suspend → 200", suspend.status, 200)
 
   // Works should now have authorSuspended=true
   const suspendedWork = await Work.findOne({ _id: twId }).select("authorSuspended").lean()
-  assert("authorSuspended=true after suspend", (suspendedWork as { authorSuspended: boolean })?.authorSuspended === true)
+  assert(
+    "authorSuspended=true after suspend",
+    (suspendedWork as { authorSuspended: boolean })?.authorSuspended === true,
+  )
 
   // Moderation: reinstate user
-  const reinstate = await post(mod, `/people/${targetId}/reinstate`, { reason: "Issue resolved." }, modToken)
+  const reinstate = await post(
+    mod,
+    `/people/${targetId}/reinstate`,
+    { reason: "Issue resolved." },
+    modToken,
+  )
   assertEq("POST /moderation/people/:id/reinstate → 200", reinstate.status, 200)
 
   // ── § 11 Appeals ─────────────────────────────────────────────────────────────
   console.log("\n§11 Appeals")
   {
     // Target user appeals the unpublish notice (from the first unpublish that was then re-published)
-    const noticeRes2  = await get(base, "/notices", targetToken)
-    const noticeList2 = ((noticeRes2.json["data"] as Json)["items"] ?? noticeRes2.json["data"]) as Json[]
+    const noticeRes2 = await get(base, "/notices", targetToken)
+    const noticeList2 = ((noticeRes2.json["data"] as Json)["items"] ??
+      noticeRes2.json["data"]) as Json[]
     const unpublishNotice = noticeList2.find((n) => n["action"] === "unpublish")
-    const appealNoticeId  = unpublishNotice?.["_id"] as string | undefined
+    const appealNoticeId = unpublishNotice?.["_id"] as string | undefined
 
     if (appealNoticeId) {
-      const appeal = await post(base, `/notices/${appealNoticeId}/appeal`, {
-        text: "I believe this decision was incorrect because the content meets all guidelines.",
-      }, targetToken)
+      const appeal = await post(
+        base,
+        `/notices/${appealNoticeId}/appeal`,
+        {
+          text: "I believe this decision was incorrect because the content meets all guidelines.",
+        },
+        targetToken,
+      )
       assertEq("POST /notices/:id/appeal → 201", appeal.status, 201)
 
       // Double appeal → 409
-      const appeal2 = await post(base, `/notices/${appealNoticeId}/appeal`, { text: "Trying again" }, targetToken)
+      const appeal2 = await post(
+        base,
+        `/notices/${appealNoticeId}/appeal`,
+        { text: "Trying again" },
+        targetToken,
+      )
       assertEq("double appeal → 409", appeal2.status, 409)
 
       // Moderation: get open appeals
@@ -498,33 +604,54 @@ async function main() {
 
       // Moderator who took the decision tries to decide — should be forbidden
       // (the same moderator who unpublished tries to decide the appeal)
-      const selfDecide = await post(mod, `/appeals/${appealId}/decide`, {
-        outcome: "upheld",
-        reason:  "Still violated the guidelines.",
-      }, modToken)
+      const selfDecide = await post(
+        mod,
+        `/appeals/${appealId}/decide`,
+        {
+          outcome: "upheld",
+          reason: "Still violated the guidelines.",
+        },
+        modToken,
+      )
       assertEq("same-actor appeal decide → 403", selfDecide.status, 403)
 
       // Register a second moderator to decide
       const mod2Reg = await post(base, "/auth/register", {
-        name: "Smoke Mod2", email: "mod2@test.local", password: "Mod2Pass000!",
-        location: "Manila, PH", role: "product", title: "Lead", years: 4, topics: ["saas"],
+        name: "Smoke Mod2",
+        email: "mod2@test.local",
+        password: "Mod2Pass000!",
+        location: "Manila, PH",
+        role: "product",
+        title: "Lead",
+        years: 4,
+        topics: ["saas"],
       })
-      const mod2Slug  = ((mod2Reg.json["data"] as Json)["user"] as Json)["slug"] as string
+      const mod2Slug = ((mod2Reg.json["data"] as Json)["user"] as Json)["slug"] as string
       const mod2Token = (mod2Reg.json["data"] as Json)["token"] as string
       await User.updateOne({ slug: mod2Slug }, { $set: { access: "moderator" } })
 
       // mod2 overturns the appeal (this republishes the work)
-      const decide = await post(mod, `/appeals/${appealId}/decide`, {
-        outcome: "overturned",
-        reason:  "Content meets the community standards on review.",
-      }, mod2Token)
+      const decide = await post(
+        mod,
+        `/appeals/${appealId}/decide`,
+        {
+          outcome: "overturned",
+          reason: "Content meets the community standards on review.",
+        },
+        mod2Token,
+      )
       assertEq("second mod overturns appeal → 200", decide.status, 200)
 
       // Double decide → 409
-      const decide2 = await post(mod, `/appeals/${appealId}/decide`, {
-        outcome: "upheld",
-        reason:  "Changed my mind.",
-      }, mod2Token)
+      const decide2 = await post(
+        mod,
+        `/appeals/${appealId}/decide`,
+        {
+          outcome: "upheld",
+          reason: "Changed my mind.",
+        },
+        mod2Token,
+      )
       assertEq("double appeal decide → 409", decide2.status, 409)
     } else {
       assert("skipped appeal test (no unpublish notice found)", true)
@@ -547,10 +674,15 @@ async function main() {
     const s = await get(mod, "/settings", modToken)
     assertEq("GET /moderation/settings → 200", s.status, 200)
 
-    const upd = await put(mod, "/settings", {
-      contact: "hello@test.local",
-      reason:  "Smoke test update",
-    }, modToken)
+    const upd = await put(
+      mod,
+      "/settings",
+      {
+        contact: "hello@test.local",
+        reason: "Smoke test update",
+      },
+      modToken,
+    )
     assertEq("PUT /moderation/settings → 200", upd.status, 200)
   }
 
@@ -573,15 +705,23 @@ async function main() {
   {
     // Attempting to register with a 'soon' craft should fail
     const badRole = await post(base, "/auth/register", {
-      name: "Data Person", email: "data@test.local", password: "DataPass000!",
-      location: "Jakarta, ID", role: "data", title: "Data Scientist", years: 3, topics: ["ai"],
+      name: "Data Person",
+      email: "data@test.local",
+      password: "DataPass000!",
+      location: "Jakarta, ID",
+      role: "data",
+      title: "Data Scientist",
+      years: 3,
+      topics: ["ai"],
     })
     assertEq("register with soon role → 400", badRole.status, 400)
 
     // Published works should not include 'soon' roles
     const works = await get(base, "/work")
     const items = (works.json["data"] as Json)["items"] as Json[]
-    const hasSoon = items.some((w) => ["data", "quality", "growth", "research"].includes(w["role"] as string))
+    const hasSoon = items.some((w) =>
+      ["data", "quality", "growth", "research"].includes(w["role"] as string),
+    )
     assert("no soon-role works in public listing", !hasSoon)
   }
 
@@ -589,12 +729,23 @@ async function main() {
   console.log("\n§16 Backfill")
   {
     // Strip languages from a user to create a gap, then run backfill
-    const any = await User.findOne({ languages: { $exists: true, $not: { $size: 0 } }, location: { $ne: "" } }).lean()
+    const any = await User.findOne({
+      languages: { $exists: true, $not: { $size: 0 } },
+      location: { $ne: "" },
+    }).lean()
     if (any) {
-      await User.updateOne({ _id: (any as { _id: mongoose.Types.ObjectId })._id }, { $set: { languages: [] } })
+      await User.updateOne(
+        { _id: (any as { _id: mongoose.Types.ObjectId })._id },
+        { $set: { languages: [] } },
+      )
       await _backfill()
-      const restored = await User.findOne({ _id: (any as { _id: mongoose.Types.ObjectId })._id }).lean()
-      assert("backfill restored languages", ((restored as { languages?: string[] })?.languages?.length ?? 0) > 0)
+      const restored = await User.findOne({
+        _id: (any as { _id: mongoose.Types.ObjectId })._id,
+      }).lean()
+      assert(
+        "backfill restored languages",
+        ((restored as { languages?: string[] })?.languages?.length ?? 0) > 0,
+      )
     } else {
       assert("skipped backfill test (no suitable user)", true)
     }
@@ -627,33 +778,64 @@ async function main() {
 
 async function _seed(_uri: string) {
   const fixturePath = path.join(__dirname, "../../fixtures")
-  const { default: people } = await import(path.join(fixturePath, "people.json"), { with: { type: "json" } })
-  const { default: works  } = await import(path.join(fixturePath, "works.json"),  { with: { type: "json" } })
+  const { default: people } = await import(path.join(fixturePath, "people.json"), {
+    with: { type: "json" },
+  })
+  const { default: works } = await import(path.join(fixturePath, "works.json"), {
+    with: { type: "json" },
+  })
   const { buildSearchBlob } = await import("../utils/text.js")
 
   const now = new Date()
   const slugToId = new Map<string, mongoose.Types.ObjectId>()
-  const personMap = new Map<string, typeof people[number]>()
+  const personMap = new Map<string, (typeof people)[number]>()
 
   for (const p of people as Array<Record<string, unknown>>) {
     personMap.set(p["id"] as string, p)
-    const topics  = (p["categories"] as string[]) ?? []
-    const blob = buildSearchBlob([p["name"] as string, p["title"] as string, p["company"] as string, p["location"] as string, ...((p["skills"] as string[]) ?? []), ...topics])
+    const topics = (p["categories"] as string[]) ?? []
+    const blob = buildSearchBlob([
+      p["name"] as string,
+      p["title"] as string,
+      p["company"] as string,
+      p["location"] as string,
+      ...((p["skills"] as string[]) ?? []),
+      ...topics,
+    ])
     const result = await User.findOneAndUpdate(
       { slug: p["id"] as string },
       {
         $set: {
-          slug: p["id"], name: p["name"], title: p["title"], company: p["company"],
-          role: p["role"], topics, location: p["location"],
-          skills: p["skills"], years: p["years"], openToWork: p["open"],
-          photoUrl: p["photo"], languages: p["languages"], pitch: p["bio"],
-          seeded: true, status: "active", access: "member",
-          emailVerifiedAt: now, searchBlob: blob, updatedAt: now,
+          slug: p["id"],
+          name: p["name"],
+          title: p["title"],
+          company: p["company"],
+          role: p["role"],
+          topics,
+          location: p["location"],
+          skills: p["skills"],
+          years: p["years"],
+          openToWork: p["open"],
+          photoUrl: p["photo"],
+          languages: p["languages"],
+          pitch: p["bio"],
+          seeded: true,
+          status: "active",
+          access: "member",
+          emailVerifiedAt: now,
+          searchBlob: blob,
+          updatedAt: now,
         },
         $setOnInsert: {
-          email: null, passwordHash: null, token: null, portfolioUrl: "",
+          email: null,
+          passwordHash: null,
+          token: null,
+          portfolioUrl: "",
           counts: { publishedWorks: 0, topicUsage: {} },
-          createdAt: now, deletedAt: null, createdBy: null, updatedBy: null, deletedBy: null,
+          createdAt: now,
+          deletedAt: null,
+          createdBy: null,
+          updatedBy: null,
+          deletedBy: null,
         },
       },
       { upsert: true, new: true },
@@ -667,31 +849,70 @@ async function _seed(_uri: string) {
     const p = personMap.get(w["authorId"] as string)!
 
     const blob = buildSearchBlob([
-      w["title"] as string, w["summary"] as string, w["problem"] as string,
-      w["approach"] as string, w["outcome"] as string,
-      ...((w["skills"] as string[]) ?? []), ...((w["stack"] as string[]) ?? []),
+      w["title"] as string,
+      w["summary"] as string,
+      w["problem"] as string,
+      w["approach"] as string,
+      w["outcome"] as string,
+      ...((w["skills"] as string[]) ?? []),
+      ...((w["stack"] as string[]) ?? []),
       ...((w["topics"] as string[]) ?? []),
       w["model"] as string,
-      p["name"] as string, p["company"] as string, p["location"] as string,
+      p["name"] as string,
+      p["company"] as string,
+      p["location"] as string,
     ])
 
     await Work.findOneAndUpdate(
       { slug: w["id"] as string },
       {
         $set: {
-          slug: w["id"], authorId,
-          author: { slug: p["id"], name: p["name"], title: p["title"], company: p["company"], photoUrl: p["photo"], years: p["years"], languages: p["languages"] },
-          authorSuspended: false, mode: "template",
-          role: w["role"], topics: w["topics"], model: w["model"], skills: w["skills"],
-          title: w["title"], summary: w["summary"] ?? "",
-          year: w["year"], duration: w["duration"] ?? "", scope: w["scope"] ?? "",
-          problem: w["problem"] ?? "", approach: w["approach"] ?? "", outcome: w["outcome"] ?? "",
-          sections: [], details: ((w["details"] as Array<Record<string, unknown>>) ?? []).map((d) => ({ ...d, proof: d["proof"] ?? false })),
-          links: w["links"] ?? [], stack: w["stack"] ?? [],
-          thumbnailPath: null, status: "published", publishedAt: now,
-          metrics: { opens: 0 }, searchBlob: blob, updatedAt: now,
+          slug: w["id"],
+          authorId,
+          author: {
+            slug: p["id"],
+            name: p["name"],
+            title: p["title"],
+            company: p["company"],
+            photoUrl: p["photo"],
+            years: p["years"],
+            languages: p["languages"],
+          },
+          authorSuspended: false,
+          mode: "template",
+          role: w["role"],
+          topics: w["topics"],
+          model: w["model"],
+          skills: w["skills"],
+          title: w["title"],
+          summary: w["summary"] ?? "",
+          year: w["year"],
+          duration: w["duration"] ?? "",
+          scope: w["scope"] ?? "",
+          problem: w["problem"] ?? "",
+          approach: w["approach"] ?? "",
+          outcome: w["outcome"] ?? "",
+          sections: [],
+          details: ((w["details"] as Array<Record<string, unknown>>) ?? []).map((d) => ({
+            ...d,
+            proof: d["proof"] ?? false,
+          })),
+          links: w["links"] ?? [],
+          stack: w["stack"] ?? [],
+          thumbnailPath: null,
+          status: "published",
+          publishedAt: now,
+          metrics: { opens: 0 },
+          searchBlob: blob,
+          updatedAt: now,
         },
-        $setOnInsert: { createdAt: now, deletedAt: null, createdBy: null, updatedBy: null, deletedBy: null },
+        $setOnInsert: {
+          createdAt: now,
+          deletedAt: null,
+          createdBy: null,
+          updatedBy: null,
+          deletedBy: null,
+        },
       },
       { upsert: true },
     )
@@ -704,8 +925,18 @@ async function _seed(_uri: string) {
   ])
   for (const row of rows) {
     const topicUsage: Record<string, number> = {}
-    for (const arr of row.topics as string[][]) for (const t of arr) topicUsage[t] = (topicUsage[t] ?? 0) + 1
-    await User.updateOne({ _id: row._id }, { $set: { "counts.publishedWorks": row.publishedWorks, "counts.topicUsage": topicUsage, updatedAt: now } })
+    for (const arr of row.topics as string[][])
+      for (const t of arr) topicUsage[t] = (topicUsage[t] ?? 0) + 1
+    await User.updateOne(
+      { _id: row._id },
+      {
+        $set: {
+          "counts.publishedWorks": row.publishedWorks,
+          "counts.topicUsage": topicUsage,
+          updatedAt: now,
+        },
+      },
+    )
   }
 }
 
@@ -719,7 +950,9 @@ async function _backfill() {
     $or: [{ languages: { $exists: false } }, { languages: { $size: 0 } }],
     location: { $nin: ["", null] },
     deletedAt: null,
-  }).select("_id location").lean()
+  })
+    .select("_id location")
+    .lean()
 
   for (const u of users) {
     const languages = languagesFor((u as { location: string }).location)
@@ -727,18 +960,38 @@ async function _backfill() {
   }
 
   const worksToFix = await Work.find({
-    $or: [{ "author.years": { $exists: false } }, { "author.languages": { $exists: false } }, { "author.languages": { $size: 0 } }],
+    $or: [
+      { "author.years": { $exists: false } },
+      { "author.languages": { $exists: false } },
+      { "author.languages": { $size: 0 } },
+    ],
     deletedAt: null,
-  }).select("_id authorId").lean()
+  })
+    .select("_id authorId")
+    .lean()
 
-  const authorIds = [...new Set(worksToFix.map((w) => (w as { authorId: mongoose.Types.ObjectId }).authorId.toString()))]
-  const authors = await User.find({ _id: { $in: authorIds } }).select("_id years languages").lean()
-  const authorMap = new Map((authors as { _id: mongoose.Types.ObjectId; years: number; languages: string[] }[]).map((a) => [a._id.toString(), a]))
+  const authorIds = [
+    ...new Set(
+      worksToFix.map((w) => (w as { authorId: mongoose.Types.ObjectId }).authorId.toString()),
+    ),
+  ]
+  const authors = await User.find({ _id: { $in: authorIds } })
+    .select("_id years languages")
+    .lean()
+  const authorMap = new Map(
+    (authors as { _id: mongoose.Types.ObjectId; years: number; languages: string[] }[]).map((a) => [
+      a._id.toString(),
+      a,
+    ]),
+  )
 
   for (const w of worksToFix) {
     const a = authorMap.get((w as { authorId: mongoose.Types.ObjectId }).authorId.toString())
     if (!a) continue
-    await Work.updateOne({ _id: w._id }, { $set: { "author.years": a.years, "author.languages": a.languages ?? [], updatedAt: now } })
+    await Work.updateOne(
+      { _id: w._id },
+      { $set: { "author.years": a.years, "author.languages": a.languages ?? [], updatedAt: now } },
+    )
   }
 }
 

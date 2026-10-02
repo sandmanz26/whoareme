@@ -9,7 +9,8 @@ const reasonSchema = z.object({
 })
 
 function parseId(value: unknown): string {
-  if (typeof value !== "string" || !/^[a-f0-9]{24}$/i.test(value)) throw badRequest("That id is not valid.")
+  if (typeof value !== "string" || !/^[a-f0-9]{24}$/i.test(value))
+    throw badRequest("That id is not valid.")
   return value
 }
 

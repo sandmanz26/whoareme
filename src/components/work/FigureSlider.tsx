@@ -40,12 +40,15 @@ export function FigureSlider({
     setIndex(Math.round(track.scrollLeft / Math.max(1, slideWidth)))
   }, [])
 
-  const goTo = useCallback((next: number) => {
-    const track = trackRef.current
-    if (!track) return
-    const clamped = Math.max(0, Math.min(figures.length - 1, next))
-    track.scrollTo({ left: clamped * track.clientWidth, behavior: "smooth" })
-  }, [figures.length])
+  const goTo = useCallback(
+    (next: number) => {
+      const track = trackRef.current
+      if (!track) return
+      const clamped = Math.max(0, Math.min(figures.length - 1, next))
+      track.scrollTo({ left: clamped * track.clientWidth, behavior: "smooth" })
+    },
+    [figures.length],
+  )
 
   // Keep the counter honest when the viewport changes under a slid track.
   useEffect(() => {
@@ -66,8 +69,14 @@ export function FigureSlider({
       // column and widens the whole page - see ENGINEERING.md invariant 1.
       className="mt-6 min-w-0"
       onKeyDown={(event) => {
-        if (event.key === "ArrowRight") { event.preventDefault(); goTo(index + 1) }
-        if (event.key === "ArrowLeft") { event.preventDefault(); goTo(index - 1) }
+        if (event.key === "ArrowRight") {
+          event.preventDefault()
+          goTo(index + 1)
+        }
+        if (event.key === "ArrowLeft") {
+          event.preventDefault()
+          goTo(index - 1)
+        }
       }}
     >
       <div

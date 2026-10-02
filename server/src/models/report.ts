@@ -4,13 +4,13 @@ import { auditFields } from "../utils/model.js"
 
 const ReportSchema = new Schema<IReport>(
   {
-    targetKind:   { type: String, required: true },
-    targetId:     { type: Schema.Types.ObjectId, required: true },
-    reason:       { type: String, required: true },
-    note:         { type: String, default: "" },
+    targetKind: { type: String, required: true },
+    targetId: { type: Schema.Types.ObjectId, required: true },
+    reason: { type: String, required: true },
+    note: { type: String, default: "" },
     reporterHash: { type: String, required: true },
-    resolvedAt:   { type: Date,   default: null },
-    resolvedBy:   { type: Schema.Types.ObjectId, ref: "User", default: null },
+    resolvedAt: { type: Date, default: null },
+    resolvedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
 
     ...auditFields,
   },

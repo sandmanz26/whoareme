@@ -7,37 +7,37 @@
  * Ink on warm paper, one loud accent, three supporting pops.
  * ------------------------------------------------------------------ */
 @theme {
- --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
- --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
 
   /* Neutrals */
- --color-ink: #0b0b0f;
- --color-ink-2: #2a2a31;
- --color-muted: #6b6b76;
- --color-paper: #f5f4ef;
- --color-paper-2: #ecebe4;
- --color-card: #ffffff;
- --color-line: #e2e0d7;
- --color-line-strong: #0b0b0f;
+  --color-ink: #0b0b0f;
+  --color-ink-2: #2a2a31;
+  --color-muted: #6b6b76;
+  --color-paper: #f5f4ef;
+  --color-paper-2: #ecebe4;
+  --color-card: #ffffff;
+  --color-line: #e2e0d7;
+  --color-line-strong: #0b0b0f;
 
   /* Pops */
- --color-pop-pink: #ff4f87;
- --color-pop-lime: #d6ff4f;
- --color-pop-violet: #6c4cf1;
- --color-pop-sky: #4fd1ff;
- --color-pop-tangerine: #ff8a3d;
+  --color-pop-pink: #ff4f87;
+  --color-pop-lime: #d6ff4f;
+  --color-pop-violet: #6c4cf1;
+  --color-pop-sky: #4fd1ff;
+  --color-pop-tangerine: #ff8a3d;
 
   /* Radii - soft, not bubbly */
- --radius-card: 1.25rem;
- --radius-pill: 999px;
+  --radius-card: 1.25rem;
+  --radius-pill: 999px;
 
   /* Motion */
- --ease-pop: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-pop: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @layer base {
   html {
- -webkit-text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
@@ -78,33 +78,62 @@
  * scales with the viewport.
  * ------------------------------------------------------------------ */
 @keyframes wru-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes wru-spin-reverse {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(-360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
 }
 
 @keyframes wru-float {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-8px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 @keyframes wru-marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 @keyframes wru-fade-up {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes wru-pop-in {
-  from { opacity: 0; transform: scale(0.94); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .orbit-ring {

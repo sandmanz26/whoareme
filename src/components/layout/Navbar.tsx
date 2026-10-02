@@ -1,52 +1,51 @@
-import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Container } from "./Container";
-import { Button } from "@/components/ui/Button";
-import { Wordmark } from "./Wordmark";
-import { useAccount } from "@/hooks/useAccount";
-import { cn, initialsOf } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
+import { Container } from "./Container"
+import { Button } from "@/components/ui/Button"
+import { Wordmark } from "./Wordmark"
+import { useAccount } from "@/hooks/useAccount"
+import { cn, initialsOf } from "@/lib/utils"
 
 type NavLink =
-  | { kind: "anchor"; id: string; label: string }
-  | { kind: "route"; path: string; label: string };
+  { kind: "anchor"; id: string; label: string } | { kind: "route"; path: string; label: string }
 
 const LINKS: NavLink[] = [
   { kind: "anchor", id: "roles", label: "Browse roles" },
   { kind: "route", path: "/work", label: "Portfolios" },
   { kind: "anchor", id: "directory", label: "People" },
-];
+]
 
 export function Navbar({ onJoin }: { onJoin: () => void }) {
-  const [scrolled, setScrolled] = useState(false);
-  const [hidden, setHidden] = useState(false);
-  const lastScrollY = useRef(0);
-  const { account, signOut } = useAccount();
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
-  const onHome = pathname === "/";
+  const [scrolled, setScrolled] = useState(false)
+  const [hidden, setHidden] = useState(false)
+  const lastScrollY = useRef(0)
+  const { account, signOut } = useAccount()
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const onHome = pathname === "/"
 
   useEffect(() => {
-    lastScrollY.current = window.scrollY;
+    lastScrollY.current = window.scrollY
 
     const onScroll = () => {
-      const y = window.scrollY;
-      setScrolled(y > 8);
+      const y = window.scrollY
+      setScrolled(y > 8)
 
       // Hide on the way down, reappear the moment someone scrolls back up -
       // the header should not eat screen real estate while reading, but it
       // has to come back on demand without a scroll-to-top round trip. Near
       // the very top it always stays put, so the page never opens hidden.
-      const scrollingDown = y > lastScrollY.current;
-      const pastThreshold = y > 120;
-      setHidden(scrollingDown && pastThreshold);
+      const scrollingDown = y > lastScrollY.current
+      const pastThreshold = y > 120
+      setHidden(scrollingDown && pastThreshold)
 
-      lastScrollY.current = y;
-    };
+      lastScrollY.current = y
+    }
 
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    onScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
 
   return (
     <header
@@ -70,8 +69,7 @@ export function Navbar({ onJoin }: { onJoin: () => void }) {
 
         <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
           {LINKS.map((link) => {
-            const active =
-              link.kind === "route" && pathname.startsWith(link.path);
+            const active = link.kind === "route" && pathname.startsWith(link.path)
             return (
               <button
                 key={link.label}
@@ -79,23 +77,18 @@ export function Navbar({ onJoin }: { onJoin: () => void }) {
                 aria-current={active ? "page" : undefined}
                 onClick={() => {
                   if (link.kind === "route") {
-                    navigate(link.path);
-                    return;
+                    navigate(link.path)
+                    return
                   }
                   if (onHome) {
-                    document
-                      .getElementById(link.id)
-                      ?.scrollIntoView({ behavior: "smooth" });
-                    return;
+                    document.getElementById(link.id)?.scrollIntoView({ behavior: "smooth" })
+                    return
                   }
-                  navigate("/");
+                  navigate("/")
                   window.setTimeout(
-                    () =>
-                      document
-                        .getElementById(link.id)
-                        ?.scrollIntoView({ behavior: "smooth" }),
+                    () => document.getElementById(link.id)?.scrollIntoView({ behavior: "smooth" }),
                     80,
-                  );
+                  )
                 }}
                 className={cn(
                   "cursor-pointer rounded-pill px-4 py-2.5 font-display text-sm font-medium",
@@ -105,7 +98,7 @@ export function Navbar({ onJoin }: { onJoin: () => void }) {
               >
                 {link.label}
               </button>
-            );
+            )
           })}
         </nav>
 
@@ -131,11 +124,7 @@ export function Navbar({ onJoin }: { onJoin: () => void }) {
           ) : (
             <>
               <span className="hidden sm:block">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate("/signin")}
-                >
+                <Button variant="ghost" size="sm" onClick={() => navigate("/signin")}>
                   Sign in
                 </Button>
               </span>
@@ -149,5 +138,5 @@ export function Navbar({ onJoin }: { onJoin: () => void }) {
         </div>
       </Container>
     </header>
-  );
+  )
 }

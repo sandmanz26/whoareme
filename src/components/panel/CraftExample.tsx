@@ -6,7 +6,8 @@ import { templateById } from "@/data/workTemplates"
 import { ChevronDown } from "@/components/ui/Icon"
 import { cn } from "@/lib/utils"
 
-const strong = (work: (typeof SEED_WORK)[number]) => Boolean(work.problem) && proofOf(work).length >= 2
+const strong = (work: (typeof SEED_WORK)[number]) =>
+  Boolean(work.problem) && proofOf(work).length >= 2
 
 /**
  * A worked example from the same craft, next to the empty form.
@@ -43,7 +44,9 @@ export function CraftExample({
       SEED_WORK.find((work) => work.template === templateId && strong(work)) ??
       SEED_WORK.find((work) => work.template === templateId) ??
       (archetype &&
-        (SEED_WORK.find((work) => templateById(work.template)?.archetype === archetype && strong(work)) ??
+        (SEED_WORK.find(
+          (work) => templateById(work.template)?.archetype === archetype && strong(work),
+        ) ??
           SEED_WORK.find((work) => templateById(work.template)?.archetype === archetype))) ??
       SEED_WORK.find((work) => work.role === role && strong(work)) ??
       SEED_WORK.find((work) => work.role === role)
@@ -71,7 +74,10 @@ export function CraftExample({
         </span>
         <ChevronDown
           size={18}
-          className={cn("shrink-0 text-muted transition-transform duration-200", open && "rotate-180")}
+          className={cn(
+            "shrink-0 text-muted transition-transform duration-200",
+            open && "rotate-180",
+          )}
         />
       </button>
 
@@ -114,8 +120,8 @@ export function CraftExample({
 
           <p className="mt-4 text-xs leading-relaxed text-muted">
             Notice what it does not do: no adjectives, no "leveraged", and the outcome names a
-            number. Yours does not have to be a success - a cancelled project with an honest
-            reason reads better than a vague win.
+            number. Yours does not have to be a success - a cancelled project with an honest reason
+            reads better than a vague win.
           </p>
         </div>
       )}

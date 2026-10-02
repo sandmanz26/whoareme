@@ -43,7 +43,11 @@ export function ThumbnailPicker({ value, seed, role, metric, onChange }: Thumbna
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
         <div className="w-full shrink-0 overflow-hidden rounded-2xl border border-line sm:w-56">
           {value ? (
-            <img src={value} alt="Selected thumbnail" className="aspect-[16/9] w-full object-cover" />
+            <img
+              src={value}
+              alt="Selected thumbnail"
+              className="aspect-[16/9] w-full object-cover"
+            />
           ) : (
             <WorkCover
               seed={seed}

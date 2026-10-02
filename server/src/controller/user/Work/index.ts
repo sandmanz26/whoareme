@@ -34,13 +34,13 @@ export const WorkController = {
 
   async Add(req: Request, res: Response) {
     const input = workInputSchema.parse(req.body)
-    const work  = await WorkUsecase.Add(req.user!.id, input)
+    const work = await WorkUsecase.Add(req.user!.id, input)
     sendResponse(res, 201, true, { work }, "Entry created.")
   },
 
   async Update(req: Request, res: Response) {
     const input = workInputSchema.parse(req.body)
-    const work  = await WorkUsecase.Update(req.user!.id, String(req.params["id"]), input)
+    const work = await WorkUsecase.Update(req.user!.id, String(req.params["id"]), input)
     sendResponse(res, 200, true, { work }, "Entry updated.")
   },
 
@@ -60,7 +60,10 @@ export const WorkController = {
   },
 
   async GetByAuthor(req: Request, res: Response) {
-    const data = await WorkUsecase.GetByAuthorSlug(String(req.params["slug"]), req.query as Record<string, unknown>)
+    const data = await WorkUsecase.GetByAuthorSlug(
+      String(req.params["slug"]),
+      req.query as Record<string, unknown>,
+    )
     sendResponse(res, 200, true, data, "")
   },
 }

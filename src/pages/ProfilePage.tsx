@@ -1,37 +1,32 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Container } from "@/components/layout/Container";
-import { Avatar } from "@/components/ui/Avatar";
-import { SocialLinks } from "@/components/ui/SocialLinks";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { ArrowRight, Globe, Pin } from "@/components/ui/Icon";
-import { WorkCard } from "@/components/work/WorkCard";
-import { proofOf } from "@/data/work";
-import { CATEGORIES, roleById, type CategoryId } from "@/data/taxonomy";
-import { ReportButton } from "@/components/admin/ReportModal";
-import { cn } from "@/lib/utils";
-import { useBrowse } from "@/context/BrowseContext";
-import { applyMeta, clamp } from "@/lib/head";
-import { track } from "@/lib/analytics";
-import type { Work } from "@/data/work";
-import type { Person } from "@/data/people";
-import type { Author } from "@/lib/authors";
-import { linksFor } from "@/data/platforms";
-import { api } from "@/lib/api/client";
-import {
-  mapPerson,
-  mapWorkCard,
-  type ApiUser,
-  type ApiWorkCard,
-} from "@/lib/api/mappers";
+import { useEffect, useMemo, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { Container } from "@/components/layout/Container"
+import { Avatar } from "@/components/ui/Avatar"
+import { SocialLinks } from "@/components/ui/SocialLinks"
+import { Badge } from "@/components/ui/Badge"
+import { Button } from "@/components/ui/Button"
+import { ArrowRight, Globe, Pin } from "@/components/ui/Icon"
+import { WorkCard } from "@/components/work/WorkCard"
+import { proofOf } from "@/data/work"
+import { CATEGORIES, roleById, type CategoryId } from "@/data/taxonomy"
+import { ReportButton } from "@/components/admin/ReportModal"
+import { cn } from "@/lib/utils"
+import { useBrowse } from "@/context/BrowseContext"
+import { applyMeta, clamp } from "@/lib/head"
+import { track } from "@/lib/analytics"
+import type { Work } from "@/data/work"
+import type { Person } from "@/data/people"
+import type { Author } from "@/lib/authors"
+import { linksFor } from "@/data/platforms"
+import { api } from "@/lib/api/client"
+import { mapPerson, mapWorkCard, type ApiUser, type ApiWorkCard } from "@/lib/api/mappers"
 
 interface TopicGroup {
-  id: CategoryId;
-  label: string;
-  tint: string;
-  kind: "industry" | "practice";
-  items: Work[];
+  id: CategoryId
+  label: string
+  tint: string
+  kind: "industry" | "practice"
+  items: Work[]
 }
 
 function groupByTopic(work: readonly Work[]): TopicGroup[] {
@@ -41,7 +36,7 @@ function groupByTopic(work: readonly Work[]): TopicGroup[] {
     tint: category.tint,
     kind: category.kind,
     items: work.filter((item) => item.topics.includes(category.id)),
-  })).filter((group) => group.items.length > 0);
+  })).filter((group) => group.items.length > 0)
 }
 
 function Stat({ value, label }: { value: string | number; label: string }) {
@@ -52,37 +47,35 @@ function Stat({ value, label }: { value: string | number; label: string }) {
         {label}
       </p>
     </div>
-  );
+  )
 }
 
-type ApiResponse<T> = { success: boolean; data: T; message: string };
+type ApiResponse<T> = { success: boolean; data: T; message: string }
 
 export function ProfilePage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { addSkillFilter, openReport } = useBrowse();
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const { addSkillFilter, openReport } = useBrowse()
 
-  const [person, setPerson] = useState<Person | null | undefined>(undefined);
-  const [work, setWork] = useState<Work[]>([]);
-  const [authors, setAuthors] = useState<Map<string, Author>>(new Map());
+  const [person, setPerson] = useState<Person | null | undefined>(undefined)
+  const [work, setWork] = useState<Work[]>([])
+  const [authors, setAuthors] = useState<Map<string, Author>>(new Map())
 
   useEffect(() => {
     if (!id) {
-      setPerson(null);
-      return;
+      setPerson(null)
+      return
     }
-    setPerson(undefined);
-    setWork([]);
+    setPerson(undefined)
+    setWork([])
 
     Promise.all([
       api.get<ApiResponse<{ user: ApiUser }>>(`/user/people/${id}`),
-      api.get<ApiResponse<{ items: ApiWorkCard[]; meta: unknown }>>(
-        `/user/people/${id}/work`,
-      ),
+      api.get<ApiResponse<{ items: ApiWorkCard[]; meta: unknown }>>(`/user/people/${id}/work`),
     ])
       .then(([personRes, workRes]) => {
-        const mapped = mapPerson(personRes.data.data.user);
-        setPerson(mapped);
+        const mapped = mapPerson(personRes.data.data.user)
+        setPerson(mapped)
 
         const authorEntry: Author = {
           id: mapped.id,
@@ -95,25 +88,25 @@ export function ProfilePage() {
           languages: mapped.languages,
           photo: mapped.photo,
           links: linksFor(mapped.role, mapped.id),
-        };
-        setAuthors(new Map([[mapped.id, authorEntry]]));
+        }
+        setAuthors(new Map([[mapped.id, authorEntry]]))
 
-        const items = workRes.data.data.items.map(mapWorkCard);
-        items.sort((a, b) => b.year - a.year);
-        setWork(items);
+        const items = workRes.data.data.items.map(mapWorkCard)
+        items.sort((a, b) => b.year - a.year)
+        setWork(items)
       })
-      .catch(() => setPerson(null));
-  }, [id]);
+      .catch(() => setPerson(null))
+  }, [id])
 
-  const groups = useMemo(() => groupByTopic(work), [work]);
-
-  useEffect(() => {
-    if (person) track("profile_opened");
-  }, [person]);
+  const groups = useMemo(() => groupByTopic(work), [work])
 
   useEffect(() => {
-    if (!person) return;
-    const role = roleById(person.role);
+    if (person) track("profile_opened")
+  }, [person])
+
+  useEffect(() => {
+    if (!person) return
+    const role = roleById(person.role)
     return applyMeta({
       title: `${person.name}, ${role.label}`,
       description: clamp(
@@ -122,15 +115,15 @@ export function ProfilePage() {
       ),
       type: "profile",
       image: person.photo,
-    });
-  }, [person, work.length]);
+    })
+  }, [person, work.length])
 
   if (person === undefined) {
     return (
       <Container className="flex min-h-[60vh] flex-col items-center justify-center py-24">
         <p className="text-sm text-muted">Loading…</p>
       </Container>
-    );
+    )
   }
 
   if (person === null) {
@@ -138,23 +131,19 @@ export function ProfilePage() {
       <Container className="flex min-h-[60vh] flex-col items-center justify-center py-24 text-center">
         <h1 className="display text-3xl">Profile not found</h1>
         <p className="mt-3 max-w-sm text-sm text-muted">
-          The link may be stale, or this person is no longer listed in the
-          directory.
+          The link may be stale, or this person is no longer listed in the directory.
         </p>
         <Button className="mt-7" onClick={() => navigate("/")}>
           Back to the directory
         </Button>
       </Container>
-    );
+    )
   }
 
-  const role = roleById(person.role);
-  const industries = groups.filter((group) => group.kind === "industry");
-  const practices = groups.filter((group) => group.kind === "practice");
-  const proofCount = work.reduce(
-    (total, item) => total + proofOf(item).length,
-    0,
-  );
+  const role = roleById(person.role)
+  const industries = groups.filter((group) => group.kind === "industry")
+  const practices = groups.filter((group) => group.kind === "practice")
+  const proofCount = work.reduce((total, item) => total + proofOf(item).length, 0)
 
   return (
     <div className="pb-24">
@@ -179,9 +168,7 @@ export function ProfilePage() {
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="display text-[clamp(1.75rem,5vw,2.75rem)]">
-                {person.name}
-              </h1>
+              <h1 className="display text-[clamp(1.75rem,5vw,2.75rem)]">{person.name}</h1>
               {person.open && (
                 <span className="inline-flex items-center gap-1.5 rounded-pill bg-pop-lime px-3 py-1 font-display text-[0.6875rem] font-semibold tracking-wide text-ink">
                   <span className="size-1.5 rounded-full bg-ink" />
@@ -199,9 +186,7 @@ export function ProfilePage() {
             </p>
 
             {person.bio && (
-              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-2">
-                {person.bio}
-              </p>
+              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-2">{person.bio}</p>
             )}
 
             {person.languages.length > 0 && (
@@ -230,9 +215,7 @@ export function ProfilePage() {
                     className="cursor-pointer rounded-pill transition-transform duration-200 ease-pop active:scale-[0.97]"
                   >
                     <Badge className="hover:border-ink/40">{skill}</Badge>
-                    <span className="sr-only">
-                      Filter portfolios by {skill}
-                    </span>
+                    <span className="sr-only">Filter portfolios by {skill}</span>
                   </button>
                 </li>
               ))}
@@ -251,9 +234,8 @@ export function ProfilePage() {
         <Container className="py-20 text-center">
           <h2 className="display text-2xl">No published work yet</h2>
           <p className="mx-auto mt-3 max-w-md text-sm text-muted">
-            {person.name.split(" ")[0]} is listed in the directory but has not
-            published a case study. A profile without work is a business card -
-            this product is the other thing.
+            {person.name.split(" ")[0]} is listed in the directory but has not published a case
+            study. A profile without work is a business card - this product is the other thing.
           </p>
         </Container>
       ) : (
@@ -265,8 +247,8 @@ export function ProfilePage() {
             </div>
             <p className="mt-3 text-xs text-muted">
               {proofCount} results claimed across {work.length}{" "}
-              {work.length === 1 ? "entry" : "entries"}. An entry that shipped
-              in two topics is listed under both.
+              {work.length === 1 ? "entry" : "entries"}. An entry that shipped in two topics is
+              listed under both.
             </p>
           </Container>
 
@@ -281,18 +263,13 @@ export function ProfilePage() {
                   <h2 className="display flex items-center gap-3 text-[clamp(1.375rem,3vw,1.875rem)]">
                     <span
                       aria-hidden="true"
-                      className={cn(
-                        "size-2.5 rounded-full",
-                        group.tint.split(" ")[0],
-                      )}
+                      className={cn("size-2.5 rounded-full", group.tint.split(" ")[0])}
                     />
                     {group.label}
                   </h2>
                   <p className="font-display text-sm font-medium text-muted">
-                    {group.items.length}{" "}
-                    {group.items.length === 1 ? "entry" : "entries"}
-                    {group.kind === "practice" &&
-                      " · practice, not an industry"}
+                    {group.items.length} {group.items.length === 1 ? "entry" : "entries"}
+                    {group.kind === "practice" && " · practice, not an industry"}
                   </p>
                 </div>
 
@@ -319,16 +296,12 @@ export function ProfilePage() {
           <div className="text-sm text-ink-2">
             <p>
               Every number on this page is{" "}
-              <span className="font-display font-semibold text-ink">
-                claimed by the author
-              </span>
-              , not verified by us.
+              <span className="font-display font-semibold text-ink">claimed by the author</span>,
+              not verified by us.
             </p>
             <p className="mt-2">
               <ReportButton
-                onClick={() =>
-                  openReport({ kind: "person", id: person.id }, person.name)
-                }
+                onClick={() => openReport({ kind: "person", id: person.id }, person.name)}
               />
             </p>
           </div>
@@ -339,17 +312,11 @@ export function ProfilePage() {
         </div>
       </Container>
     </div>
-  );
+  )
 }
 
-function TopicIndex({
-  title,
-  groups,
-}: {
-  title: string;
-  groups: TopicGroup[];
-}) {
-  if (groups.length === 0) return null;
+function TopicIndex({ title, groups }: { title: string; groups: TopicGroup[] }) {
+  if (groups.length === 0) return null
 
   return (
     <div className="min-w-0 flex-1">
@@ -368,10 +335,7 @@ function TopicIndex({
             >
               <span
                 aria-hidden="true"
-                className={cn(
-                  "size-1.5 rounded-full",
-                  group.tint.split(" ")[0],
-                )}
+                className={cn("size-1.5 rounded-full", group.tint.split(" ")[0])}
               />
               {group.label}
               <span className="text-muted">{group.items.length}</span>
@@ -380,9 +344,9 @@ function TopicIndex({
         ))}
       </ul>
     </div>
-  );
+  )
 }
 
 export function profileHref(authorId: string): string {
-  return `/people/${authorId}`;
+  return `/people/${authorId}`
 }

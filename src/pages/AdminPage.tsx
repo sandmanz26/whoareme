@@ -6,12 +6,7 @@ import { Button } from "@/components/ui/Button"
 import { Field, TextArea, TextInput } from "@/components/ui/Field"
 import { ArrowUpRight, Check, Eye } from "@/components/ui/Icon"
 import { useAdmin } from "@/hooks/useAdmin"
-import {
-  actionLabel,
-  reportReasonLabel,
-  type Report,
-  type SiteContact,
-} from "@/data/admin"
+import { actionLabel, reportReasonLabel, type Report, type SiteContact } from "@/data/admin"
 import { COPY_SLOTS } from "@/data/siteCopy"
 import { ROLES } from "@/data/taxonomy"
 import type { Person } from "@/data/people"
@@ -51,11 +46,7 @@ function ActionForm({
 
   if (!open) {
     return (
-      <Button
-        size="sm"
-        variant={destructive ? "primary" : "outline"}
-        onClick={() => setOpen(true)}
-      >
+      <Button size="sm" variant={destructive ? "primary" : "outline"} onClick={() => setOpen(true)}>
         {label}
       </Button>
     )
@@ -109,7 +100,11 @@ function Row({
           <p className="font-display text-sm font-semibold text-ink">{title}</p>
           <p className="mt-1 text-sm leading-relaxed text-muted">{meta}</p>
         </div>
-        {tint && <Badge className={tint}>{tint.includes("pink") ? "High" : tint.includes("tangerine") ? "Medium" : "Low"}</Badge>}
+        {tint && (
+          <Badge className={tint}>
+            {tint.includes("pink") ? "High" : tint.includes("tangerine") ? "Medium" : "Low"}
+          </Badge>
+        )}
       </div>
       <div className="flex flex-wrap items-center gap-2">{children}</div>
     </li>
@@ -147,12 +142,22 @@ export function AdminPage() {
   const queueSize = openFlags.length + admin.state.reports.length + openAppeals.length
 
   const items = [
-    { id: "queue", label: "Review queue", href: "/admin", badge: queueSize ? String(queueSize) : undefined },
+    {
+      id: "queue",
+      label: "Review queue",
+      href: "/admin",
+      badge: queueSize ? String(queueSize) : undefined,
+    },
     { id: "entries", label: "Entries", href: "/admin/entries", badge: String(allWork.length) },
     { id: "people", label: "People", href: "/admin/people", badge: String(allPeople.length) },
     { id: "funnel", label: "Funnel", href: "/admin/funnel" },
     { id: "site", label: "Site settings", href: "/admin/site" },
-    { id: "log", label: "Audit log", href: "/admin/log", badge: admin.state.log.length ? String(admin.state.log.length) : undefined },
+    {
+      id: "log",
+      label: "Audit log",
+      href: "/admin/log",
+      badge: admin.state.log.length ? String(admin.state.log.length) : undefined,
+    },
   ]
 
   const titles: Record<string, { title: string; description: string }> = {
@@ -176,7 +181,8 @@ export function AdminPage() {
     },
     site: {
       title: "Site settings",
-      description: "Contact details, the copy that can change without a deploy, and which crafts are offered.",
+      description:
+        "Contact details, the copy that can change without a deploy, and which crafts are offered.",
     },
     log: {
       title: "Audit log",
@@ -254,8 +260,8 @@ function QueueSection({
         <section>
           <h2 className="display text-xl">Appeals ({appeals.length})</h2>
           <p className="mt-2 text-sm text-muted">
-            Someone's work is withheld while this waits, so it goes first. Overturning actually
-            puts the entry back; upholding leaves it down and tells them why.
+            Someone's work is withheld while this waits, so it goes first. Overturning actually puts
+            the entry back; upholding leaves it down and tells them why.
           </p>
           <ul className="mt-4">
             {appeals.map((notice) => (
@@ -518,7 +524,9 @@ function EntriesSection({ allWork }: { allWork: Work[] }) {
           onClick={() => setOnlyHidden((current) => !current)}
           className={cn(
             "h-11 shrink-0 cursor-pointer rounded-pill border px-4 font-display text-sm font-medium transition-colors duration-200",
-            onlyHidden ? "border-ink bg-ink text-paper" : "border-ink/15 bg-card text-ink-2 hover:border-ink/40",
+            onlyHidden
+              ? "border-ink bg-ink text-paper"
+              : "border-ink/15 bg-card text-ink-2 hover:border-ink/40",
           )}
         >
           Withheld only ({admin.state.hiddenWork.length})
@@ -647,7 +655,7 @@ function PeopleSection({ allPeople, allWork }: { allPeople: Person[]; allWork: W
 function FunnelSection() {
   const [counts, setCounts] = useState<FunnelCounts>(() => readFunnel())
 
-  const byStage = FUNNEL_STEPS.reduce<Record<string, typeof FUNNEL_STEPS[number][]>>(
+  const byStage = FUNNEL_STEPS.reduce<Record<string, (typeof FUNNEL_STEPS)[number][]>>(
     (groups, step) => {
       groups[step.stage] = [...(groups[step.stage] ?? []), step]
       return groups
@@ -920,11 +928,7 @@ function CopyEditor({ slotId }: { slotId: string }) {
         }
       </Field>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <Button
-          size="sm"
-          disabled={!dirty}
-          onClick={() => admin.setCopy(slotId, draft)}
-        >
+        <Button size="sm" disabled={!dirty} onClick={() => admin.setCopy(slotId, draft)}>
           Save
         </Button>
         {overridden && (

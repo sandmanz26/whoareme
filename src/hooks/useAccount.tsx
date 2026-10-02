@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
 import type { Account, WorkDraft } from "@/data/account"
@@ -32,7 +40,10 @@ interface AccountContextValue {
   /** Kept for BrowseContext backward compatibility. Mutations live in useMyWork(). */
   drafts: WorkDraft[]
   publishedWork: Work[]
-  register: (account: Omit<Account, "id" | "createdAt" | "passwordHash" | "emailVerifiedAt">, password: string) => Promise<Account>
+  register: (
+    account: Omit<Account, "id" | "createdAt" | "passwordHash" | "emailVerifiedAt">,
+    password: string,
+  ) => Promise<Account>
   signIn: (email: string, password: string) => Promise<SignInResult>
   resetPassword: (email: string, password: string) => Promise<SignInResult>
   confirmPasswordReset: (token: string, password: string) => Promise<SignInResult>
@@ -67,11 +78,15 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const { drafts } = useMyWork()
 
   // ── Session restore via useQuery ───────────────────────────────────────────
-  const { data: meData, isPending: mePending, isError: meIsError } = useQuery({
+  const {
+    data: meData,
+    isPending: mePending,
+    isError: meIsError,
+  } = useQuery({
     queryKey: QUERY_KEYS.me,
-    queryFn:  fetchMe,
-    enabled:  tokenExists,
-    retry:    false,
+    queryFn: fetchMe,
+    enabled: tokenExists,
+    retry: false,
     staleTime: Infinity,
   })
 
@@ -86,7 +101,10 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     if (cached) return
     fetchWorkMineList()
       .then(({ items }) =>
-        queryClient.setQueryData<WorkDraft[]>(QUERY_KEYS.workMineList, items.map(mapApiWorkMineToDraft))
+        queryClient.setQueryData<WorkDraft[]>(
+          QUERY_KEYS.workMineList,
+          items.map(mapApiWorkMineToDraft),
+        ),
       )
       .catch(() => {})
   }, [meData, queryClient])
@@ -103,16 +121,16 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const register = useCallback<AccountContextValue["register"]>(
     async (input, password) => {
       const { token, user } = await postRegister({
-        name:         input.name,
-        email:        input.email,
+        name: input.name,
+        email: input.email,
         password,
-        location:     input.location  || "",
-        role:         input.role,
-        title:        input.title     || "",
-        years:        Number(input.years) || 0,
-        topics:       input.topics,
+        location: input.location || "",
+        role: input.role,
+        title: input.title || "",
+        years: Number(input.years) || 0,
+        topics: input.topics,
         portfolioUrl: input.portfolio || "",
-        pitch:        input.pitch     || "",
+        pitch: input.pitch || "",
       })
       writeJson(TOKEN_KEY, token)
       setApiToken(token)
@@ -134,7 +152,10 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         setApiToken(token)
         setAccount(mapAccount(user))
         const { items } = await fetchWorkMineList()
-        queryClient.setQueryData<WorkDraft[]>(QUERY_KEYS.workMineList, items.map(mapApiWorkMineToDraft))
+        queryClient.setQueryData<WorkDraft[]>(
+          QUERY_KEYS.workMineList,
+          items.map(mapApiWorkMineToDraft),
+        )
         queryClient.setQueryData(QUERY_KEYS.me, { user })
         setTokenExists(true)
         return { ok: true }
@@ -145,17 +166,14 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     [queryClient],
   )
 
-  const resetPassword = useCallback<AccountContextValue["resetPassword"]>(
-    async (email) => {
-      try {
-        await postForgotPassword(email)
-        return { ok: false, reason: "Reset link sent — check your inbox." }
-      } catch (err) {
-        return { ok: false, reason: apiError(err) }
-      }
-    },
-    [],
-  )
+  const resetPassword = useCallback<AccountContextValue["resetPassword"]>(async (email) => {
+    try {
+      await postForgotPassword(email)
+      return { ok: false, reason: "Reset link sent — check your inbox." }
+    } catch (err) {
+      return { ok: false, reason: apiError(err) }
+    }
+  }, [])
 
   const confirmPasswordReset = useCallback<AccountContextValue["confirmPasswordReset"]>(
     async (token, password) => {
@@ -165,7 +183,10 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         setApiToken(newToken)
         setAccount(mapAccount(user))
         const { items } = await fetchWorkMineList()
-        queryClient.setQueryData<WorkDraft[]>(QUERY_KEYS.workMineList, items.map(mapApiWorkMineToDraft))
+        queryClient.setQueryData<WorkDraft[]>(
+          QUERY_KEYS.workMineList,
+          items.map(mapApiWorkMineToDraft),
+        )
         queryClient.setQueryData(QUERY_KEYS.me, { user })
         setTokenExists(true)
         return { ok: true }

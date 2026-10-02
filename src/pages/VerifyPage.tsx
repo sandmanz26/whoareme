@@ -12,9 +12,9 @@ type State = "loading" | "success" | "error"
 
 export function VerifyPage() {
   const [params] = useSearchParams()
-  const navigate  = useNavigate()
+  const navigate = useNavigate()
   const { refreshAccount } = useAccount()
-  const [state, setState]  = useState<State>("loading")
+  const [state, setState] = useState<State>("loading")
   const [errorMsg, setErrorMsg] = useState("")
 
   useEffect(() => {
@@ -30,13 +30,17 @@ export function VerifyPage() {
     api
       .post("/user/auth/verify/confirm", { token })
       .then(async () => {
-        try { await refreshAccount() } catch { /* user may not be signed in — ok */ }
+        try {
+          await refreshAccount()
+        } catch {
+          /* user may not be signed in — ok */
+        }
         setState("success")
         setTimeout(() => navigate("/panel"), 3000)
       })
       .catch((err: unknown) => {
         const msg = axios.isAxiosError(err)
-          ? (err.response?.data as { message?: string })?.message ?? "Invalid or expired link."
+          ? ((err.response?.data as { message?: string })?.message ?? "Invalid or expired link.")
           : "Something went wrong."
         setState("error")
         setErrorMsg(msg)
@@ -49,9 +53,7 @@ export function VerifyPage() {
 
   return (
     <Container className="flex min-h-[60vh] max-w-md flex-col justify-center py-16">
-      {state === "loading" && (
-        <p className="text-muted">Verifying your email…</p>
-      )}
+      {state === "loading" && <p className="text-muted">Verifying your email…</p>}
 
       {state === "success" && (
         <div className="flex flex-col items-center text-center">
@@ -69,9 +71,7 @@ export function VerifyPage() {
         <div>
           <h1 className="display text-2xl">That link didn't work</h1>
           <p className="mt-3 text-sm leading-relaxed text-muted">{errorMsg}</p>
-          <p className="mt-1 text-sm text-muted">
-            You can request a new link from your panel.
-          </p>
+          <p className="mt-1 text-sm text-muted">You can request a new link from your panel.</p>
           <Button className="mt-6" onClick={() => navigate("/panel")}>
             Go to panel
           </Button>

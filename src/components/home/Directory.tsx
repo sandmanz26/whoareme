@@ -68,7 +68,10 @@ export function Directory({
   const hasFilters = activeRoles.length > 0 || query.trim().length > 0
 
   return (
-    <section id="directory" className="scroll-mt-24 border-t border-line bg-paper-2/60 py-20 sm:py-28">
+    <section
+      id="directory"
+      className="scroll-mt-24 border-t border-line bg-paper-2/60 py-20 sm:py-28"
+    >
       <Container>
         <SectionHeading
           title={
@@ -95,7 +98,10 @@ export function Directory({
           >
             All topics
             <span
-              className={cn("text-xs", activeCategories.length === 0 ? "text-paper/60" : "text-muted")}
+              className={cn(
+                "text-xs",
+                activeCategories.length === 0 ? "text-paper/60" : "text-muted",
+              )}
             >
               {totalCount}
             </span>

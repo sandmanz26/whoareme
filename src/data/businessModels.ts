@@ -10,7 +10,11 @@ export const BUSINESS_MODELS = [
   { id: "b2b-saas", label: "B2B SaaS", blurb: "Subscription software sold to companies" },
   { id: "consumer", label: "Consumer", blurb: "Sold to, or used directly by, individuals" },
   { id: "marketplace", label: "Marketplace", blurb: "Two-sided supply and demand" },
-  { id: "enterprise", label: "Enterprise / on-prem", blurb: "Licensed, long cycles, deployed per client" },
+  {
+    id: "enterprise",
+    label: "Enterprise / on-prem",
+    blurb: "Licensed, long cycles, deployed per client",
+  },
   { id: "platform", label: "Internal platform", blurb: "Built for other teams inside the company" },
   { id: "ecommerce", label: "E-commerce", blurb: "Direct sale of goods" },
   { id: "agency", label: "Agency / client work", blurb: "Delivered for an external client" },

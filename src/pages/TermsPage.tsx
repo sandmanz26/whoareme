@@ -26,8 +26,8 @@ export function TermsPage() {
         <Section title="Who this is between">
           <p>
             "We" is whoever operates whoareyou. "You" is the person using it. Using the directory,
-            or publishing anything on it, means these terms apply to you. If you do not accept
-            them, do not publish.
+            or publishing anything on it, means these terms apply to you. If you do not accept them,
+            do not publish.
           </p>
           <p>
             This is a pre-release build. It runs in your browser with no account server, so at the
@@ -56,8 +56,8 @@ export function TermsPage() {
             conversion rate is a problem you will own, not us.
           </p>
           <p>
-            If a claim is made against us because of something you published, you agree to cover
-            the cost of defending it. We would rather never rely on that clause, which is why the
+            If a claim is made against us because of something you published, you agree to cover the
+            cost of defending it. We would rather never rely on that clause, which is why the
             authoring form warns you before you type a figure.
           </p>
         </Section>
@@ -131,8 +131,8 @@ export function TermsPage() {
 
         <Section title="Changes">
           <p>
-            We will change these terms. When a change affects what you may publish or how
-            moderation works, we will say so on the{" "}
+            We will change these terms. When a change affects what you may publish or how moderation
+            works, we will say so on the{" "}
             <a
               href="/changelog"
               className="font-display font-medium text-ink underline decoration-ink/25 underline-offset-4 transition-colors duration-200 hover:decoration-pop-pink"
