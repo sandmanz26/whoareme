@@ -12,4 +12,5 @@ export const QUERY_KEYS = {
   moderationAppeals:   ["moderation", "appeals"]    as const,
   moderationLog:       ["moderation", "log"]        as const,
   moderationSettings:  ["moderation", "settings"]   as const,
+  userNotices:         ["user", "notices"]           as const,
 }
