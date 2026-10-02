@@ -10,16 +10,11 @@ interface TalentCardProps {
   person: Person
   /** Position in the grid, used to stagger the entrance animation. */
   index: number
-  /** Reported so a person can see their own profile views in the panel. */
-  onView: (personId: string) => void
 }
 
-export function TalentCard({ person, index, onView }: TalentCardProps) {
+export function TalentCard({ person, index }: TalentCardProps) {
   const navigate = useNavigate()
-  // Counting the view and routing are one action from the reader's side, so
-  // they stay one function rather than two things a caller can forget to pair.
   function open() {
-    onView(person.id)
     navigate(`/people/${person.id}`)
   }
 

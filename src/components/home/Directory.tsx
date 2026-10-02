@@ -29,7 +29,6 @@ interface DirectoryProps {
   query: string
   onCategoryChange: (category: CategoryId | null) => void
   onResetFilters: () => void
-  onProfileView: (personId: string) => void
   onJoin: () => void
 }
 
@@ -42,7 +41,6 @@ export function Directory({
   query,
   onCategoryChange,
   onResetFilters,
-  onProfileView,
   onJoin,
 }: DirectoryProps) {
   const { copy } = useAdmin()
@@ -191,7 +189,7 @@ export function Directory({
             <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {visible.map((person, index) => (
                 <li key={person.id} className="min-w-0">
-                  <TalentCard person={person} index={index} onView={onProfileView} />
+                  <TalentCard person={person} index={index} />
                 </li>
               ))}
             </ul>
