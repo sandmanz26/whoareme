@@ -90,7 +90,10 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     staleTime: Infinity,
   })
 
-  const isInitializing = tokenExists && mePending
+  // Cover the window between meData resolving and the useEffect below syncing
+  // `account`. Route guards reading { account, isInitializing } otherwise see
+  // isInitializing=false with account=null for one render → false redirect.
+  const isInitializing = tokenExists && (mePending || (!!meData && !account))
 
   // Sync account + populate drafts cache when me query resolves (session restore path)
   useEffect(() => {

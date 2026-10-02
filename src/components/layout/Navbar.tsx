@@ -105,6 +105,20 @@ export function Navbar({ onJoin }: { onJoin: () => void }) {
         <div className="flex items-center gap-2">
           {account ? (
             <>
+              {(account.access === "admin" || account.access === "moderator") && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/admin")}
+                  aria-current={pathname.startsWith("/admin") ? "page" : undefined}
+                  className={cn(
+                    "hidden cursor-pointer rounded-pill px-4 py-2.5 font-display text-sm font-medium",
+                    "transition-colors duration-200 hover:bg-ink/5 hover:text-ink sm:block",
+                    pathname.startsWith("/admin") ? "text-ink" : "text-ink-2",
+                  )}
+                >
+                  Admin
+                </button>
+              )}
               <button
                 type="button"
                 onClick={signOut}
