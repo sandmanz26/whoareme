@@ -23,16 +23,16 @@ export interface ApiUserNotice {
 }
 
 export async function fetchUserNotices(): Promise<ApiUserNotice[]> {
-  const res = await api.get<Wrap<{ items: ApiUserNotice[] }>>("/notices")
+  const res = await api.get<Wrap<{ items: ApiUserNotice[] }>>("/user/notices")
   return res.data.data.items
 }
 
 export async function postMarkNoticeRead(noticeId: string): Promise<void> {
-  await api.post(`/notices/${noticeId}/read`)
+  await api.post(`/user/notices/${noticeId}/read`)
 }
 
 export async function postAppealNotice(noticeId: string, text: string): Promise<void> {
-  await api.post(`/notices/${noticeId}/appeal`, { text })
+  await api.post(`/user/notices/${noticeId}/appeal`, { text })
 }
 
 export async function postReport(
@@ -41,5 +41,5 @@ export async function postReport(
   reason: string,
   note: string,
 ): Promise<void> {
-  await api.post("/reports", { targetKind, targetId, reason, note })
+  await api.post("/user/reports", { targetKind, targetId, reason, note })
 }
