@@ -1,0 +1,10 @@
+export const QUERY_KEYS = {
+  me:             ["me"]                              as const,
+  workMineList:   ["work", "mine", "list"]            as const,
+  workMineDetail: (id: string)   => ["work", "mine", id]    as const,
+  workDetail:     (slug: string) => ["work", slug]           as const,
+  person:         (slug: string) => ["person", slug]         as const,
+  personWork:     (slug: string) => ["person", slug, "work"] as const,
+  peopleList:     (params?: object) => ["people", "list", params ?? {}] as const,
+  workList:       (params?: object) => ["work", "list",   params ?? {}] as const,
+}
