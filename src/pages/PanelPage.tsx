@@ -1,4 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  updateProfileSchema,
+  type UpdateProfileValues,
+} from "@/lib/validation/authSchemas";
 import { useNavigate, useParams } from "react-router-dom";
 import { PanelShell, type PanelNavItem } from "@/components/panel/PanelShell";
 import { WorkStarter } from "@/components/panel/WorkStarter";
@@ -491,37 +497,56 @@ function ProfileForm({
   onSave: (patch: Partial<Account>) => void;
   onDelete: () => void;
 }) {
-  const [values, setValues] = useState<Account>(account);
   const [saved, setSaved] = useState(false);
 
-  function set<K extends keyof Account>(key: K, value: Account[K]) {
-    setValues((prev) => ({ ...prev, [key]: value }));
-    setSaved(false);
+  const form = useForm<UpdateProfileValues>({
+    resolver: zodResolver(updateProfileSchema),
+    defaultValues: {
+      name: account.name,
+      email: account.email,
+      location: account.location,
+      years: account.years,
+      role: account.role,
+      title: account.title,
+      topics: account.topics,
+      portfolio: account.portfolio,
+      pitch: account.pitch,
+      photo: account.photo ?? "",
+    },
+  });
+
+  const values = form.watch();
+  const { errors } = form.formState;
+
+  function onSubmit(data: UpdateProfileValues) {
+    onSave(data as Partial<Account>);
+    setSaved(true);
   }
 
   return (
     <form
       className="grid max-w-2xl gap-5"
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSave(values);
-        setSaved(true);
-      }}
+      onSubmit={form.handleSubmit(onSubmit)}
     >
       <AvatarPicker
         value={values.photo ?? ""}
-        name={values.name}
-        onChange={(photo) => set("photo", photo)}
+        name={values.name ?? ""}
+        onChange={(photo) => {
+          form.setValue("photo", photo);
+          setSaved(false);
+        }}
       />
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Full name" required>
+        <Field label="Full name" required error={errors.name?.message}>
           {({ id, invalid }) => (
             <TextInput
               id={id}
               invalid={invalid}
-              value={values.name}
-              onChange={(e) => set("name", e.target.value)}
+              value={values.name ?? ""}
+              onChange={(e) =>
+                form.setValue("name", e.target.value, { shouldValidate: true })
+              }
             />
           )}
         </Field>
@@ -531,8 +556,8 @@ function ProfileForm({
               id={id}
               type="email"
               invalid={invalid}
-              value={values.email}
-              onChange={(e) => set("email", e.target.value)}
+              value={values.email ?? ""}
+              onChange={(e) => form.setValue("email", e.target.value)}
             />
           )}
         </Field>
@@ -541,8 +566,8 @@ function ProfileForm({
             <TextInput
               id={id}
               invalid={invalid}
-              value={values.location}
-              onChange={(e) => set("location", e.target.value)}
+              value={values.location ?? ""}
+              onChange={(e) => form.setValue("location", e.target.value)}
             />
           )}
         </Field>
@@ -554,8 +579,8 @@ function ProfileForm({
               min={0}
               max={60}
               invalid={invalid}
-              value={values.years}
-              onChange={(e) => set("years", e.target.value)}
+              value={values.years ?? ""}
+              onChange={(e) => form.setValue("years", e.target.value)}
             />
           )}
         </Field>
@@ -564,13 +589,13 @@ function ProfileForm({
             <SelectInput
               id={id}
               invalid={invalid}
-              value={values.role}
+              value={values.role ?? ""}
               placeholder="Select a craft…"
               options={LIVE_ROLES.map((role) => ({
                 value: role.id,
                 label: role.label,
               }))}
-              onChange={(next) => set("role", next as RoleId)}
+              onChange={(next) => form.setValue("role", next as RoleId)}
             />
           )}
         </Field>
@@ -579,8 +604,8 @@ function ProfileForm({
             <TextInput
               id={id}
               invalid={invalid}
-              value={values.title}
-              onChange={(e) => set("title", e.target.value)}
+              value={values.title ?? ""}
+              onChange={(e) => form.setValue("title", e.target.value)}
             />
           )}
         </Field>
@@ -589,18 +614,19 @@ function ProfileForm({
       <ChipGroup
         legend="Topics"
         options={CATEGORY_OPTIONS}
-        value={values.topics}
+        value={values.topics ?? []}
         max={4}
-        onToggle={(id: CategoryId) =>
-          set(
+        onToggle={(id: CategoryId) => {
+          const current = values.topics ?? [];
+          form.setValue(
             "topics",
-            values.topics.includes(id)
-              ? values.topics.filter((t) => t !== id)
-              : values.topics.length < 4
-                ? [...values.topics, id]
-                : values.topics,
-          )
-        }
+            current.includes(id)
+              ? current.filter((t) => t !== id)
+              : current.length < 4
+                ? [...current, id]
+                : current,
+          );
+        }}
         hint="The worlds you have really shipped in. Pick up to 4."
       />
 
@@ -613,9 +639,9 @@ function ProfileForm({
             id={id}
             type="url"
             invalid={invalid}
-            value={values.portfolio}
+            value={values.portfolio ?? ""}
             placeholder="https://"
-            onChange={(e) => set("portfolio", e.target.value)}
+            onChange={(e) => form.setValue("portfolio", e.target.value)}
           />
         )}
       </Field>
@@ -629,9 +655,9 @@ function ProfileForm({
             id={id}
             invalid={invalid}
             rows={4}
-            value={values.pitch}
+            value={values.pitch ?? ""}
             placeholder="I turn messy internal tooling into something a team will actually open."
-            onChange={(e) => set("pitch", e.target.value)}
+            onChange={(e) => form.setValue("pitch", e.target.value)}
           />
         )}
       </Field>
@@ -828,7 +854,9 @@ function PortfolioSection({
           author={author}
           siblings={drafts}
           onRestart={() => navigate("/panel/portfolio/new")}
-          onSave={(next) => { onSave(next) }}
+          onSave={(next) => {
+            onSave(next);
+          }}
           onDelete={async () => {
             await onDelete(existing.id);
             navigate("/panel/portfolio");

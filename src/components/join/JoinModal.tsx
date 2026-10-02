@@ -1,70 +1,54 @@
-import { useEffect, useState } from "react"
-import axios from "axios"
-import { Modal } from "@/components/ui/Modal"
-import { Button } from "@/components/ui/Button"
-import { Field, PasswordInput, SelectInput, TextInput } from "@/components/ui/Field"
-import { ArrowRight, Check } from "@/components/ui/Icon"
-import { track } from "@/lib/analytics"
-import { initialsOf } from "@/lib/utils"
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { isAxiosError } from "axios";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import {
-  EMPTY_JOIN_VALUES,
-  ROLE_OPTIONS,
-  validateJoin,
-  type JoinErrors,
-  type JoinValues,
-} from "./joinForm"
-import type { RoleId } from "@/data/taxonomy"
-import { useAccount } from "@/hooks/useAccount"
+  Field,
+  PasswordInput,
+  SelectInput,
+  TextInput,
+} from "@/components/ui/Field";
+import { ArrowRight, Check } from "@/components/ui/Icon";
+import { track } from "@/lib/analytics";
+import { initialsOf } from "@/lib/utils";
+import { ROLE_OPTIONS } from "./joinForm";
+import type { RoleId } from "@/data/taxonomy";
+import { useAccount } from "@/hooks/useAccount";
+import {
+  registerSchema,
+  type RegisterValues,
+} from "@/lib/validation/authSchemas";
 
 interface JoinModalProps {
-  open: boolean
-  onClose: () => void
-  /** Registration is only useful if it leads somewhere - straight to the panel. */
-  onOpenPanel: () => void
+  open: boolean;
+  onClose: () => void;
+  onOpenPanel: () => void;
 }
 
-/**
- * One screen: name, email, craft, password. Everything else a profile can
- * carry - location, title, topics, a portfolio link, a bio, a photo - is a
- * field on the panel's profile form, not a step here. A shorter form finishes
- * more often, and finishing is worth more than arriving complete.
- */
 export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
-  const { register } = useAccount()
-  const [values, setValues] = useState<JoinValues>(EMPTY_JOIN_VALUES)
-  const [errors, setErrors] = useState<JoinErrors>({})
-  const [serverError, setServerError] = useState<string | null>(null)
-  const [submitted, setSubmitted] = useState(false)
-  const [working, setWorking] = useState(false)
+  const { register: registerAccount } = useAccount();
+  const form = useForm<RegisterValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: { name: "", email: "", role: "", password: "" },
+  });
+  const {
+    formState: { errors, isSubmitting, isSubmitSuccessful },
+  } = form;
+  const values = form.watch();
 
   useEffect(() => {
-    if (open) track("signup_opened")
-  }, [open])
+    if (open) track("signup_opened");
+  }, [open]);
 
-  function update<K extends keyof JoinValues>(key: K, value: JoinValues[K]) {
-    setValues((current) => ({ ...current, [key]: value }))
-    setErrors((current) => (current[key] ? { ...current, [key]: undefined } : current))
-    setServerError(null)
-  }
-
-  async function submit() {
-    const found = validateJoin(values)
-    if (Object.keys(found).length > 0) {
-      setErrors(found)
-      return
-    }
-
-    // Front-end only: no request goes out, the account lands in localStorage.
-    // Hashing is async, so the button is disabled while it runs - PBKDF2 at
-    // 150k iterations is deliberately not instant.
-    setWorking(true)
+  async function onSubmit(data: RegisterValues) {
     try {
-      await register(
+      await registerAccount(
         {
-          name: values.name.trim(),
-          email: values.email.trim(),
-          role: values.role as RoleId,
-          // Filled in from the panel, not here.
+          name: data.name.trim(),
+          email: data.email.trim(),
+          role: data.role as RoleId,
           location: "",
           title: "",
           years: "",
@@ -73,64 +57,56 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
           pitch: "",
           photo: "",
         },
-        values.password,
-      )
-      track("signup_completed")
-      setSubmitted(true)
+        data.password,
+      );
+      track("signup_completed");
     } catch (err) {
-      const msg = axios.isAxiosError(err)
-        ? (err.response?.data as { message?: string })?.message ?? "Something went wrong."
-        : "Something went wrong. Please try again."
-      setServerError(msg)
-    } finally {
-      setWorking(false)
+      const msg = isAxiosError(err)
+        ? ((err.response?.data as { message?: string })?.message ??
+          "Something went wrong.")
+        : "Something went wrong. Please try again.";
+      form.setError("root", { message: msg });
+      throw err; // re-throw so RHF marks isSubmitSuccessful as false
     }
   }
 
-  function reset() {
-    setValues(EMPTY_JOIN_VALUES)
-    setErrors({})
-    setServerError(null)
-    setSubmitted(false)
+  function handleClose() {
+    onClose();
+    window.setTimeout(() => form.reset(), 200);
   }
 
-  function handleClose() {
-    onClose()
-    // Let the close animation finish before wiping the form.
-    window.setTimeout(reset, 200)
-  }
+  const serverError = form.formState.errors.root?.message;
 
   return (
     <Modal
       open={open}
       onClose={handleClose}
-      title={submitted ? "You're on the list" : "Create your profile"}
+      title={isSubmitSuccessful ? "You're on the list" : "Create your profile"}
       description={
-        submitted
+        isSubmitSuccessful
           ? "Nothing was sent anywhere - this demo keeps everything in your browser."
           : "Who you are, how to get back in, and what you do. The rest - title, location, a portfolio link, a bio - is a field on your panel whenever you're ready."
       }
     >
-      {submitted ? (
+      {isSubmitSuccessful ? (
         <SuccessState
           values={values}
           onClose={handleClose}
           onOpenPanel={() => {
-            onClose()
-            onOpenPanel()
-            window.setTimeout(reset, 200)
+            onClose();
+            onOpenPanel();
+            window.setTimeout(() => form.reset(), 200);
           }}
         />
       ) : (
         <form
           noValidate
-          onSubmit={(event) => {
-            event.preventDefault()
-            submit()
-          }}
+          onSubmit={form.handleSubmit(onSubmit, () => {
+            // validation error — no-op, RHF shows inline errors
+          })}
         >
           <div className="flex flex-col gap-5">
-            <Field label="Full name" required error={errors.name}>
+            <Field label="Full name" required error={errors.name?.message}>
               {({ id, describedBy, invalid }) => (
                 <TextInput
                   id={id}
@@ -139,12 +115,21 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
                   value={values.name}
                   autoComplete="name"
                   placeholder="Rani Ardhana"
-                  onChange={(event) => update("name", event.target.value)}
+                  onChange={(e) =>
+                    form.setValue("name", e.target.value, {
+                      shouldValidate: isSubmitting,
+                    })
+                  }
                 />
               )}
             </Field>
 
-            <Field label="Email" required error={errors.email} hint="Only used to send you the edit link.">
+            <Field
+              label="Email"
+              required
+              error={errors.email?.message}
+              hint="Only used to send you the edit link."
+            >
               {({ id, describedBy, invalid }) => (
                 <TextInput
                   id={id}
@@ -154,12 +139,21 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
                   value={values.email}
                   autoComplete="email"
                   placeholder="you@studio.com"
-                  onChange={(event) => update("email", event.target.value)}
+                  onChange={(e) =>
+                    form.setValue("email", e.target.value, {
+                      shouldValidate: isSubmitting,
+                    })
+                  }
                 />
               )}
             </Field>
 
-            <Field label="Craft" required error={errors.role} hint="What you want to be found for.">
+            <Field
+              label="Craft"
+              required
+              error={errors.role?.message}
+              hint="What you want to be found for."
+            >
               {({ id, describedBy, invalid }) => (
                 <SelectInput
                   id={id}
@@ -167,8 +161,13 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
                   invalid={invalid}
                   value={values.role}
                   placeholder="Select a craft…"
-                  options={ROLE_OPTIONS.map((option) => ({ value: option.id, label: option.label }))}
-                  onChange={(next) => update("role", next as RoleId)}
+                  options={ROLE_OPTIONS.map((o) => ({
+                    value: o.id,
+                    label: o.label,
+                  }))}
+                  onChange={(next) =>
+                    form.setValue("role", next, { shouldValidate: true })
+                  }
                 />
               )}
             </Field>
@@ -176,7 +175,7 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
             <Field
               label="Password"
               required
-              error={errors.password}
+              error={errors.password?.message}
               hint="Guards the way back into this profile. Stored hashed, in this browser only."
             >
               {({ id, describedBy, invalid }) => (
@@ -186,15 +185,19 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
                   aria-describedby={describedBy}
                   invalid={invalid}
                   value={values.password}
-                  placeholder="At least 8 characters"
-                  onChange={(event) => update("password", event.target.value)}
+                  placeholder="At least 10 characters"
+                  onChange={(e) =>
+                    form.setValue("password", e.target.value, {
+                      shouldValidate: isSubmitting,
+                    })
+                  }
                 />
               )}
             </Field>
           </div>
 
           {serverError && (
-            <p role="alert" className="text-sm font-medium text-pop-pink">
+            <p role="alert" className="mt-4 text-sm font-medium text-pop-pink">
               {serverError}
             </p>
           )}
@@ -203,30 +206,29 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
             <Button type="button" variant="ghost" onClick={handleClose}>
               Cancel
             </Button>
-
-            <Button type="submit" disabled={working}>
-              {working ? "Creating your profile…" : "Create profile"}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Creating your profile…" : "Create profile"}
               <ArrowRight size={17} />
             </Button>
           </div>
         </form>
       )}
     </Modal>
-  )
+  );
 }
 
-/* ------------------------------------------------------------------ */
+/* ── Success state ────────────────────────────────────────────────────── */
 
 function SuccessState({
   values,
   onClose,
   onOpenPanel,
 }: {
-  values: JoinValues
-  onClose: () => void
-  onOpenPanel: () => void
+  values: RegisterValues;
+  onClose: () => void;
+  onOpenPanel: () => void;
 }) {
-  const role = ROLE_OPTIONS.find((option) => option.id === values.role)
+  const role = ROLE_OPTIONS.find((o) => o.id === values.role);
 
   return (
     <div className="animate-fade-up flex flex-col items-center text-center">
@@ -234,20 +236,23 @@ function SuccessState({
         <Check size={26} />
       </span>
 
-      <h3 className="display mt-5 text-2xl">Profile ready, {values.name.split(" ")[0]}</h3>
+      <h3 className="display mt-5 text-2xl">
+        Profile ready, {values.name.split(" ")[0]}
+      </h3>
       <p className="mt-2 max-w-sm text-sm text-muted">
-        Add your title, location, a portfolio link and a bio from your panel - then add real work.
-        Your panel has a different form for every craft.
+        Add your title, location, a portfolio link and a bio from your panel -
+        then add real work. Your panel has a different form for every craft.
       </p>
 
-      {/* Preview card - mirrors the real directory card so the payoff is concrete. */}
       <div className="mt-7 w-full rounded-card border border-line bg-paper p-5 text-left">
         <div className="flex items-start gap-4">
           <span className="grid size-14 shrink-0 place-items-center rounded-[30%] bg-ink font-display text-lg font-bold text-paper">
             {initialsOf(values.name)}
           </span>
           <div className="min-w-0">
-            <p className="truncate font-display text-base font-semibold text-ink">{values.name}</p>
+            <p className="truncate font-display text-base font-semibold text-ink">
+              {values.name}
+            </p>
             <p className="truncate text-sm text-ink-2">Add your title</p>
           </div>
         </div>
@@ -271,5 +276,5 @@ function SuccessState({
         </Button>
       </div>
     </div>
-  )
+  );
 }
