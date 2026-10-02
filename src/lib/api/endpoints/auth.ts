@@ -1,15 +1,10 @@
 import { api } from "../client"
-import type { ApiUser, ApiWorkMine } from "../mappers"
+import type { ApiUser } from "../mappers"
 
 type Wrap<T> = { success: boolean; data: T; message: string }
 
 export async function fetchMe() {
   const res = await api.get<Wrap<{ user: ApiUser }>>("/user/auth/me")
-  return res.data.data
-}
-
-export async function fetchWorkMineListOnLogin() {
-  const res = await api.get<Wrap<{ items: ApiWorkMine[] }>>("/user/work/mine/list")
   return res.data.data
 }
 
