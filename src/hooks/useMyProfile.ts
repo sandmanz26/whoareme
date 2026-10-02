@@ -31,9 +31,13 @@ export function useMyProfile() {
       return { user: { ...old.user, ...apiPatch } as ApiUser }
     })
     // Sync to server; on failure refetch server truth to revert the optimistic update
-    patchMe(apiPatch).catch(() => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.me })
-    })
+    patchMe(apiPatch)
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["people", "list"] })
+      })
+      .catch(() => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.me })
+      })
   }, [queryClient])
 
   return { updateProfile }

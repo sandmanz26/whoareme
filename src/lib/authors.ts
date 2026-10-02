@@ -93,6 +93,28 @@ export function authorIndex(account: Account | null): Map<string, Author> {
   return merged
 }
 
+/** Build an author index from a live people list (API-sourced). */
+export function authorIndexFromPeople(people: readonly Person[], viewerId: string | null): Map<string, Author> {
+  return new Map(
+    people.map((p) => [
+      p.id,
+      {
+        id:        p.id,
+        name:      p.name,
+        title:     p.title,
+        company:   p.company,
+        location:  p.location,
+        role:      p.role,
+        years:     p.years,
+        languages: p.languages,
+        photo:     p.photo,
+        links:     p.links,
+        isViewer:  p.id === viewerId,
+      },
+    ]),
+  )
+}
+
 /**
  * Widen each person's topics with the topics their published work carries.
  *

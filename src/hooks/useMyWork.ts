@@ -91,9 +91,14 @@ export function useMyWork() {
         await postPublishWork(resolved.id)
       } catch {
         resolved = { ...resolved, published: false }
+      } finally {
+        queryClient.invalidateQueries({ queryKey: ["work", "list"] })
+        queryClient.invalidateQueries({ queryKey: ["people", "list"] })
       }
     } else if (!resolved.published && wasPublished) {
       await postUnpublishWork(resolved.id).catch(() => {})
+      queryClient.invalidateQueries({ queryKey: ["work", "list"] })
+      queryClient.invalidateQueries({ queryKey: ["people", "list"] })
     }
 
     // Update cache: remove old local-id entry if id changed, then upsert
