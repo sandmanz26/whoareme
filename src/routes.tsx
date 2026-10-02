@@ -8,6 +8,8 @@ import { PanelPage } from "@/pages/PanelPage"
 import { AdminPage } from "@/pages/AdminPage"
 import { SignInPage } from "@/pages/SignInPage"
 import { GuestRoute } from "@/components/layout/GuestRoute"
+import { AuthRoute } from "@/components/layout/AuthRoute"
+import { ModRoute } from "@/components/layout/ModRoute"
 import { AboutPage } from "@/pages/AboutPage"
 import { ChangelogPage } from "@/pages/ChangelogPage"
 import { PrivacyPage } from "@/pages/PrivacyPage"
@@ -48,11 +50,46 @@ export const router = createBrowserRouter([
           </GuestRoute>
         ),
       },
-      { path: "panel", element: <PanelPage /> },
-      { path: "panel/:section", element: <PanelPage /> },
-      { path: "panel/:section/:entry", element: <PanelPage /> },
-      { path: "admin", element: <AdminPage /> },
-      { path: "admin/:tab", element: <AdminPage /> },
+      {
+        path: "panel",
+        element: (
+          <AuthRoute>
+            <PanelPage />
+          </AuthRoute>
+        ),
+      },
+      {
+        path: "panel/:section",
+        element: (
+          <AuthRoute>
+            <PanelPage />
+          </AuthRoute>
+        ),
+      },
+      {
+        path: "panel/:section/:entry",
+        element: (
+          <AuthRoute>
+            <PanelPage />
+          </AuthRoute>
+        ),
+      },
+      {
+        path: "admin",
+        element: (
+          <ModRoute>
+            <AdminPage />
+          </ModRoute>
+        ),
+      },
+      {
+        path: "admin/:tab",
+        element: (
+          <ModRoute>
+            <AdminPage />
+          </ModRoute>
+        ),
+      },
       { path: "*", element: <NotFoundPage /> },
     ],
   },
