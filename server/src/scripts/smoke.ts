@@ -5,9 +5,9 @@
  * Run with: npm run test:smoke
  */
 import { MongoMemoryReplSet } from "mongodb-memory-server"
-import mongoose from "mongoose"
+import type mongoose from "mongoose"
 import http from "node:http"
-import { AddressInfo } from "node:net"
+import type { AddressInfo } from "node:net"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import User from "../models/user.js"

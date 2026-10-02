@@ -1,4 +1,4 @@
-import { Document, Types } from "mongoose"
+import type { Document, Types } from "mongoose"
 import type { RoleId } from "../constant/app.js"
 
 export interface ISiteSettings {

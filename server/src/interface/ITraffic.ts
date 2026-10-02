@@ -1,4 +1,4 @@
-import { Document, Types } from "mongoose"
+import type { Document, Types } from "mongoose"
 
 export interface ITrafficEvent {
   _id: Types.ObjectId

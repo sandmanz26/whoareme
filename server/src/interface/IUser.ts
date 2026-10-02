@@ -1,4 +1,4 @@
-import { Document, Types } from "mongoose"
+import type { Document, Types } from "mongoose"
 import type { AccessLevel, RoleId, TopicId } from "../constant/app.js"
 
 export interface IUser {

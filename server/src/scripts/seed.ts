@@ -1,6 +1,7 @@
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import mongoose, { Types } from "mongoose"
+import type { Types } from "mongoose";
+import mongoose from "mongoose"
 import { env } from "../config/index.js"
 import User from "../models/user.js"
 import Work from "../models/work.js"
