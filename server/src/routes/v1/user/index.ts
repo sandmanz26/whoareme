@@ -107,7 +107,7 @@ UserRouter.delete(
 )
 
 // ── Reports ───────────────────────────────────────────────────────────────────
-UserRouter.post("/reports", reportLimiter, asyncErrorHandler(ReportsController.Add))
+UserRouter.post("/reports", isAuth(), reportLimiter, asyncErrorHandler(ReportsController.Add))
 
 // ── Notices ───────────────────────────────────────────────────────────────────
 UserRouter.get("/notices", isAuth(), asyncErrorHandler(NoticesController.GetList))
