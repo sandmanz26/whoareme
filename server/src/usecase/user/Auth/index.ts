@@ -196,7 +196,6 @@ export const AuthUsecase = {
     const current = await User.findOne({ _id: userId, status: "active" }).lean()
     if (!current) throw notFound("Account")
 
-    const next = { ...current, ...patch }
     const searchBlob = searchBlobFor({
       name: (patch.name ?? current.name) as string,
       title: (patch.title ?? current.title) as string,
@@ -214,21 +213,102 @@ export const AuthUsecase = {
       patch.role !== undefined ||
       patch.company !== undefined ||
       patch.years !== undefined ||
-      patch.languages !== undefined
+      patch.languages !== undefined ||
+      patch.location !== undefined
     if (cardChanged) {
+      const newName = patch.name ?? current.name
+      const newTitle = patch.title ?? current.title
+      const newCompany = patch.company ?? current.company
+      const newYears = patch.years ?? current.years
+      const newLanguages = patch.languages ?? current.languages ?? []
+      const newLocation = patch.location ?? current.location ?? ""
+
       await Work.updateMany(
         { authorId: userId },
-        {
-          $set: {
-            "author.name": next.name,
-            "author.title": patch.title ?? current.title,
-            "author.company": patch.company ?? current.company,
-            "author.photoUrl": current.photoUrl,
-            "author.years": patch.years ?? current.years,
-            "author.languages": patch.languages ?? current.languages ?? [],
-            updatedAt: new Date(),
+        [
+          {
+            $set: {
+              "author.name": newName,
+              "author.title": newTitle,
+              "author.company": newCompany,
+              "author.photoUrl": current.photoUrl,
+              "author.years": newYears,
+              "author.languages": newLanguages,
+              searchBlob: {
+                $toLower: {
+                  $trim: {
+                    input: {
+                      $concat: [
+                        { $ifNull: ["$title", ""] }, " ",
+                        { $ifNull: ["$summary", ""] }, " ",
+                        { $ifNull: ["$problem", ""] }, " ",
+                        { $ifNull: ["$approach", ""] }, " ",
+                        { $ifNull: ["$outcome", ""] }, " ",
+                        {
+                          $reduce: {
+                            input: { $ifNull: ["$sections", []] },
+                            initialValue: "",
+                            in: {
+                              $concat: [
+                                "$$value", " ",
+                                { $ifNull: ["$$this.heading", ""] }, " ",
+                                { $ifNull: ["$$this.body", ""] },
+                              ],
+                            },
+                          },
+                        },
+                        " ",
+                        {
+                          $reduce: {
+                            input: { $ifNull: ["$details", []] },
+                            initialValue: "",
+                            in: {
+                              $concat: [
+                                "$$value", " ",
+                                { $ifNull: ["$$this.label", ""] }, " ",
+                                { $ifNull: ["$$this.value", ""] },
+                              ],
+                            },
+                          },
+                        },
+                        " ",
+                        {
+                          $reduce: {
+                            input: { $ifNull: ["$skills", []] },
+                            initialValue: "",
+                            in: { $concat: ["$$value", " ", "$$this"] },
+                          },
+                        },
+                        " ",
+                        {
+                          $reduce: {
+                            input: { $ifNull: ["$stack", []] },
+                            initialValue: "",
+                            in: { $concat: ["$$value", " ", "$$this"] },
+                          },
+                        },
+                        " ",
+                        {
+                          $reduce: {
+                            input: { $ifNull: ["$topics", []] },
+                            initialValue: "",
+                            in: { $concat: ["$$value", " ", "$$this"] },
+                          },
+                        },
+                        " ",
+                        { $ifNull: ["$model", ""] }, " ",
+                        newName, " ",
+                        newCompany, " ",
+                        newLocation,
+                      ],
+                    },
+                  },
+                },
+              },
+              updatedAt: new Date(),
+            },
           },
-        },
+        ],
       )
     }
 
