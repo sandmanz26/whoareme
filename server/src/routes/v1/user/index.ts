@@ -1,7 +1,12 @@
 import { Router } from "express"
 import { asyncErrorHandler } from "../../../middleware/index.js"
-import { isAuth, isOptionalAuth } from "../../../middleware/userAuth.js"
-import { authLimiter, reportLimiter, writeLimiter } from "../../../middleware/rateLimit.js"
+import { isAuth, isAuthAllowSuspended, isOptionalAuth } from "../../../middleware/userAuth.js"
+import {
+  authLimiter,
+  loginThrottle,
+  reportLimiter,
+  writeLimiter,
+} from "../../../middleware/rateLimit.js"
 import { uploadThumbnail, uploadPhoto } from "../../../config/multer/index.js"
 
 import { TaxonomyController } from "../../../controller/user/Taxonomy/index.js"
@@ -24,11 +29,11 @@ UserRouter.get("/settings", asyncErrorHandler(SettingsController.Get))
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 UserRouter.post("/auth/register", authLimiter, asyncErrorHandler(AuthController.Register))
-UserRouter.post("/auth/login", authLimiter, asyncErrorHandler(AuthController.Login))
-UserRouter.post("/auth/logout", isAuth(), asyncErrorHandler(AuthController.Logout))
-UserRouter.get("/auth/me", isAuth(), asyncErrorHandler(AuthController.Me))
+UserRouter.post("/auth/login", authLimiter, loginThrottle, asyncErrorHandler(AuthController.Login))
+UserRouter.post("/auth/logout", isAuthAllowSuspended, asyncErrorHandler(AuthController.Logout))
+UserRouter.get("/auth/me", isAuthAllowSuspended, asyncErrorHandler(AuthController.Me))
 UserRouter.patch("/auth/me", isAuth(), asyncErrorHandler(AuthController.UpdateMe))
-UserRouter.delete("/auth/me", isAuth(), asyncErrorHandler(AuthController.DeleteMe))
+UserRouter.delete("/auth/me", isAuthAllowSuspended, asyncErrorHandler(AuthController.DeleteMe))
 UserRouter.post(
   "/auth/verify/request",
   isAuth(),
@@ -111,8 +116,16 @@ UserRouter.delete(
 UserRouter.post("/reports", isAuth(), reportLimiter, asyncErrorHandler(ReportsController.Add))
 
 // ── Notices ───────────────────────────────────────────────────────────────────
-UserRouter.get("/notices", isAuth(), asyncErrorHandler(NoticesController.GetList))
-UserRouter.post("/notices/:id/read", isAuth(), asyncErrorHandler(NoticesController.MarkRead))
-UserRouter.post("/notices/:id/appeal", isAuth(), asyncErrorHandler(NoticesController.Appeal))
+UserRouter.get("/notices", isAuthAllowSuspended, asyncErrorHandler(NoticesController.GetList))
+UserRouter.post(
+  "/notices/:id/read",
+  isAuthAllowSuspended,
+  asyncErrorHandler(NoticesController.MarkRead),
+)
+UserRouter.post(
+  "/notices/:id/appeal",
+  isAuthAllowSuspended,
+  asyncErrorHandler(NoticesController.Appeal),
+)
 
 export default UserRouter

@@ -81,6 +81,26 @@ function del(base: string, path: string, token?: string) {
   return api(base, "DELETE", path, undefined, token)
 }
 
+/** Multipart upload, used to exercise the thumbnail/portrait routes. */
+async function uploadFile(
+  base: string,
+  path: string,
+  token: string,
+  filename: string,
+  mime: string,
+  bytes: Uint8Array,
+): Promise<{ status: number; json: Json }> {
+  const form = new FormData()
+  form.append("file", new Blob([bytes], { type: mime }), filename)
+  const res = await fetch(`${base}${path}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  })
+  const text = await res.text()
+  return { status: res.status, json: (text ? JSON.parse(text) : {}) as Json }
+}
+
 // ── Minimal work input that passes publishable validation ─────────────────────
 
 function makeWork(overrides: Partial<Record<string, unknown>> = {}): Json {
@@ -114,6 +134,7 @@ async function main() {
   process.env["MONGODB_DB"] = "whoareyou_smoke"
   process.env["JWT_SECRET"] = "smoke-test-secret-at-least-sixteen"
   process.env["JWT_EXPIRES_IN"] = "30d"
+  process.env["TOKEN_HASH_SECRET"] = "smoke-token-hash-secret-at-least-32-chars"
   process.env["VIEWER_HASH_SALT"] = "smoke-salt-1234"
   process.env["CORS_ORIGINS"] = ""
   process.env["NODE_ENV"] = "test"
@@ -870,6 +891,160 @@ async function main() {
       years: 1,
     })
     assertEq("email freed for re-registration → 201", reReg.status, 201)
+  }
+
+  // ── § 19 Moderator republish quota guard ──────────────────────────────────────
+  console.log("\n§19 Moderator republish quota guard")
+  {
+    const owner = await post(base, "/auth/register", {
+      name: "Quota Probe",
+      email: "quota-probe@example.com",
+      password: "quota-probe-12345",
+      role: "engineering",
+      years: 3,
+    })
+    const ownerToken = (owner.json["data"] as Json)["token"] as string
+    const ovreq = await post(base, "/auth/verify/request", {}, ownerToken)
+    await post(base, "/auth/verify/confirm", {
+      token: (ovreq.json["data"] as Json)["token"] as string,
+    })
+
+    const a = await post(base, "/work", makeWork({ title: "Quota probe A" }), ownerToken)
+    const aWork = (a.json["data"] as Json)["work"] as Json
+    const b = await post(base, "/work", makeWork({ title: "Quota probe B" }), ownerToken)
+    const bWork = (b.json["data"] as Json)["work"] as Json
+    await post(base, `/work/${aWork["_id"] as string}/publish`, {}, ownerToken)
+    await post(base, `/work/${bWork["_id"] as string}/publish`, {}, ownerToken)
+
+    const modReg = await post(base, "/auth/register", {
+      name: "Quota Mod",
+      email: "quota-mod@example.com",
+      password: "quota-mod-12345",
+      role: "product",
+      years: 6,
+    })
+    const qmodToken = (modReg.json["data"] as Json)["token"] as string
+    const qmodSlug = ((modReg.json["data"] as Json)["user"] as Json)["slug"] as string
+    await User.updateOne({ slug: qmodSlug }, { $set: { access: "moderator" } })
+
+    // Take A down, so saas has one published entry.
+    const down = await post(
+      mod,
+      `/work/${aWork["slug"] as string}/unpublish`,
+      { reason: "Temporary moderation test reason." },
+      qmodToken,
+    )
+    assertEq("mod unpublish frees a quota slot → 200", down.status, 200)
+
+    // The owner refills it: saas is back at the cap of two.
+    const c = await post(base, "/work", makeWork({ title: "Quota probe C" }), ownerToken)
+    const cWork = (c.json["data"] as Json)["work"] as Json
+    const cp = await post(base, `/work/${cWork["_id"] as string}/publish`, {}, ownerToken)
+    assertEq("owner refills the second saas slot → 200", cp.status, 200)
+
+    // Republishing A would make three in saas, which the rule forbids.
+    const up = await post(
+      mod,
+      `/work/${aWork["slug"] as string}/republish`,
+      { reason: "Attempting to exceed the topic cap." },
+      qmodToken,
+    )
+    assertEq("moderator republish over quota → 409", up.status, 409)
+    assert(
+      "moderator quota error names the topic",
+      JSON.stringify(up.json).toLowerCase().includes("quota"),
+    )
+  }
+
+  // ── § 20 Uploads ──────────────────────────────────────────────────────────────
+  console.log("\n§20 Uploads")
+  {
+    const reg = await post(base, "/auth/register", {
+      name: "Upload Probe",
+      email: "upload-probe@example.com",
+      password: "upload-probe-12345",
+      role: "engineering",
+      years: 2,
+    })
+    const uToken = (reg.json["data"] as Json)["token"] as string
+    const made = await post(base, "/work", makeWork({ title: "Upload probe entry" }), uToken)
+    const workId = ((made.json["data"] as Json)["work"] as Json)["_id"] as string
+
+    // A PNG sent under an .html filename must still land as .png: the extension
+    // comes from the MIME allowlist, not the client's name.
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    )
+    const up = await uploadFile(
+      base,
+      `/uploads/work/${workId}/thumbnail`,
+      uToken,
+      "evil.html",
+      "image/png",
+      png,
+    )
+    assertEq("POST thumbnail upload → 201", up.status, 201)
+    const stored = (((up.json["data"] as Json)["thumbnailPath"] as string) ?? "").trim()
+    assert("stored path is under /uploads/thumbnails", stored.includes("/uploads/thumbnails/"))
+    assert("extension comes from the MIME, not the filename", stored.endsWith(".png"))
+
+    // Removing it must resolve the file from the new URL shape.
+    const rm = await del(base, `/uploads/work/${workId}/thumbnail`, uToken)
+    assertEq("DELETE thumbnail → 200", rm.status, 200)
+  }
+
+  // ── § 21 Suspended account access ─────────────────────────────────────────────
+  console.log("\n§21 Suspended account access")
+  {
+    const reg = await post(base, "/auth/register", {
+      name: "Suspend Probe",
+      email: "suspend-probe@example.com",
+      password: "suspend-probe-12345",
+      role: "design",
+      years: 2,
+    })
+    const sSlug = ((reg.json["data"] as Json)["user"] as Json)["slug"] as string
+
+    const sus = await post(
+      mod,
+      `/people/${sSlug}/suspend`,
+      { reason: "Suspension access test reason." },
+      modToken,
+    )
+    assertEq("moderator suspends probe → 200", sus.status, 200)
+
+    // A suspended person can still sign in, read the notice, and delete the account.
+    const login = await post(base, "/auth/login", {
+      email: "suspend-probe@example.com",
+      password: "suspend-probe-12345",
+    })
+    assertEq("suspended user can sign in → 200", login.status, 200)
+    const sToken = (login.json["data"] as Json)["token"] as string
+
+    const me = await get(base, "/auth/me", sToken)
+    assertEq("suspended GET /auth/me → 200", me.status, 200)
+    const notices = await get(base, "/notices", sToken)
+    assertEq("suspended GET /notices → 200", notices.status, 200)
+    assert(
+      "suspension notice delivered",
+      JSON.stringify(notices.json).toLowerCase().includes("suspend"),
+    )
+
+    // Everything else stays closed.
+    const mine = await get(base, "/work/mine/list", sToken)
+    assertEq("suspended work routes stay closed → 401", mine.status, 401)
+    const patchRes = await patch(base, "/auth/me", { pitch: "nope" }, sToken)
+    assertEq("suspended profile edits stay closed → 401", patchRes.status, 401)
+
+    // Cleanup.
+    const rein = await post(
+      mod,
+      `/people/${sSlug}/reinstate`,
+      { reason: "Reinstate after access test." },
+      modToken,
+    )
+    assertEq("moderator reinstates probe → 200", rein.status, 200)
   }
 
   // ── Results ───────────────────────────────────────────────────────────────────

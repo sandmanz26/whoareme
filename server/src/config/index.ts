@@ -8,8 +8,13 @@ const schema = z.object({
   MONGODB_URI: z.string().min(1),
   MONGODB_DB: z.string().min(1).default("whoareyou"),
 
-  JWT_SECRET: z.string().min(16),
+  JWT_SECRET: z.string().min(32),
   JWT_EXPIRES_IN: z.string().default("30d"),
+
+  // Separate key for hashing one-time tokens (email verification, password
+  // reset). Reusing JWT_SECRET would mean one leak compromised both signing
+  // and the ability to check stored token hashes.
+  TOKEN_HASH_SECRET: z.string().min(32),
 
   VIEWER_HASH_SALT: z.string().min(8),
 
@@ -54,7 +59,7 @@ if (env.MAIL_TRANSPORT === "http") {
 }
 
 if (env.NODE_ENV === "production") {
-  for (const key of ["JWT_SECRET", "VIEWER_HASH_SALT"] as const) {
+  for (const key of ["JWT_SECRET", "TOKEN_HASH_SECRET", "VIEWER_HASH_SALT"] as const) {
     if (env[key].startsWith("change-me")) {
       throw new Error(`${key} still holds its placeholder value. Refusing to start in production.`)
     }

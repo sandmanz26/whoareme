@@ -26,7 +26,25 @@ app.use(
 )
 app.use(express.json({ limit: "256kb" }))
 app.use(express.urlencoded({ extended: true }))
-app.use(express.static("uploads"))
+
+// Uploads are served from /uploads/*, not the API root: an arbitrary path on
+// the API origin is a stored-content risk, and the prefix keeps a hand-edited
+// filename from walking outside the upload directory.
+app.use(
+  "/uploads",
+  express.static("uploads", {
+    dotfiles: "deny",
+    index: false,
+    setHeaders: (res) => res.setHeader("Content-Disposition", "inline"),
+  }),
+)
+
+// URLs written before the move still point at the old root paths. Redirect so
+// stored thumbnails and portraits keep resolving.
+app.get(["/thumbnails/:file", "/profiles/:file"], (req, res) => {
+  res.redirect(301, `/uploads${req.path}`)
+})
+
 app.use(
   pinoHttp({
     logger,

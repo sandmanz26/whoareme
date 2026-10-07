@@ -23,6 +23,8 @@ export interface Account {
   passwordHash: string
   emailVerifiedAt: string | null
   access: "member" | "moderator" | "admin"
+  /** A suspended account can still read notices and delete itself, and nothing else. */
+  status: "active" | "suspended"
   createdAt: string
 }
 

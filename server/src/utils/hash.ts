@@ -8,5 +8,5 @@ export function viewerHash(ip: string, userAgent: string, day: string): string {
 }
 
 export function hashToken(token: string): string {
-  return createHmac("sha256", env.JWT_SECRET).update(token).digest("hex")
+  return createHmac("sha256", env.TOKEN_HASH_SECRET).update(token).digest("hex")
 }

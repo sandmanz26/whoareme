@@ -42,7 +42,10 @@ interface AccountContextValue {
   drafts: WorkDraft[]
   publishedWork: Work[]
   register: (
-    account: Omit<Account, "id" | "createdAt" | "passwordHash" | "emailVerifiedAt" | "access">,
+    account: Omit<
+      Account,
+      "id" | "createdAt" | "passwordHash" | "emailVerifiedAt" | "access" | "status"
+    >,
     password: string,
   ) => Promise<Account>
   signIn: (email: string, password: string) => Promise<SignInResult>
@@ -99,10 +102,16 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   // Sync account + populate drafts cache when me query resolves (session restore path)
   useEffect(() => {
     if (!meData) return
-    setAccount(mapAccount(meData.user))
+    const mapped = mapAccount(meData.user)
+    setAccount(mapped)
     // Only fetch drafts if not already in cache (avoids double-load after login)
     const cached = queryClient.getQueryData(QUERY_KEYS.workMineList)
     if (cached) return
+    if (mapped.status === "suspended") {
+      // A suspended account has no work access, so the request would just 401.
+      queryClient.setQueryData<WorkDraft[]>(QUERY_KEYS.workMineList, [])
+      return
+    }
     fetchWorkMineList()
       .then(({ items }) =>
         queryClient.setQueryData<WorkDraft[]>(
@@ -152,14 +161,20 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     async (email, password) => {
       try {
         const { token, user } = await postLogin(email, password)
+        const mapped = mapAccount(user)
         writeJson(TOKEN_KEY, token)
         setApiToken(token)
-        setAccount(mapAccount(user))
-        const { items } = await fetchWorkMineList()
-        queryClient.setQueryData<WorkDraft[]>(
-          QUERY_KEYS.workMineList,
-          items.map(mapApiWorkMineToDraft),
-        )
+        setAccount(mapped)
+        if (mapped.status === "suspended") {
+          // Suspended accounts cannot read their work, so skip the request.
+          queryClient.setQueryData<WorkDraft[]>(QUERY_KEYS.workMineList, [])
+        } else {
+          const { items } = await fetchWorkMineList()
+          queryClient.setQueryData<WorkDraft[]>(
+            QUERY_KEYS.workMineList,
+            items.map(mapApiWorkMineToDraft),
+          )
+        }
         queryClient.setQueryData(QUERY_KEYS.me, { user })
         setTokenExists(true)
         return { ok: true }

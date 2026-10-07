@@ -212,3 +212,38 @@ C2, H2, H9, U5, S5, S6, `sessions`, pagination, CI/CD. H7 dan C10 menunggu §F. 
 ### Catatan keputusan yang diambil
 
 Penghapusan memakai **hard delete** untuk konten dan telemetri, bukan soft-delete, karena Terms menjanjikan "tidak ada salinan yang disimpan". User row disisakan sebagai tombstone ter-scrub semata agar `moderationAction` tetap punya aktor. Jika nanti diinginkan soft-delete, ubah copy Terms lebih dulu agar tidak berbohong.
+
+---
+
+## K. Batch 3 (selesai, 8 Oktober 2026)
+
+Keputusan §F dikonfirmasi, lalu dikerjakan. Commit `fcb7c1f`.
+
+### 3a — keamanan cepat
+
+| Item | Perubahan |
+|---|---|
+| C9 | `TOKEN_HASH_SECRET` dipisah dari `JWT_SECRET`; `JWT_SECRET` minimum 32; `.env.example` diperbarui |
+| S4 | `pino` redact: `authorization`, `cookie`, `password`, `passwordHash`, `token` |
+| C4 | Guard `$nor` kuota di `ModerationWorkUsecase.SetPublished` + compensating rollback; smoke §19 |
+
+### 3b — data dan alur
+
+| Item | Perubahan |
+|---|---|
+| C5 | Upload disajikan dari `/uploads/*`; ekstensi dari allowlist MIME; `Content-Disposition: inline`; redirect path lama; `server/src/utils/files.ts` menangani bentuk lama dan baru |
+| C5 | Script `npm run db:migrate-uploads` (`scripts/migrate-upload-urls.ts`) untuk menulis ulang URL tersimpan. **Belum dijalankan** atas permintaan. |
+| C10 | `loginThrottle` per-email dengan jeda progresif (maks 3s), tanpa lock permanen |
+| H7 | `isAuthAllowSuspended` untuk notices, logout, `GET`/`DELETE /auth/me`; `Login` dan `Me` menerima status `suspended`; FE menampilkan panel terbatas untuk akun suspended |
+
+### Verifikasi
+
+- `npm run lint` dan `cd server && npm run lint`: 0 error.
+- `cd server && npm run test:smoke`: **114 passed, 0 failed** (§19 kuota, §20 upload, §21 suspended).
+- `npm run build`: sukses.
+- Manual: S4 (token tidak muncul di log), C5 (path baru 200 + `Content-Disposition`, path lama 301, traversal 404), C10 (attempt 5-8 melambat 0.33s→1.74s, email lain tetap 0.10s).
+
+### Catatan
+
+- `db:migrate-uploads` harus dijalankan saat deploy sebelum redirect path lama dilepas. Selama belum, gambar lama tetap hidup lewat redirect.
+- H7 hanya menyentuh notices + hapus akun; route lain tetap menolak akun suspended.

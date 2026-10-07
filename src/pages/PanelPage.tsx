@@ -85,6 +85,28 @@ export function PanelPage() {
     { id: "traffic", label: "Traffic", href: "/panel/traffic" },
   ]
 
+  // A suspended account keeps one door open: read the decision, appeal it, or
+  // leave. Everything else stays closed, which is what the API enforces.
+  if (account.status === "suspended") {
+    return (
+      <PanelShell
+        items={items}
+        activeId="overview"
+        title="Account suspended"
+        description="Read the decision, appeal it, or delete your account. Everything else is closed while the suspension stands."
+      >
+        <div className="flex flex-col gap-6">
+          <div className="rounded-card border border-pop-pink/40 bg-pop-pink/8 p-5 text-sm leading-relaxed text-ink-2">
+            A moderator suspended your account. The reason is in the notice below. Replying there
+            sends the appeal to a different moderator, who reviews the decision.
+          </div>
+          <NoticeList personId={account.id} />
+          <DeleteProfile onDelete={deleteAccount} />
+        </div>
+      </PanelShell>
+    )
+  }
+
   if (section === "profile") {
     return (
       <PanelShell

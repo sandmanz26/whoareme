@@ -11,7 +11,7 @@ export const UploadsUsecase = {
     if (work.authorId.toString() !== userId) throw forbidden("That entry belongs to someone else.")
 
     await removeStoredFile(work.thumbnailPath)
-    const url = `${env.API_BASE_URL}/thumbnails/${filename}`
+    const url = `${env.API_BASE_URL}/uploads/thumbnails/${filename}`
     await Work.updateOne({ _id: workId }, { $set: { thumbnailPath: url, updatedAt: new Date() } })
 
     return { thumbnailPath: url }
@@ -31,7 +31,7 @@ export const UploadsUsecase = {
     if (!user) throw notFound("Account")
 
     await removeStoredFile(user.photoUrl)
-    const url = `${env.API_BASE_URL}/profiles/${filename}`
+    const url = `${env.API_BASE_URL}/uploads/profiles/${filename}`
     await Promise.all([
       User.updateOne({ _id: userId }, { $set: { photoUrl: url, updatedAt: new Date() } }),
       Work.updateMany({ authorId: userId }, { $set: { "author.photoUrl": url } }),

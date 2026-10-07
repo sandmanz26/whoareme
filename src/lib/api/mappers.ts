@@ -16,6 +16,8 @@ export interface ApiUser {
   role: string
   /** Present only on ownerUser responses (GET /auth/me, login, register). */
   access?: "member" | "moderator" | "admin"
+  /** Present only on ownerUser responses. Suspended accounts can read notices and delete. */
+  status?: "active" | "suspended" | "deleted"
   title: string
   company: string
   location: string
@@ -100,6 +102,7 @@ export function mapAccount(u: ApiUser): Account {
     passwordHash: "",
     emailVerifiedAt: u.emailVerifiedAt,
     access: u.access ?? "member",
+    status: u.status === "suspended" ? "suspended" : "active",
     createdAt: u.createdAt,
   }
 }

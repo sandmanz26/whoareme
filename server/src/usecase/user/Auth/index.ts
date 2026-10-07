@@ -67,6 +67,7 @@ type UserLike = Pick<
   | "emailVerifiedAt"
   | "role"
   | "access"
+  | "status"
   | "title"
   | "company"
   | "location"
@@ -105,13 +106,14 @@ export function publicUser(user: UserLike) {
   }
 }
 
-/** Owner-only — adds email, emailVerifiedAt, access level, and full quota counts. */
+/** Owner-only. Adds email, emailVerifiedAt, access level, and full quota counts. */
 function ownerUser(user: UserLike) {
   return {
     ...publicUser(user),
     email: user.email,
     emailVerifiedAt: user.emailVerifiedAt,
     access: user.access ?? "member",
+    status: user.status ?? "active",
     counts: user.counts,
   }
 }
@@ -166,7 +168,10 @@ export const AuthUsecase = {
   },
 
   async Login(input: z.infer<typeof loginSchema>) {
-    const user = await User.findOne({ email: input.email, status: "active" })
+    const user = await User.findOne({
+      email: input.email,
+      status: { $in: ["active", "suspended"] },
+    })
     const ok = user?.passwordHash
       ? await verifyPassword(input.password, user.passwordHash)
       : await verifyPassword(
@@ -266,7 +271,10 @@ export const AuthUsecase = {
   },
 
   async Me(userId: string) {
-    const user = await User.findOne({ _id: userId, status: "active" }).lean()
+    const user = await User.findOne({
+      _id: userId,
+      status: { $in: ["active", "suspended"] },
+    }).lean()
     if (!user) throw notFound("Account")
     return ownerUser(user as unknown as UserLike)
   },

@@ -20,6 +20,7 @@
     "db:seed-admin": "tsx --env-file=.env src/scripts/seed-admin.ts",
     "db:reconcile": "tsx src/scripts/reconcile-counts.ts",
     "db:backfill": "tsx src/scripts/backfill.ts",
+    "db:migrate-uploads": "tsx --env-file=.env src/scripts/migrate-upload-urls.ts",
     "test:smoke": "tsx src/scripts/smoke.ts"
   },
   "dependencies": {

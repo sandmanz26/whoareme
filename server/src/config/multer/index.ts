@@ -1,16 +1,25 @@
 import multer from "multer"
 import { randomBytes } from "node:crypto"
-import path from "node:path"
 import fs from "node:fs"
 import { env } from "../index.js"
+
+/**
+ * The stored extension comes from an allowlist keyed by MIME, never from the
+ * client's filename. A filename is attacker-controlled, and a file saved as
+ * `.html` and served from the API origin is a stored-XSS primitive.
+ */
+const EXT_BY_MIME: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+}
 
 function makeStorage(dir: string) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
   return multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, dir),
     filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase()
-      cb(null, `${randomBytes(16).toString("hex")}${ext}`)
+      cb(null, `${randomBytes(16).toString("hex")}${EXT_BY_MIME[file.mimetype] ?? ".bin"}`)
     },
   })
 }
