@@ -101,9 +101,8 @@ export function AccessibilityPage() {
             usually enough to reproduce it.
           </p>
           <p>
-            Our contact address is in the footer. In this pre-release build there is no mail
-            transport wired up, so the honest position is that the address works and the response
-            time on this page is an intention rather than a record.
+            Our contact address is in the footer. It reaches a real inbox, so the response time
+            stated on this page is a commitment we can be held to, not an aspiration.
           </p>
         </Section>
       </Prose>

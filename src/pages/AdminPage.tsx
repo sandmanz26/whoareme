@@ -881,8 +881,8 @@ function SiteSection({ allWork }: { allWork: Work[] }) {
       <section className="border-t border-line pt-8">
         <h2 className="display text-xl">Reset</h2>
         <p className="mt-2 max-w-lg text-sm text-muted">
-          Clears every moderation decision, report, setting and log line from this browser. The
-          seeded fixtures are untouched, because nothing here ever edited them.
+          Clears the review flags dismissed in this browser. Decisions, reports, settings and the
+          audit log live on the server and are not affected.
         </p>
         <div className="mt-4">
           <ActionForm

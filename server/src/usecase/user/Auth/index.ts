@@ -1,10 +1,16 @@
 import { randomBytes } from "node:crypto"
 import { z } from "zod"
+import { Types } from "mongoose"
 import User from "../../../models/user.js"
 import Work from "../../../models/work.js"
+import TrafficEvent from "../../../models/trafficEvent.js"
+import TrafficDaily from "../../../models/trafficDaily.js"
+import Notice from "../../../models/notice.js"
+import Report from "../../../models/report.js"
 import { hashPassword, verifyPassword } from "../../../service/password.js"
 import { signToken } from "../../../service/token.js"
 import { hashToken } from "../../../utils/hash.js"
+import { removeStoredFile } from "../../../utils/files.js"
 import { uniqueSlug } from "../../../utils/slug.js"
 import { buildSearchBlob } from "../../../utils/text.js"
 import { languagesFor } from "../../../utils/languages.js"
@@ -186,6 +192,79 @@ export const AuthUsecase = {
     await User.updateOne({ _id: userId }, { $set: { token: null, updatedAt: new Date() } })
   },
 
+  /**
+   * Erase the account and everything attached to it.
+   *
+   * Content and uploads are removed for real, not moved into a soft-deleted
+   * state: someone who deletes their profile is entitled to have it gone, not
+   * merely hidden. The one thing kept is the moderation decision record, which
+   * the terms and content policy both name, because a log the subject can erase
+   * cannot hold moderation to account. The user row survives as a scrubbed
+   * tombstone so that record still points at an actor.
+   */
+  async DeleteAccount(userId: string) {
+    const user = await User.findOne({ _id: userId, deletedAt: null }).lean()
+    if (!user) throw notFound("Account")
+
+    const now = new Date()
+    const authorId = new Types.ObjectId(userId)
+    const works = await Work.find({ authorId, deletedAt: null }, "_id thumbnailPath").lean()
+    const workIds = works.map((w) => w._id as Types.ObjectId)
+
+    // Files first: once the rows are gone they cannot be found to clean up, and
+    // an orphaned upload is exactly the copy a deletion request is about.
+    await Promise.all([
+      removeStoredFile(user.photoUrl),
+      ...works.map((w) => removeStoredFile(w.thumbnailPath)),
+    ])
+
+    await Promise.all([
+      Work.deleteMany({ authorId }),
+      TrafficEvent.deleteMany({ ownerId: authorId }),
+      TrafficDaily.deleteMany({ ownerId: authorId }),
+      Notice.deleteMany({ userId: authorId }),
+      Report.deleteMany({
+        $or: [
+          { targetKind: "user", targetId: authorId },
+          { targetKind: "work", targetId: { $in: workIds } },
+        ],
+      }),
+      Report.updateMany({ resolvedBy: authorId }, { $set: { resolvedBy: null } }),
+      User.updateOne(
+        { _id: authorId },
+        {
+          $set: {
+            email: null,
+            passwordHash: null,
+            emailVerifyTokenHash: null,
+            emailVerifyExpiresAt: null,
+            passwordResetTokenHash: null,
+            passwordResetExpiresAt: null,
+            token: null,
+            status: "deleted",
+            deletedAt: now,
+            deletedBy: authorId,
+            updatedAt: now,
+            name: "Deleted account",
+            title: "",
+            company: "",
+            location: "",
+            years: 0,
+            languages: [],
+            topics: [],
+            skills: [],
+            openToWork: false,
+            photoUrl: "",
+            portfolioUrl: "",
+            pitch: "",
+            searchBlob: "",
+            counts: { publishedWorks: 0, topicUsage: {} },
+          },
+        },
+      ),
+    ])
+  },
+
   async Me(userId: string) {
     const user = await User.findOne({ _id: userId, status: "active" }).lean()
     if (!user) throw notFound("Account")
@@ -239,19 +318,26 @@ export const AuthUsecase = {
                   $trim: {
                     input: {
                       $concat: [
-                        { $ifNull: ["$title", ""] }, " ",
-                        { $ifNull: ["$summary", ""] }, " ",
-                        { $ifNull: ["$problem", ""] }, " ",
-                        { $ifNull: ["$approach", ""] }, " ",
-                        { $ifNull: ["$outcome", ""] }, " ",
+                        { $ifNull: ["$title", ""] },
+                        " ",
+                        { $ifNull: ["$summary", ""] },
+                        " ",
+                        { $ifNull: ["$problem", ""] },
+                        " ",
+                        { $ifNull: ["$approach", ""] },
+                        " ",
+                        { $ifNull: ["$outcome", ""] },
+                        " ",
                         {
                           $reduce: {
                             input: { $ifNull: ["$sections", []] },
                             initialValue: "",
                             in: {
                               $concat: [
-                                "$$value", " ",
-                                { $ifNull: ["$$this.heading", ""] }, " ",
+                                "$$value",
+                                " ",
+                                { $ifNull: ["$$this.heading", ""] },
+                                " ",
                                 { $ifNull: ["$$this.body", ""] },
                               ],
                             },
@@ -264,8 +350,10 @@ export const AuthUsecase = {
                             initialValue: "",
                             in: {
                               $concat: [
-                                "$$value", " ",
-                                { $ifNull: ["$$this.label", ""] }, " ",
+                                "$$value",
+                                " ",
+                                { $ifNull: ["$$this.label", ""] },
+                                " ",
                                 { $ifNull: ["$$this.value", ""] },
                               ],
                             },
@@ -296,9 +384,12 @@ export const AuthUsecase = {
                           },
                         },
                         " ",
-                        { $ifNull: ["$model", ""] }, " ",
-                        newName, " ",
-                        newCompany, " ",
+                        { $ifNull: ["$model", ""] },
+                        " ",
+                        newName,
+                        " ",
+                        newCompany,
+                        " ",
                         newLocation,
                       ],
                     },
@@ -309,6 +400,8 @@ export const AuthUsecase = {
             },
           },
         ],
+        // Mongoose 9 rejects an array update unless the pipeline is explicit.
+        { updatePipeline: true },
       )
     }
 

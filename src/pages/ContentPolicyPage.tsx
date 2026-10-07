@@ -63,7 +63,7 @@ export function ContentPolicyPage() {
         eyebrow="Content policy"
         title="What comes down, and what stays up"
         lede="The grounds we act on, the reasons we do not, and what happens when you disagree with a decision."
-        meta="Version 0.1 · 18 September 2026 · a draft for an unreleased product, not reviewed by a lawyer"
+        meta="Version 0.2 · 8 October 2026 · a draft for an unreleased product, not reviewed by a lawyer"
       />
 
       <Prose>
@@ -102,9 +102,9 @@ export function ContentPolicyPage() {
         <Section title="How to report something">
           <p>
             Every case study and every profile carries a{" "}
-            <strong className="font-semibold text-ink">Report this</strong> link. No account is
-            needed: the reports worth having often come from someone who happens to know a claim is
-            false, and requiring them to sign up first would mean we never hear it.
+            <strong className="font-semibold text-ink">Report this</strong> link. Reporting needs a
+            free account, which keeps reports accountable and cuts down on spam. The report is not
+            stored against your account: only the reason, your note and a de-duplication hash.
           </p>
           <p>
             Tell us which part is wrong and why. "The headline figure does not match the outcome
@@ -140,10 +140,10 @@ export function ContentPolicyPage() {
 
         <Section title="Where this is honest about itself">
           <p>
-            In this pre-release build the console has no access control, decisions live in one
-            browser, and there is no mail transport to send a notice with. The appeal route
-            described above is the intended behaviour, not a shipped feature. It is written down
-            here because the policy has to exist before the power to remove things does, not after.
+            Moderation runs on the server and is access-controlled: a decision is made by a signed
+            in moderator, recorded with its reason, and the author is notified. This page is a draft
+            and has not been reviewed by a lawyer. It is written down because the policy has to
+            exist before the power to remove things does, not after.
           </p>
         </Section>
       </Prose>

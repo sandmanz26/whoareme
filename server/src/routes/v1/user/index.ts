@@ -28,6 +28,7 @@ UserRouter.post("/auth/login", authLimiter, asyncErrorHandler(AuthController.Log
 UserRouter.post("/auth/logout", isAuth(), asyncErrorHandler(AuthController.Logout))
 UserRouter.get("/auth/me", isAuth(), asyncErrorHandler(AuthController.Me))
 UserRouter.patch("/auth/me", isAuth(), asyncErrorHandler(AuthController.UpdateMe))
+UserRouter.delete("/auth/me", isAuth(), asyncErrorHandler(AuthController.DeleteMe))
 UserRouter.post(
   "/auth/verify/request",
   isAuth(),

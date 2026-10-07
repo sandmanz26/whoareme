@@ -1,4 +1,5 @@
 import { Outlet, ScrollRestoration, useNavigate } from "react-router-dom"
+import { Toaster } from "react-hot-toast"
 import { Navbar } from "@/components/layout/Navbar"
 import { Footer } from "@/components/layout/Footer"
 import { JoinModal } from "@/components/join/JoinModal"
@@ -35,6 +36,21 @@ function Layout() {
         onClose={closeReport}
         target={reportOf?.target ?? null}
         label={reportOf?.label ?? ""}
+      />
+      {/* A mutation that fails silently is a mutation the user cannot recover from. */}
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          duration: 4000,
+          className:
+            "rounded-card border border-line bg-card font-display text-sm font-medium text-ink shadow-lg",
+          success: {
+            iconTheme: { primary: "var(--color-pop-lime)", secondary: "var(--color-ink)" },
+          },
+          error: {
+            iconTheme: { primary: "var(--color-pop-pink)", secondary: "var(--color-paper)" },
+          },
+        }}
       />
       <ScrollRestoration />
     </div>

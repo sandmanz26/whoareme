@@ -17,3 +17,16 @@ api.interceptors.request.use((config) => {
   if (_token) config.headers.Authorization = `Bearer ${_token}`
   return config
 })
+
+/**
+ * The one place an axios failure becomes a sentence a person can read.
+ * The API always answers `{ success, data, message }`, so the message field is
+ * preferred over axios's own (which is URL-shaped and unhelpful).
+ */
+export function apiErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const message = (err.response?.data as { message?: string } | undefined)?.message
+    return message ?? err.message
+  }
+  return err instanceof Error ? err.message : "Something went wrong."
+}

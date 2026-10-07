@@ -33,7 +33,7 @@ export function VerifyPage() {
         try {
           await refreshAccount()
         } catch {
-          /* user may not be signed in — ok */
+          /* user may not be signed in - ok */
         }
         setState("success")
         setTimeout(() => navigate("/panel"), 3000)
@@ -47,7 +47,7 @@ export function VerifyPage() {
       })
 
     return cleanup
-    // Intentionally empty deps — runs once on mount only
+    // Intentionally empty deps - runs once on mount only
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

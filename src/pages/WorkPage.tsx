@@ -399,7 +399,7 @@ export function WorkPage() {
               <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-muted">
                 <Chart size={14} className="mt-0.5 shrink-0" />
                 <span>
-                  Only you see this. Counts opens by others — your own visits are excluded.
+                  Only you see this. Counts opens by others - your own visits are excluded.
                 </span>
               </p>
             </div>

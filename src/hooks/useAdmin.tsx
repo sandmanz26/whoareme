@@ -16,6 +16,9 @@ import {
 import { copySlotById } from "@/data/siteCopy"
 import type { RoleId } from "@/data/taxonomy"
 import { QUERY_KEYS } from "@/lib/api/queryKeys"
+import { fetchPublicSettings } from "@/lib/api/endpoints/settings"
+import { toast } from "react-hot-toast"
+import { apiErrorMessage } from "@/lib/api/client"
 import {
   fetchReports,
   fetchAppeals,
@@ -204,6 +207,16 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     staleTime: 5 * 60 * 1000,
   })
 
+  // Public settings are readable without a session. They carry the withdrawn
+  // crafts and the editable copy, so a visitor sees the same controls a
+  // moderator configured. When both are present, the moderator copy wins.
+  const { data: publicSettings = null } = useQuery({
+    queryKey: QUERY_KEYS.publicSettings,
+    queryFn: fetchPublicSettings,
+    staleTime: 5 * 60 * 1000,
+  })
+  const effectiveSettings = apiSettings ?? publicSettings
+
   const { data: apiUserNotices = [] } = useQuery({
     queryKey: QUERY_KEYS.userNotices,
     queryFn: fetchUserNotices,
@@ -219,11 +232,11 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       reports: apiReports.map(mapReport),
       notices: apiAppeals.map(mapAppeal),
       log: apiLog.map(mapLogEntry),
-      disabledRoles: (apiSettings?.disabledRoles ?? []) as RoleId[],
-      contact: apiSettings?.contact ?? EMPTY_MODERATION.contact,
-      copy: apiSettings?.copy ?? {},
+      disabledRoles: (effectiveSettings?.disabledRoles ?? []) as RoleId[],
+      contact: effectiveSettings?.contact ?? EMPTY_MODERATION.contact,
+      copy: effectiveSettings?.copy ?? {},
     }),
-    [reviewed, apiReports, apiAppeals, apiLog, apiSettings],
+    [reviewed, apiReports, apiAppeals, apiLog, effectiveSettings],
   )
 
   const invalidateModeration = useCallback(() => {
@@ -232,43 +245,67 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const setWorkHidden = useCallback(
     async (workId: string, hidden: boolean, _label: string, reason: string) => {
-      if (hidden) await unpublishWork(workId, reason)
-      else await republishWork(workId, reason)
-      queryClient.invalidateQueries({ queryKey: ["work", "list"] })
-      queryClient.invalidateQueries({ queryKey: ["people", "list"] })
-      invalidateModeration()
+      try {
+        if (hidden) await unpublishWork(workId, reason)
+        else await republishWork(workId, reason)
+        toast.success(hidden ? "Entry withdrawn." : "Entry restored.")
+      } catch (err) {
+        toast.error(apiErrorMessage(err))
+      } finally {
+        queryClient.invalidateQueries({ queryKey: ["work", "list"] })
+        queryClient.invalidateQueries({ queryKey: ["people", "list"] })
+        invalidateModeration()
+      }
     },
     [queryClient, invalidateModeration],
   )
 
   const setPersonSuspended = useCallback(
     async (personId: string, suspended: boolean, _label: string, reason: string) => {
-      if (suspended) await suspendPerson(personId, reason)
-      else await reinstatePerson(personId, reason)
-      queryClient.invalidateQueries({ queryKey: ["people", "list"] })
-      queryClient.invalidateQueries({ queryKey: ["work", "list"] })
-      invalidateModeration()
+      try {
+        if (suspended) await suspendPerson(personId, reason)
+        else await reinstatePerson(personId, reason)
+        toast.success(suspended ? "Person suspended." : "Person reinstated.")
+      } catch (err) {
+        toast.error(apiErrorMessage(err))
+      } finally {
+        queryClient.invalidateQueries({ queryKey: ["people", "list"] })
+        queryClient.invalidateQueries({ queryKey: ["work", "list"] })
+        invalidateModeration()
+      }
     },
     [queryClient, invalidateModeration],
   )
 
   const resolveReport = useCallback(
     async (reportId: string, reason: string) => {
-      await apiResolveReport(reportId, reason)
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationReports })
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationLog })
+      try {
+        await apiResolveReport(reportId, reason)
+        toast.success("Report closed.")
+      } catch (err) {
+        toast.error(apiErrorMessage(err))
+      } finally {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationReports })
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationLog })
+      }
     },
     [queryClient],
   )
 
   const decideAppeal = useCallback(
     async (noticeId: string, outcome: "upheld" | "overturned", reason: string) => {
-      await apiDecideAppeal(noticeId, outcome, reason)
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationAppeals })
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationLog })
-      if (outcome === "overturned") {
-        queryClient.invalidateQueries({ queryKey: ["work", "list"] })
-        queryClient.invalidateQueries({ queryKey: ["people", "list"] })
+      try {
+        await apiDecideAppeal(noticeId, outcome, reason)
+        toast.success(outcome === "overturned" ? "Appeal overturned." : "Appeal upheld.")
+      } catch (err) {
+        toast.error(apiErrorMessage(err))
+      } finally {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationAppeals })
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationLog })
+        if (outcome === "overturned") {
+          queryClient.invalidateQueries({ queryKey: ["work", "list"] })
+          queryClient.invalidateQueries({ queryKey: ["people", "list"] })
+        }
       }
     },
     [queryClient],
@@ -280,46 +317,61 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const setRoleDisabled = useCallback(
     async (role: RoleId, disabled: boolean, label: string) => {
-      const current = (apiSettings?.disabledRoles ?? []) as RoleId[]
-      const next = disabled ? [...new Set([...current, role])] : current.filter((r) => r !== role)
-      await updateSettings(
-        { disabledRoles: next },
-        disabled
-          ? `Hidden from browse controls: ${label}`
-          : `Shown in browse controls again: ${label}`,
-      )
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.moderationSettings,
-      })
+      try {
+        const current = (effectiveSettings?.disabledRoles ?? []) as RoleId[]
+        const next = disabled ? [...new Set([...current, role])] : current.filter((r) => r !== role)
+        await updateSettings(
+          { disabledRoles: next },
+          disabled
+            ? `Hidden from browse controls: ${label}`
+            : `Shown in browse controls again: ${label}`,
+        )
+        toast.success(disabled ? `${label} withdrawn from browse.` : `${label} shown again.`)
+      } catch (err) {
+        toast.error(apiErrorMessage(err))
+      } finally {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationSettings })
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.publicSettings })
+      }
     },
-    [queryClient, apiSettings],
+    [queryClient, effectiveSettings],
   )
 
   const setContact = useCallback(
     async (contact: SiteContact) => {
-      await updateSettings({ contact }, `Contact updated: ${contact.email}, ${contact.location}`)
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.moderationSettings,
-      })
+      try {
+        await updateSettings({ contact }, `Contact updated: ${contact.email}, ${contact.location}`)
+        toast.success("Contact updated.")
+      } catch (err) {
+        toast.error(apiErrorMessage(err))
+      } finally {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationSettings })
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.publicSettings })
+      }
     },
     [queryClient],
   )
 
   const setCopy = useCallback(
     async (slotId: string, value: string) => {
-      const currentCopy = { ...(apiSettings?.copy ?? {}) }
-      const fallback = copySlotById(slotId)?.defaultValue ?? ""
-      if (value.trim() === "" || value === fallback) delete currentCopy[slotId]
-      else currentCopy[slotId] = value
-      await updateSettings(
-        { copy: currentCopy },
-        currentCopy[slotId] ? "Copy edited" : "Copy reset to the shipped default",
-      )
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.moderationSettings,
-      })
+      try {
+        const currentCopy = { ...(effectiveSettings?.copy ?? {}) }
+        const fallback = copySlotById(slotId)?.defaultValue ?? ""
+        if (value.trim() === "" || value === fallback) delete currentCopy[slotId]
+        else currentCopy[slotId] = value
+        await updateSettings(
+          { copy: currentCopy },
+          currentCopy[slotId] ? "Copy edited" : "Copy reset to the shipped default",
+        )
+        toast.success("Copy saved.")
+      } catch (err) {
+        toast.error(apiErrorMessage(err))
+      } finally {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationSettings })
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.publicSettings })
+      }
     },
-    [queryClient, apiSettings],
+    [queryClient, effectiveSettings],
   )
 
   const resetAll = useCallback(() => {
@@ -327,9 +379,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const report = useCallback((target: Target, reason: ReportReasonId, note: string) => {
-    postReport(target.kind === "person" ? "user" : target.kind, target.id, reason, note).catch(
-      () => {},
-    )
+    postReport(target.kind === "person" ? "user" : target.kind, target.id, reason, note)
+      .then(() => toast.success("Report sent. Thank you for flagging it."))
+      .catch((err) => toast.error(apiErrorMessage(err)))
   }, [])
 
   const noticesFor = useCallback(
@@ -339,17 +391,28 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const markNoticeRead = useCallback(
     async (noticeId: string) => {
-      await postMarkNoticeRead(noticeId)
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userNotices })
+      try {
+        await postMarkNoticeRead(noticeId)
+      } catch (err) {
+        toast.error(apiErrorMessage(err))
+      } finally {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userNotices })
+      }
     },
     [queryClient],
   )
 
   const appealNotice = useCallback(
     async (noticeId: string, text: string) => {
-      await postAppealNotice(noticeId, text)
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userNotices })
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationAppeals })
+      try {
+        await postAppealNotice(noticeId, text)
+        toast.success("Appeal submitted.")
+      } catch (err) {
+        toast.error(apiErrorMessage(err))
+      } finally {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userNotices })
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.moderationAppeals })
+      }
     },
     [queryClient],
   )

@@ -1,7 +1,9 @@
 import { useRef } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { toast } from "react-hot-toast"
 import type { WorkDraft } from "@/data/account"
 import { mapApiWorkMineToDraft, draftToApiBody } from "@/lib/api/mappers"
+import { apiErrorMessage } from "@/lib/api/client"
 import {
   fetchWorkMineList,
   postWork,
@@ -24,7 +26,7 @@ const isLocalId = (id: string) => id.startsWith("w-")
 export function useMyWork() {
   const queryClient = useQueryClient()
 
-  // `enabled: false` — never auto-fetches. Reads from cache populated by AccountProvider.
+  // `enabled: false` - never auto-fetches. Reads from cache populated by AccountProvider.
   // queryFn is provided so TanStack Query knows the data shape and can refetch on explicit invalidation.
   const { data: drafts = [] } = useQuery<WorkDraft[]>({
     queryKey: QUERY_KEYS.workMineList,
@@ -46,8 +48,14 @@ export function useMyWork() {
 
     if (isLocalId(draft.id)) {
       // First save: create on server, swap local id → MongoDB id
-      const { work } = await postWork(body)
-      const serverDraft = mapApiWorkMineToDraft(work)
+      let created
+      try {
+        created = await postWork(body)
+      } catch (err) {
+        toast.error(apiErrorMessage(err))
+        throw err
+      }
+      const serverDraft = mapApiWorkMineToDraft(created.work)
       resolved = {
         ...serverDraft,
         values: draft.values,
@@ -59,7 +67,12 @@ export function useMyWork() {
         figures: draft.figures,
       }
     } else {
-      await putWork(draft.id, body)
+      try {
+        await putWork(draft.id, body)
+      } catch (err) {
+        toast.error(apiErrorMessage(err))
+        throw err
+      }
       resolved = { ...draft, updatedAt: new Date().toISOString() }
     }
 
@@ -76,7 +89,7 @@ export function useMyWork() {
         const { thumbnailPath } = await postWorkThumbnail(resolved.id, file)
         resolved = { ...resolved, thumbnail: thumbnailPath }
       } catch {
-        // Upload failed — keep data URL locally, will retry on next save
+        // Upload failed - keep data URL locally, will retry on next save
       }
     } else if (!resolved.thumbnail && prevThumb && !prevThumb.startsWith("data:")) {
       await deleteWorkThumbnail(resolved.id).catch(() => {})
@@ -89,16 +102,25 @@ export function useMyWork() {
     if (resolved.published && !wasPublished) {
       try {
         await postPublishWork(resolved.id)
-      } catch {
+        toast.success("Entry published.")
+      } catch (err) {
         resolved = { ...resolved, published: false }
+        toast.error(apiErrorMessage(err))
       } finally {
         queryClient.invalidateQueries({ queryKey: ["work", "list"] })
         queryClient.invalidateQueries({ queryKey: ["people", "list"] })
       }
     } else if (!resolved.published && wasPublished) {
-      await postUnpublishWork(resolved.id).catch(() => {})
-      queryClient.invalidateQueries({ queryKey: ["work", "list"] })
-      queryClient.invalidateQueries({ queryKey: ["people", "list"] })
+      try {
+        await postUnpublishWork(resolved.id)
+        toast.success("Entry reverted to draft.")
+      } catch (err) {
+        resolved = { ...resolved, published: true }
+        toast.error(apiErrorMessage(err))
+      } finally {
+        queryClient.invalidateQueries({ queryKey: ["work", "list"] })
+        queryClient.invalidateQueries({ queryKey: ["people", "list"] })
+      }
     }
 
     // Update cache: remove old local-id entry if id changed, then upsert
@@ -115,7 +137,13 @@ export function useMyWork() {
 
   async function deleteDraft(id: string): Promise<void> {
     if (!isLocalId(id)) {
-      await deleteWork(id)
+      try {
+        await deleteWork(id)
+        toast.success("Entry deleted.")
+      } catch (err) {
+        toast.error(apiErrorMessage(err))
+        return
+      }
     }
     queryClient.setQueryData<WorkDraft[]>(QUERY_KEYS.workMineList, (current = []) =>
       current.filter((d) => d.id !== id),

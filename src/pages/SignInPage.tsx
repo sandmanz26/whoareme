@@ -154,7 +154,7 @@ function ForgotPasswordView({ onBack }: { onBack: () => void }) {
       setSent(true)
     } catch {
       form.setError("email", {
-        message: "Could not send reset link — try again.",
+        message: "Could not send reset link - try again.",
       })
     }
   }

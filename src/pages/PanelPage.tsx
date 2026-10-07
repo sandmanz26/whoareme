@@ -32,7 +32,8 @@ import { useAccount } from "@/hooks/useAccount"
 import { useMyWork } from "@/hooks/useMyWork"
 import { useMyProfile } from "@/hooks/useMyProfile"
 import { useTrafficSummary } from "@/hooks/useTrafficSummary"
-import { api } from "@/lib/api/client"
+import { api, apiErrorMessage } from "@/lib/api/client"
+import { toast } from "react-hot-toast"
 import { useBrowse } from "@/context/BrowseContext"
 import { cn, initialsOf } from "@/lib/utils"
 import { applyMeta } from "@/lib/head"
@@ -50,7 +51,7 @@ export function PanelPage() {
   const { drafts, saveDraft, deleteDraft } = useMyWork()
   const { updateProfile } = useMyProfile()
   const trafficSummary = useTrafficSummary()
-  const { viewerAuthor } = useBrowse()
+  const { viewerAuthor, openJoin } = useBrowse()
   const onboarding = useOnboarding()
 
   useEffect(() => {
@@ -68,7 +69,7 @@ export function PanelPage() {
   }, [section, entry])
 
   if (isInitializing) return null
-  if (!account) return <SignedOut onJoin={() => navigate("/signup")} />
+  if (!account) return <SignedOut onJoin={openJoin} />
 
   const published = drafts.filter((d) => d.published).length
 
@@ -130,7 +131,7 @@ export function PanelPage() {
       items={items}
       activeId="overview"
       title={`Hey, ${account.name.split(" ")[0]}`}
-      description="Your profile is live in this browser. Fill it in and publish work to be findable."
+      description="Your profile is live in the directory. Fill it in and publish work to be findable."
       action={
         <Button onClick={() => navigate("/panel/portfolio/new")}>
           <Plus size={16} />
@@ -173,7 +174,7 @@ function VerifyEmailBanner() {
     <div className="mb-4 rounded-card border border-pop-tangerine/40 bg-pop-tangerine/8 px-4 py-3 text-sm">
       {sent ? (
         <p className="text-muted">
-          Verification link sent — check your inbox (valid for 24 hours).
+          Verification link sent - check your inbox (valid for 24 hours).
         </p>
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -202,10 +203,10 @@ function SignedOut({ onJoin }: { onJoin: () => void }) {
   const navigate = useNavigate()
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-5 text-center">
-      <h1 className="display text-3xl">No profile in this browser</h1>
+      <h1 className="display text-3xl">No profile yet</h1>
       <p className="mt-3 text-sm leading-relaxed text-muted">
-        The panel opens once you create a profile. Everything is stored locally - there is no
-        server, so nothing to sign into.
+        Create a profile to open the panel, then fill in your details and publish work to be
+        findable in the directory.
       </p>
       <div className="mt-7 flex flex-wrap justify-center gap-3">
         <Button onClick={onJoin}>Create a profile</Button>
@@ -444,7 +445,7 @@ function ProfileForm({
 }: {
   account: Account
   onSave: (patch: Partial<Account>) => void
-  onDelete: () => void
+  onDelete: () => Promise<void>
 }) {
   const [saved, setSaved] = useState(false)
 
@@ -558,7 +559,7 @@ function ProfileForm({
       <ChipGroup
         legend="Topics"
         options={CATEGORY_OPTIONS}
-        value={values.topics ?? []}
+        value={(values.topics ?? []) as CategoryId[]}
         max={4}
         onToggle={(id: CategoryId) => {
           const current = values.topics ?? []
@@ -614,7 +615,7 @@ function ProfileForm({
             className="flex items-center gap-1.5 font-display text-sm font-medium text-ink-2"
           >
             <Check size={15} className="text-pop-violet" />
-            Saved to this browser.
+            Saved.
           </p>
         )}
       </div>
@@ -624,31 +625,44 @@ function ProfileForm({
   )
 }
 
-function DeleteProfile({ onDelete }: { onDelete: () => void }) {
+function DeleteProfile({ onDelete }: { onDelete: () => Promise<void> }) {
   const navigate = useNavigate()
   const [armed, setArmed] = useState(false)
+  const [working, setWorking] = useState(false)
+
+  async function confirmDelete() {
+    setWorking(true)
+    try {
+      await onDelete()
+      toast.success("Account deleted.")
+      navigate("/")
+    } catch (err) {
+      toast.error(apiErrorMessage(err))
+      setWorking(false)
+    }
+  }
 
   return (
     <div className="mt-2 border-t border-line pt-6">
       <p className="font-display text-sm font-semibold text-ink">Delete profile</p>
       <p className="mt-2 max-w-lg text-sm leading-relaxed text-muted">
-        Removes your profile, every entry and your traffic history from this browser. Nothing is
-        kept on a server, so there is no copy to restore from and no undo.
+        Removes your account, every entry you published, the images you uploaded, your traffic
+        history and your notices. The record of moderation decisions about your content is kept, as
+        the content policy describes. This cannot be undone.
       </p>
 
       {armed ? (
         <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Button type="button" size="sm" disabled={working} onClick={confirmDelete}>
+            {working ? "Deleting…" : "Yes, delete everything"}
+          </Button>
           <Button
             type="button"
             size="sm"
-            onClick={() => {
-              onDelete()
-              navigate("/")
-            }}
+            variant="ghost"
+            disabled={working}
+            onClick={() => setArmed(false)}
           >
-            Yes, delete everything
-          </Button>
-          <Button type="button" size="sm" variant="ghost" onClick={() => setArmed(false)}>
             Keep it
           </Button>
         </div>

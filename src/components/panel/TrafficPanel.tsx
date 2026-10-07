@@ -147,7 +147,7 @@ export function TrafficPanel({
 
       <p className="rounded-card border border-dashed border-ink/20 px-5 py-4 text-xs leading-relaxed text-muted">
         <span className="font-display font-semibold text-ink">How these numbers work.</span> Profile
-        views and portfolio opens are counted when other people visit — your own visits are
+        views and portfolio opens are counted when other people visit - your own visits are
         excluded. Numbers update within a few minutes.
       </p>
     </div>

@@ -1,10 +1,12 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { Modal } from "@/components/ui/Modal"
 import { Button } from "@/components/ui/Button"
 import { Field, TextArea } from "@/components/ui/Field"
 import { Check } from "@/components/ui/Icon"
 import { REPORT_REASONS, type ReportReasonId, type Target } from "@/data/admin"
 import { useAdmin } from "@/hooks/useAdmin"
+import { useAccount } from "@/hooks/useAccount"
 import { cn } from "@/lib/utils"
 
 interface ReportModalProps {
@@ -16,15 +18,19 @@ interface ReportModalProps {
 }
 
 /**
- * Reporting is deliberately low-friction and low-promise.
+ * Reporting is low-friction and low-promise, but it is not anonymous.
  *
- * No account required, because requiring one would mean the only people who
- * report are the ones already invested. And the confirmation says a human will
- * look rather than that anything will be removed, because a report is a
- * request for review and saying otherwise sets up a disappointment.
+ * An account is required, because an unauthenticated report endpoint is a spam
+ * funnel and because a report should come from someone: the API stores the
+ * reason and a salted daily hash to stop duplicates, not the account that filed
+ * it. The confirmation says a human will look rather than that anything will be
+ * removed, because a report is a request for review and saying otherwise sets
+ * up a disappointment.
  */
 export function ReportModal({ open, onClose, target, label }: ReportModalProps) {
   const { report } = useAdmin()
+  const { account } = useAccount()
+  const navigate = useNavigate()
   const [reason, setReason] = useState<ReportReasonId | null>(null)
   const [note, setNote] = useState("")
   const [sent, setSent] = useState(false)
@@ -46,7 +52,22 @@ export function ReportModal({ open, onClose, target, label }: ReportModalProps) 
       title={sent ? "Thank you" : "Report this"}
       description={sent ? undefined : label}
     >
-      {sent ? (
+      {!account ? (
+        <div className="flex flex-col items-start gap-4">
+          <p className="text-sm leading-relaxed text-ink-2">
+            Reporting needs a free account. That keeps reports accountable and cuts down on spam,
+            and it is the same account you would use to publish.
+          </p>
+          <Button
+            onClick={() => {
+              close()
+              navigate("/signin")
+            }}
+          >
+            Sign in to report
+          </Button>
+        </div>
+      ) : sent ? (
         <div className="flex flex-col items-start gap-4">
           <span className="inline-flex items-center gap-2 rounded-pill bg-pop-lime px-3 py-1.5 font-display text-xs font-semibold text-ink">
             <Check size={15} />
@@ -54,8 +75,8 @@ export function ReportModal({ open, onClose, target, label }: ReportModalProps) 
           </span>
           <p className="text-sm leading-relaxed text-ink-2">
             A moderator will look at this. We cannot promise an outcome: a report is a request for
-            review, not a removal. Nothing about you was recorded, and in this build the report
-            stays in your own browser.
+            review, not a removal. We store the reason and a de-duplication hash, not which account
+            sent it.
           </p>
           <Button onClick={close}>Close</Button>
         </div>

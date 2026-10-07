@@ -48,9 +48,11 @@ async function api(
   path: string,
   body?: Json,
   token?: string,
+  userAgent?: string,
 ): Promise<{ status: number; json: Json }> {
   const headers: Record<string, string> = { "Content-Type": "application/json" }
   if (token) headers["Authorization"] = `Bearer ${token}`
+  if (userAgent) headers["User-Agent"] = userAgent
 
   const res = await fetch(`${base}${path}`, {
     method,
@@ -63,8 +65,8 @@ async function api(
   return { status: res.status, json }
 }
 
-function get(base: string, path: string, token?: string) {
-  return api(base, "GET", path, undefined, token)
+function get(base: string, path: string, token?: string, userAgent?: string) {
+  return api(base, "GET", path, undefined, token, userAgent)
 }
 function post(base: string, path: string, body: Json, token?: string) {
   return api(base, "POST", path, body, token)
@@ -395,6 +397,41 @@ async function main() {
     const r = await get(base, "/traffic/me", loginToken)
     assertEq("GET /traffic/me → 200", r.status, 200)
     assert("traffic summary is object", typeof r.json["data"] === "object")
+
+    // The traffic read is an aggregate, which does not cast the owner id against
+    // the schema. Prove a recorded view comes back, since a total of zero was
+    // the silent failure this covers.
+    const t = await post(base, "/work", makeWork({ title: "Traffic probe entry" }), loginToken)
+    const tWork = (t.json["data"] as Json)["work"] as Json
+    const tid = tWork["_id"] as string
+    const tslug = tWork["slug"] as string
+    await post(base, `/work/${tid}/publish`, {}, loginToken)
+
+    // Anonymous view with a distinct UA, so the daily de-dup counts it.
+    const viewed = await get(base, `/work/${tslug}`, undefined, "smoke-viewer/1.0")
+    assertEq("anonymous work view → 200", viewed.status, 200)
+
+    // RecordOpen is fire-and-forget, so poll until this entry shows up. The
+    // summary can already be non-zero from earlier views, so wait on the entry.
+    type TrafficData = {
+      totals: { workOpens: number }
+      perWork: Array<{ slug: string | null; opens: number }>
+    }
+    let data: TrafficData | null = null
+    for (let i = 0; i < 40; i++) {
+      const summary = await get(base, "/traffic/me", loginToken)
+      data = summary.json["data"] as TrafficData
+      if (data.perWork.some((row) => row.slug === tslug && row.opens > 0)) break
+      await new Promise((resolve) => setTimeout(resolve, 50))
+    }
+    assert("traffic workOpens > 0", (data?.totals.workOpens ?? 0) > 0)
+    assert(
+      "traffic perWork lists the viewed entry",
+      (data?.perWork ?? []).some((row) => row.slug === tslug && row.opens > 0),
+    )
+
+    await post(base, `/work/${tid}/unpublish`, {}, loginToken)
+    await del(base, `/work/${tid}`, loginToken)
   }
 
   // ── § 9 Reports ───────────────────────────────────────────────────────────────
@@ -776,6 +813,63 @@ async function main() {
     // Token should no longer work
     const meAfter = await get(base, "/auth/me", loginToken)
     assertEq("old token rejected after logout → 401", meAfter.status, 401)
+  }
+
+  // ── § 18 Account deletion ─────────────────────────────────────────────────────
+  console.log("\n§18 Account deletion")
+  {
+    const email = "deletion-probe@example.com"
+    const password = "deletion-probe-12345"
+
+    const reg = await post(base, "/auth/register", {
+      name: "Deletion Probe",
+      email,
+      password,
+      role: "engineering",
+      years: 4,
+    })
+    assertEq("register deletion probe → 201", reg.status, 201)
+    const probeToken = (reg.json["data"] as Json)["token"] as string
+
+    // Verify so the probe can publish, then publish one entry.
+    const vreq = await post(base, "/auth/verify/request", {}, probeToken)
+    const vt = (vreq.json["data"] as Json)["token"] as string
+    await post(base, "/auth/verify/confirm", { token: vt })
+
+    const made = await post(
+      base,
+      "/work",
+      makeWork({ title: "Deletion cascade entry" }),
+      probeToken,
+    )
+    const madeWork = (made.json["data"] as Json)["work"] as Json
+    const madeId = madeWork["_id"] as string
+    const madeSlug = madeWork["slug"] as string
+    await post(base, `/work/${madeId}/publish`, {}, probeToken)
+
+    const listedBefore = await get(base, `/work/${madeSlug}`)
+    assertEq("probe entry is public before deletion → 200", listedBefore.status, 200)
+
+    const delRes = await del(base, "/auth/me", probeToken)
+    assertEq("DELETE /auth/me → 200", delRes.status, 200)
+
+    const meAfter = await get(base, "/auth/me", probeToken)
+    assertEq("deleted account token rejected → 401", meAfter.status, 401)
+
+    const loginAfter = await post(base, "/auth/login", { email, password })
+    assertEq("deleted account cannot log in → 401", loginAfter.status, 401)
+
+    const listedAfter = await get(base, `/work/${madeSlug}`)
+    assertEq("probe entry gone from public → 404", listedAfter.status, 404)
+
+    const reReg = await post(base, "/auth/register", {
+      name: "Deletion Probe Two",
+      email,
+      password,
+      role: "engineering",
+      years: 1,
+    })
+    assertEq("email freed for re-registration → 201", reReg.status, 201)
   }
 
   // ── Results ───────────────────────────────────────────────────────────────────

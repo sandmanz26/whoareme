@@ -360,7 +360,7 @@ export function WorkEditor({
               className="flex w-full items-center gap-1.5 font-display text-xs font-medium text-ink-2"
             >
               <Check size={14} className="text-pop-violet" />
-              Saved at {savedAt} - stored in this browser only.
+              Saved at {savedAt}.
             </p>
           )}
         </div>

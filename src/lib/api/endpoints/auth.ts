@@ -38,6 +38,10 @@ export async function postLogout() {
   await api.post("/user/auth/logout")
 }
 
+export async function deleteMe() {
+  await api.delete("/user/auth/me")
+}
+
 export async function patchMe(patch: Record<string, unknown>) {
   const res = await api.patch<Wrap<{ user: ApiUser }>>("/user/auth/me", patch)
   return res.data.data

@@ -20,6 +20,7 @@ import {
   postLogin,
   postRegister,
   postLogout,
+  deleteMe,
   postForgotPassword,
   postResetPassword,
 } from "@/lib/api/endpoints/auth"
@@ -41,7 +42,7 @@ interface AccountContextValue {
   drafts: WorkDraft[]
   publishedWork: Work[]
   register: (
-    account: Omit<Account, "id" | "createdAt" | "passwordHash" | "emailVerifiedAt">,
+    account: Omit<Account, "id" | "createdAt" | "passwordHash" | "emailVerifiedAt" | "access">,
     password: string,
   ) => Promise<Account>
   signIn: (email: string, password: string) => Promise<SignInResult>
@@ -49,7 +50,7 @@ interface AccountContextValue {
   confirmPasswordReset: (token: string, password: string) => Promise<SignInResult>
   refreshAccount: () => Promise<void>
   signOut: () => void
-  deleteAccount: () => void
+  deleteAccount: () => Promise<void>
 }
 
 const AccountContext = createContext<AccountContextValue | null>(null)
@@ -64,7 +65,7 @@ function apiError(err: unknown): string {
 export function AccountProvider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<Account | null>(null)
 
-  // Tracks whether a valid token is present — controls the me query's enabled state.
+  // Tracks whether a valid token is present - controls the me query's enabled state.
   // Also initializes the axios token synchronously on first render.
   const [tokenExists, setTokenExists] = useState<boolean>(() => {
     const t = readJson<string | null>(TOKEN_KEY, null)
@@ -112,7 +113,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       .catch(() => {})
   }, [meData, queryClient])
 
-  // Token expired or revoked — clear so next load doesn't retry
+  // Token expired or revoked - clear so next load doesn't retry
   useEffect(() => {
     if (!meIsError) return
     removeKey(TOKEN_KEY)
@@ -172,7 +173,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const resetPassword = useCallback<AccountContextValue["resetPassword"]>(async (email) => {
     try {
       await postForgotPassword(email)
-      return { ok: false, reason: "Reset link sent — check your inbox." }
+      return { ok: true }
     } catch (err) {
       return { ok: false, reason: apiError(err) }
     }
@@ -204,26 +205,32 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     await queryClient.refetchQueries({ queryKey: QUERY_KEYS.me })
   }, [queryClient])
 
-  const signOut = useCallback(() => {
-    postLogout().catch(() => {})
-    removeKey(TOKEN_KEY)
-    setApiToken(null)
-    setTokenExists(false)
-    queryClient.removeQueries({ queryKey: QUERY_KEYS.me })
-    queryClient.removeQueries({ queryKey: QUERY_KEYS.workMineList })
-    setAccount(null)
-  }, [queryClient])
-
-  const deleteAccount = useCallback(() => {
-    postLogout().catch(() => {})
+  const clearSession = useCallback(() => {
     removeKey(TOKEN_KEY)
     setApiToken(null)
     setTokenExists(false)
     queryClient.removeQueries({ queryKey: QUERY_KEYS.me })
     queryClient.removeQueries({ queryKey: QUERY_KEYS.workMineList })
     queryClient.removeQueries({ queryKey: QUERY_KEYS.trafficSummary })
+    queryClient.removeQueries({ queryKey: ["people", "list"] })
+    queryClient.removeQueries({ queryKey: ["work", "list"] })
     setAccount(null)
   }, [queryClient])
+
+  const signOut = useCallback(() => {
+    postLogout().catch(() => {})
+    clearSession()
+  }, [clearSession])
+
+  /**
+   * Erases the account on the server, then clears the session. Deliberately not
+   * optimistic: if the request fails the account still exists, and the panel
+   * should say so rather than pretend the data is gone.
+   */
+  const deleteAccount = useCallback(async () => {
+    await deleteMe()
+    clearSession()
+  }, [clearSession])
 
   // ── Context value ──────────────────────────────────────────────────────────
   const publishedWork = useMemo(

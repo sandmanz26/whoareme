@@ -36,6 +36,11 @@ export const AuthController = {
     sendResponse(res, 200, true, null, "Logged out.")
   },
 
+  async DeleteMe(req: Request, res: Response) {
+    await AuthUsecase.DeleteAccount(req.user!.id)
+    sendResponse(res, 200, true, null, "Account deleted.")
+  },
+
   async Me(req: Request, res: Response) {
     const user = await AuthUsecase.Me(req.user!.id)
     sendResponse(res, 200, true, { user }, "")

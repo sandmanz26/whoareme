@@ -18,7 +18,7 @@ export const forgotPasswordSchema = z.object({
     .email({ error: "Not a valid email address" }),
 })
 
-// Matches server constraint (min 10). Frontend previously allowed 8 — aligned here.
+// Matches server constraint (min 10). Frontend previously allowed 8 - aligned here.
 export const resetPasswordSchema = z
   .object({
     password: z.string().min(10, "At least 10 characters"),

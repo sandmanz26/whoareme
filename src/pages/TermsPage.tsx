@@ -19,7 +19,7 @@ export function TermsPage() {
         eyebrow="Terms"
         title="The deal, in plain terms"
         lede="What you agree to by publishing here, what we agree to, and the one risk this product creates that most portfolio sites do not."
-        meta="Version 0.1 · 18 September 2026 · a draft for an unreleased product, not reviewed by a lawyer"
+        meta="Version 0.2 · 8 October 2026 · a draft for an unreleased product, not reviewed by a lawyer"
       />
 
       <Prose>
@@ -30,10 +30,10 @@ export function TermsPage() {
             do not publish.
           </p>
           <p>
-            This is a pre-release build. It runs in your browser with no account server, so at the
-            moment there is no service to suspend and no data of yours held anywhere but your own
-            device. These terms describe the service as it is intended to operate, and we will say
-            plainly when that changes.
+            This build runs a real account server, so your profile, your entries and your traffic
+            are held on our systems and the service can be suspended. It is still pre-release: the
+            pages here are drafts, and where something is aspirational we say so rather than letting
+            it read as shipped.
           </p>
         </Section>
 
@@ -84,8 +84,9 @@ export function TermsPage() {
           </p>
           <p>
             You can unpublish an entry at any time, which removes it from the directory, or delete
-            your profile, which removes everything. There is no retention period and no copy kept
-            for our own purposes, with one exception named below.
+            your profile, which removes your account, your entries, your uploads, your traffic
+            history and your notices. There is no retention period and no copy kept for our own
+            purposes, with one exception named below.
           </p>
         </Section>
 

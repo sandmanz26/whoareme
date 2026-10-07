@@ -1,8 +1,10 @@
 import { useCallback } from "react"
 import { useQueryClient } from "@tanstack/react-query"
+import { toast } from "react-hot-toast"
 import type { Account } from "@/data/account"
 import { patchMe } from "@/lib/api/endpoints/auth"
 import { QUERY_KEYS } from "@/lib/api/queryKeys"
+import { apiErrorMessage } from "@/lib/api/client"
 import type { ApiUser } from "@/lib/api/mappers"
 
 // Translates Account field names → backend field names for PATCH /auth/me
@@ -34,9 +36,11 @@ export function useMyProfile() {
       // Sync to server; on failure refetch server truth to revert the optimistic update
       patchMe(apiPatch)
         .then(() => {
+          toast.success("Profile saved.")
           queryClient.invalidateQueries({ queryKey: ["people", "list"] })
         })
-        .catch(() => {
+        .catch((err) => {
+          toast.error(apiErrorMessage(err))
           queryClient.invalidateQueries({ queryKey: QUERY_KEYS.me })
         })
     },

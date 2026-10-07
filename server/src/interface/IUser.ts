@@ -30,7 +30,7 @@ export interface IUser {
   token: string | null
 
   seeded: boolean
-  status: "active" | "suspended"
+  status: "active" | "suspended" | "deleted"
   access: AccessLevel
 
   counts: {

@@ -129,10 +129,11 @@ export function AboutPage() {
 
         <Section title="What this build actually is">
           <p>
-            A front-end demo. The people and case studies you are reading are seeded fixtures, and
-            anything you create lives in your own browser's storage - nothing is uploaded and there
-            is no account on any server. An API exists in the repository and is not yet wired to
-            this interface.
+            It is a working directory with a real backend. The people and case studies you land on
+            are seeded fixtures, written to show the shape of the thing, but an account you create
+            and work you publish are stored on our servers and shown to everyone. This is a
+            pre-release build: expect rough edges, and expect the policies and this page to say so
+            plainly.
           </p>
         </Section>
       </Prose>

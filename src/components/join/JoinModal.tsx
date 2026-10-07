@@ -75,7 +75,7 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
       title={isSubmitSuccessful ? "You're on the list" : "Create your profile"}
       description={
         isSubmitSuccessful
-          ? "Nothing was sent anywhere - this demo keeps everything in your browser."
+          ? "Your profile is created. Next: your title, location, a portfolio link and a bio, all on your panel."
           : "Who you are, how to get back in, and what you do. The rest - title, location, a portfolio link, a bio - is a field on your panel whenever you're ready."
       }
     >
@@ -93,7 +93,7 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
         <form
           noValidate
           onSubmit={form.handleSubmit(onSubmit, () => {
-            // validation error — no-op, RHF shows inline errors
+            // validation error - no-op, RHF shows inline errors
           })}
         >
           <div className="flex flex-col gap-5">
@@ -165,7 +165,7 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
               label="Password"
               required
               error={errors.password?.message}
-              hint="Guards the way back into this profile. Stored hashed, in this browser only."
+              hint="Guards the way back into this profile. Stored hashed, on our servers."
             >
               {({ id, describedBy, invalid }) => (
                 <PasswordInput
