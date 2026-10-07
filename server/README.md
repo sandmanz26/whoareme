@@ -1,7 +1,7 @@
 # whoareyou API
 
 Node + Express + MongoDB backend for the whoareyou directory. TypeScript, ESM,
-native MongoDB driver (no ODM), Zod at the edges.
+Mongoose at the data layer, Zod at the edges.
 
 See [`../docs/DATABASE.md`](../docs/DATABASE.md) for the collection design,
 indexes and every query this server runs.
@@ -24,9 +24,11 @@ Generate secrets with:
 node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 ```
 
-**A replica set is required.** Publish runs in a transaction. `docker-compose.yml`
-starts one locally; Atlas is one by default. On a standalone `mongod` the server
-logs a warning at boot and falls back to compensating writes.
+**Standalone is assumed.** Production runs a standalone `mongod`, so publish and
+every other multi-document operation use guarded atomic updates plus compensating
+writes, never transactions. `npm run db:reconcile` is the safety net for a counter
+that drifts; run it on a schedule. `docker-compose.yml` starts a single-node
+replica set if you prefer, but nothing in the API requires one.
 
 ## Verify
 
@@ -34,11 +36,12 @@ logs a warning at boot and falls back to compensating writes.
 npm run test:smoke
 ```
 
-Boots the real app against an ephemeral replica set, seeds it, and runs 125
-assertions across every route — including refresh-token rotation, the
-two-per-topic quota under a third publish, traffic de-duplication, the launch
-scope, an appeal that a second moderator overturns, and the backfill script. No
-external services; the mongod binary is cached after the first run.
+Boots the real app against an ephemeral MongoDB, seeds it, and runs a growing
+set of assertions across every route - the two-per-topic quota under a third
+publish, moderator republish past the cap, account deletion and its cascade,
+traffic reads, uploads, suspended-account access, the launch scope, an appeal
+that a second moderator overturns, and the backfill script. No external
+services; the mongod binary is cached after the first run.
 
 ## Scripts
 
@@ -55,29 +58,30 @@ external services; the mongod binary is cached after the first run.
 
 ## API
 
-Base path `/api`. Errors are always
-`{ error: { code, message, details? } }`.
+Base path `/api/v1`. Every response, success or error, is
+`{ success, data, message, details? }`.
 
 ### Auth
 
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/auth/register` | → `{ user, accessToken }` + httpOnly refresh cookie |
-| POST | `/auth/login` | same shape |
-| POST | `/auth/refresh` | rotates: the old refresh token is deleted as the new one is issued |
-| POST | `/auth/logout` | revokes one session |
-| POST | `/auth/logout-all` | revokes every session for the user |
-| GET | `/auth/me` | requires `Authorization: Bearer` |
-| PATCH | `/auth/me` | also refreshes the author snapshot on every card |
-| POST | `/auth/verify/request` | auth — mails a link; with `MAIL_TRANSPORT=none` returns the token instead and says so |
-| POST | `/auth/verify/confirm` | `{ token }` — single use, 24 hours |
+| POST | `/auth/register` | returns `{ token, user }` |
+| POST | `/auth/login` | returns `{ token, user }`; a suspended account may sign in |
+| POST | `/auth/logout` | clears the stored token |
+| GET | `/auth/me` | `Authorization: Bearer`; a suspended account may read it |
+| PATCH | `/auth/me` | active accounts only; refreshes the author snapshot |
+| DELETE | `/auth/me` | erases the account and everything attached to it |
+| POST | `/auth/verify/request` | auth; with `MAIL_TRANSPORT=none` returns the token instead |
+| POST | `/auth/verify/confirm` | `{ token }`, single use, 24 hours |
+| POST | `/auth/forgot-password` | always `200`; sends a reset link only if the address exists |
+| POST | `/auth/reset-password` | `{ token, password }`, single use, 1 hour |
 
 Registration only accepts a craft whose status is `live`. Publishing requires a
 verified address; drafting does not.
 
-Access tokens are 15-minute JWTs held in memory by the client. Refresh tokens
-are opaque random strings; only their SHA-256 is stored, so a database leak
-does not hand over live sessions.
+One active token per account: signing in on a second device replaces the stored
+token and ends the first session. The token lives on the user document, so logout
+revocation is immediate. There is no refresh token yet.
 
 ### Directory
 
@@ -136,17 +140,18 @@ does not hand over live sessions.
 
 ## Decisions worth knowing
 
-**Native driver, not Mongoose.** The queries in `docs/DATABASE.md` are literally
-what runs. Validation lives at the edge (Zod) and at rest (`$jsonSchema`), which
-is where it belongs — an ODM would put a third copy in the middle.
+**Mongoose at the data layer.** Schemas live in `server/src/models`, validation
+at the edge is Zod, and `$jsonSchema` is applied by `db:setup`. The one thing to
+watch is that `aggregate()` does not cast query values the way `find()` does, so
+ids passed into a pipeline have to be `ObjectId`.
 
-**scrypt, not argon2.** `node:crypto` means no native build step. If you are
-happy with one, `@node-rs/argon2` is stronger — swap the two functions in
-`lib/password.ts` and keep the `scrypt$` prefix check so old hashes verify.
+**bcrypt, not argon2.** The hashes are bcrypt and verified through
+`service/password.ts`. If you later move to argon2, keep the existing verify path
+so old hashes still let people in, and rehash on next sign-in.
 
-**GridFS, not S3.** One dependency instead of two. The client already downscales
-to 960px; the size cap here is the backstop. Swap the bucket for an S3 client
-when image traffic justifies it — nothing else changes.
+**Local disk, not S3.** Uploads are written under `uploads/` and served from
+`/uploads/*`. Swap in an S3 client behind the same two helpers when image traffic
+justifies it.
 
 **Denormalised author snapshot on every work.** Listing 24 cards is one query
 instead of a `$lookup`. `PATCH /auth/me` fans the update out. `years` and

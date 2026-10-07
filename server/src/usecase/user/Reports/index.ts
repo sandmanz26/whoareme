@@ -31,6 +31,7 @@ export const ReportsUsecase = {
       reason: input.reason,
       note: input.note,
       reporterHash: hash,
+      day,
     }).catch((err: { code?: number }) => {
       if (err.code !== 11000) throw err
     })

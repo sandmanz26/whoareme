@@ -47,11 +47,22 @@ export const ModerationPeopleUsecase = {
     const user = await User.findOne({ _id: userId, deletedAt: null }).lean()
     if (!user) throw notFound("Person")
 
-    await User.updateOne(
-      { _id: userId },
-      { $set: { status: suspended ? "suspended" : "active", updatedAt: new Date() } },
-    )
-    await Work.updateMany({ authorId: userId }, { $set: { authorSuspended: suspended } })
+    const previousStatus = user.status ?? "active"
+    const now = new Date()
+    try {
+      await User.updateOne(
+        { _id: userId },
+        { $set: { status: suspended ? "suspended" : "active", updatedAt: now } },
+      )
+      await Work.updateMany({ authorId: userId }, { $set: { authorSuspended: suspended } })
+    } catch (err) {
+      // The status and the denormalised flag on the works have to move together.
+      await User.updateOne(
+        { _id: userId },
+        { $set: { status: previousStatus, updatedAt: new Date() } },
+      ).catch(() => {})
+      throw err
+    }
 
     await recordAndNotify(
       {

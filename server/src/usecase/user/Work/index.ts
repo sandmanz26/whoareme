@@ -2,6 +2,10 @@ import { z } from "zod"
 import { Types } from "mongoose"
 import WorkModel from "../../../models/work.js"
 import User from "../../../models/user.js"
+import Report from "../../../models/report.js"
+import TrafficEvent from "../../../models/trafficEvent.js"
+import TrafficDaily from "../../../models/trafficDaily.js"
+import { removeStoredFile } from "../../../utils/files.js"
 import {
   ROLES,
   TOPICS,
@@ -515,19 +519,31 @@ export const WorkUsecase = {
     if (work.status !== "published") return toMineDoc(work)
 
     const topics = work.topics as string[]
-    await WorkModel.updateOne(
-      { _id: workId },
-      { $set: { status: "draft" as const, publishedAt: null, updatedAt: new Date() } },
-    )
-    await User.updateOne(
-      { _id: userId },
-      {
-        $inc: {
-          "counts.publishedWorks": -1,
-          ...Object.fromEntries(topics.map((t) => [`counts.topicUsage.${t}`, -1])),
+    const now = new Date()
+    const wasPublishedAt = work.publishedAt ?? now
+
+    try {
+      await WorkModel.updateOne(
+        { _id: workId, status: "published" as const },
+        { $set: { status: "draft" as const, publishedAt: null, updatedAt: now } },
+      )
+      await User.updateOne(
+        { _id: userId },
+        {
+          $inc: {
+            "counts.publishedWorks": -1,
+            ...Object.fromEntries(topics.map((t) => [`counts.topicUsage.${t}`, -1])),
+          },
         },
-      },
-    )
+      )
+    } catch (err) {
+      // Put the entry back so the status and the counters cannot disagree.
+      await WorkModel.updateOne(
+        { _id: workId },
+        { $set: { status: "published" as const, publishedAt: wasPublishedAt, updatedAt: now } },
+      ).catch(() => {})
+      throw err
+    }
 
     return toMineDoc(await getMineOrThrow(userId, workId))
   },
@@ -535,10 +551,25 @@ export const WorkUsecase = {
   async Delete(userId: string, workId: string) {
     const work = await getMineOrThrow(userId, workId)
     if (work.status === "published") await WorkUsecase.Unpublish(userId, workId)
-    await WorkModel.updateOne(
-      { _id: workId },
-      { $set: { deletedAt: new Date(), deletedBy: new Types.ObjectId(userId) } },
-    )
+
+    const objectId = new Types.ObjectId(workId)
+
+    // The row, its file and the records that pointed at it go together. Traffic
+    // events are removed and the daily counter is unset; reports about the entry
+    // are closed rather than left pointing at something gone.
+    await removeStoredFile(work.thumbnailPath)
+    await Promise.all([
+      TrafficEvent.deleteMany({ workId: objectId }),
+      TrafficDaily.updateMany(
+        { [`work.${workId}`]: { $exists: true } },
+        { $unset: { [`work.${workId}`]: "" } },
+      ),
+      Report.deleteMany({ targetKind: "work", targetId: objectId }),
+      WorkModel.updateOne(
+        { _id: workId },
+        { $set: { deletedAt: new Date(), deletedBy: new Types.ObjectId(userId) } },
+      ),
+    ])
   },
 
   async GetByAuthorSlug(slug: string, rawQuery: Record<string, unknown>) {

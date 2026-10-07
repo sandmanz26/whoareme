@@ -9,6 +9,8 @@ export interface IReport {
   note: string
   /** Salted daily hash of IP + UA — de-duplicates, identifies nobody. */
   reporterHash: string
+  /** The day the report was filed. Part of the de-dupe key so one report per reason per day. */
+  day: string | null
   resolvedAt: Date | null
   resolvedBy: Types.ObjectId | null
 

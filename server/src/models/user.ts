@@ -47,6 +47,8 @@ const UserSchema = new Schema<IUser>(
 UserSchema.index({ email: 1 }, { sparse: true })
 UserSchema.index({ token: 1 }, { sparse: true })
 UserSchema.index({ status: 1, role: 1 })
+// Public reads exclude staff accounts by access, so the staff lookup wanted an index.
+UserSchema.index({ access: 1 })
 UserSchema.index({ searchBlob: "text" })
 
 const User = model<IUser>("User", UserSchema)

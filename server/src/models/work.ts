@@ -91,7 +91,6 @@ WorkSchema.index({ authorId: 1, status: 1 })
 WorkSchema.index({ topics: 1, status: 1 })
 WorkSchema.index({ role: 1, status: 1 })
 WorkSchema.index({ authorSuspended: 1, status: 1 })
-WorkSchema.index({ seeded: 1 })
 WorkSchema.index({ searchBlob: "text" })
 
 const Work = model<IWork>("Work", WorkSchema)

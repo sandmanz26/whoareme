@@ -36,6 +36,23 @@ export const ModerationNoticesUsecase = {
       )
     }
 
+    // Claim the decision atomically. The checks above give a clear error, but two
+    // moderators acting at once both pass them; only one wins this update, so the
+    // reversal below runs exactly once.
+    const claimed = await Notice.findOneAndUpdate(
+      { _id: noticeId, "appeal.outcome": null, actorId: { $ne: actor.id } },
+      {
+        $set: {
+          "appeal.outcome": outcome,
+          "appeal.outcomeReason": reason,
+          "appeal.decidedAt": new Date(),
+          "appeal.decidedBy": actor.id,
+        },
+      },
+      { returnDocument: "after" },
+    ).lean()
+    if (!claimed) throw conflict("That appeal has already been decided.")
+
     if (outcome === "overturned" && notice.targetId) {
       if (notice.action === "unpublish" && notice.targetKind === "work") {
         await ModerationWorkUsecase.SetPublished(
@@ -53,18 +70,6 @@ export const ModerationNoticesUsecase = {
         )
       }
     }
-
-    await Notice.updateOne(
-      { _id: noticeId, "appeal.outcome": null },
-      {
-        $set: {
-          "appeal.outcome": outcome,
-          "appeal.outcomeReason": reason,
-          "appeal.decidedAt": new Date(),
-          "appeal.decidedBy": actor.id,
-        },
-      },
-    )
 
     await ModerationAction.create({
       action: "appeal",

@@ -247,3 +247,31 @@ Keputusan §F dikonfirmasi, lalu dikerjakan. Commit `fcb7c1f`.
 
 - `db:migrate-uploads` harus dijalankan saat deploy sebelum redirect path lama dilepas. Selama belum, gambar lama tetap hidup lewat redirect.
 - H7 hanya menyentuh notices + hapus akun; route lain tetap menolak akun suspended.
+
+---
+
+## L. Batch 4 (selesai, 8 Oktober 2026)
+
+Data dan reliability.
+
+| Item | Perubahan |
+|---|---|
+| H10 | Decide appeal memakai satu `findOneAndUpdate` atomik sebagai klaim; dua moderator tidak bisa sama-sama membalik |
+| C3 sisa | Kompensasi di `Unpublish`, moderator unpublish, dan `SetSuspended`; fan-out `UpdateProfile` di-`catch` + log, tidak lagi menggagalkan seluruh edit profil |
+| H8 | `Delete` menghapus file thumbnail; juga menghapus traffic events, unset counter harian, dan menutup reports yang menunjuk entri itu |
+| D1 | `patch.role` dikeluarkan dari pemicu fan-out (role ada per entri, bukan di snapshot) |
+| D3 | `report.day` ditambah; unique index jadi `(reporterHash, targetKind, targetId, reason, day)` |
+| D4 | Index `users.access`, `notices(userId, createdAt)`, `notices("appeal.outcome")`; index `works.seeded` dibuang |
+| D5 | Ditinjau: query pembaca sudah memfilter `deletedAt`/`status`; tidak ada perubahan kode |
+| docs | `server/README.md` diperbaiki: klaim transaksi/replica-set, refresh token, driver native, dan scrypt diganti sesuai kenyataan |
+
+### Verifikasi
+
+- `npm run lint` dan `cd server && npm run lint`: 0 error.
+- `cd server && npm run test:smoke`: **118 passed, 0 failed** (§22 baru: cascade hapus entri).
+- `npm run build`: sukses.
+
+### Catatan
+
+- Index baru berlaku setelah `npm run db:setup` (`syncIndexes`). Perubahan index report akan **drop** index unique lama `(reporterHash, targetId)`; dokumen lama tanpa `day` tetap aman karena field baru nullable.
+- `db:migrate-uploads` masih menunggu dijalankan saat deploy.

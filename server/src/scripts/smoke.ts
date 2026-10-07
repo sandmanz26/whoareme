@@ -1047,6 +1047,42 @@ async function main() {
     assertEq("moderator reinstates probe → 200", rein.status, 200)
   }
 
+  // ── § 22 Work delete cascade ──────────────────────────────────────────────────
+  console.log("\n§22 Work delete cascade")
+  {
+    const reg = await post(base, "/auth/register", {
+      name: "Delete Work Probe",
+      email: "delete-work-probe@example.com",
+      password: "delete-work-probe-12345",
+      role: "engineering",
+      years: 2,
+    })
+    const dToken = (reg.json["data"] as Json)["token"] as string
+    const vreq = await post(base, "/auth/verify/request", {}, dToken)
+    await post(base, "/auth/verify/confirm", {
+      token: (vreq.json["data"] as Json)["token"] as string,
+    })
+
+    const made = await post(base, "/work", makeWork({ title: "Delete cascade entry 2" }), dToken)
+    const w = (made.json["data"] as Json)["work"] as Json
+    const wId = w["_id"] as string
+    const wSlug = w["slug"] as string
+    await post(base, `/work/${wId}/publish`, {}, dToken)
+
+    const before = await get(base, `/work/${wSlug}`)
+    assertEq("entry public before delete → 200", before.status, 200)
+
+    const delRes = await del(base, `/work/${wId}`, dToken)
+    assertEq("DELETE /work/:id → 200", delRes.status, 200)
+
+    const after = await get(base, `/work/${wSlug}`)
+    assertEq("entry gone from public after delete → 404", after.status, 404)
+
+    const mine = await get(base, "/work/mine/list", dToken)
+    const ids = (((mine.json["data"] as Json)["items"] as Json[]) ?? []).map((i) => i["_id"])
+    assert("deleted entry absent from mine list", !ids.includes(wId))
+  }
+
   // ── Results ───────────────────────────────────────────────────────────────────
   console.log(`\n─────────────────────────────────────────`)
   console.log(`  ${passed} passed  ${failed > 0 ? failed + " FAILED" : ""}`)

@@ -15,6 +15,7 @@ import { uniqueSlug } from "../../../utils/slug.js"
 import { buildSearchBlob } from "../../../utils/text.js"
 import { languagesFor } from "../../../utils/languages.js"
 import { badRequest, conflict, notFound, unauthorized } from "../../../middleware/error.js"
+import { logger } from "../../../libraries/logger.js"
 import { ROLES, TOPICS, isRoleLive } from "../../../constant/app.js"
 
 export const registerSchema = z.object({
@@ -294,10 +295,11 @@ export const AuthUsecase = {
 
     await User.updateOne({ _id: userId }, { $set: { ...patch, searchBlob, updatedAt: new Date() } })
 
+    // `role` is not in the author snapshot: each entry carries its own craft, so
+    // changing the profile craft must not trigger a rewrite of every entry.
     const cardChanged =
       patch.name !== undefined ||
       patch.title !== undefined ||
-      patch.role !== undefined ||
       patch.company !== undefined ||
       patch.years !== undefined ||
       patch.languages !== undefined ||
@@ -410,7 +412,11 @@ export const AuthUsecase = {
         ],
         // Mongoose 9 rejects an array update unless the pipeline is explicit.
         { updatePipeline: true },
-      )
+      ).catch((err: unknown) => {
+        // The profile itself is already saved. The snapshot fan-out is repair
+        // work that can be retried; log it rather than failing the whole edit.
+        logger.error({ err, userId }, "author snapshot fan-out failed")
+      })
     }
 
     const updated = await User.findOne({ _id: userId, status: "active" }).lean()

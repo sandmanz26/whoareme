@@ -110,15 +110,30 @@ export const ModerationWorkUsecase = {
     }
 
     if (!published) {
-      await User.updateOne(
-        { _id: work.authorId },
-        {
-          $inc: {
-            "counts.publishedWorks": -1,
-            ...Object.fromEntries(topics.map((t) => [`counts.topicUsage.${t}`, -1])),
+      try {
+        await User.updateOne(
+          { _id: work.authorId },
+          {
+            $inc: {
+              "counts.publishedWorks": -1,
+              ...Object.fromEntries(topics.map((t) => [`counts.topicUsage.${t}`, -1])),
+            },
           },
-        },
-      )
+        )
+      } catch (err) {
+        // Put it back so the status and the counters cannot disagree.
+        await WorkModel.updateOne(
+          { _id: workId },
+          {
+            $set: {
+              status: "published" as const,
+              publishedAt: work.publishedAt ?? now,
+              updatedAt: now,
+            },
+          },
+        ).catch(() => {})
+        throw err
+      }
     }
 
     await recordAndNotify(

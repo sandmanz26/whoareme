@@ -33,6 +33,10 @@ const NoticeSchema = new Schema<INotice>(
 )
 
 NoticeSchema.index({ userId: 1, readAt: 1 })
+// Listing a person's notices sorts by createdAt; the open-appeals queue filters
+// on the appeal outcome.
+NoticeSchema.index({ userId: 1, createdAt: -1 })
+NoticeSchema.index({ "appeal.outcome": 1 })
 NoticeSchema.index({ actionId: 1 }, { unique: true })
 
 const Notice = model<INotice>("Notice", NoticeSchema)
