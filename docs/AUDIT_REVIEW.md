@@ -275,3 +275,40 @@ Data dan reliability.
 
 - Index baru berlaku setelah `npm run db:setup` (`syncIndexes`). Perubahan index report akan **drop** index unique lama `(reporterHash, targetId)`; dokumen lama tanpa `day` tetap aman karena field baru nullable.
 - `db:migrate-uploads` masih menunggu dijalankan saat deploy.
+
+---
+
+## M. Handover — status per 8 Oktober 2026 (untuk lanjut besok)
+
+**Branch:** `development`. **HEAD:** `8f9b1bb`. Working tree bersih kecuali `docs/AUDIT_03102026.md` (untuk Anda, sengaja tidak di-commit).
+
+**Sudah selesai dan terverifikasi:**
+
+| Batch | Commit | Isi |
+|---|---|---|
+| 1 | `ec021be` | Fix traffic (cast + sum), `/signup`, `resetPassword`, `disabledRoles` publik, toaster + feedback mutasi, perbaikan baseline (updatePipeline, lint FE, skipLibCheck) |
+| 2 | `ec021be` | Hapus akun end-to-end + cascade; koreksi halaman publik & copy; report wajib login; sapuan em dash |
+| 3 | `71292f1` | C9 `TOKEN_HASH_SECRET`, S4 redact log, C4 guard kuota republish, C5 `/uploads` + MIME + redirect + script migrasi, C10 throttle per-email, H7 akses akun suspended |
+| 4 | `8f9b1bb` | H10 CAS appeal, C3 kompensasi unpublish/suspend/fan-out, H8 + cascade hapus entri, D1, D3 `report.day`, D4 index, README diperbaiki |
+
+**Verifikasi terakhir:** FE lint 0 error, server lint 0 error, `test:smoke` **118 passed**, `npm run build` sukses.
+
+**Keputusan Batch 0 (dikonfirmasi, §F):** standalone + compensating; throttle tanpa lock; login terbatas untuk suspended; `sessions` belum dibuat; migrasi URL + alias.
+
+**Utang deploy (belum dijalankan):**
+- `npm run db:setup` untuk memasang index baru (D4/D3).
+- `npm run db:migrate-uploads` sebelum redirect path lama dilepas.
+- Jadwalkan `npm run db:reconcile` (safety net counter).
+- `server/.env` lokal sudah dapat `TOKEN_HASH_SECRET` (gitignored).
+
+**Belum diverifikasi:** seluruh Batch 1-4 di browser (browser desktop tidak terhubung sepanjang sesi).
+
+**Berikutnya — Batch 5 (FE infra):**
+1. C8 — axios response interceptor: timeout 10s, normalisasi error, redirect ke `/signin` saat 401 (tanpa zustand, pakai event/langsung bersihkan sesi).
+2. H3 — state loading/error di `useAdmin` + `AdminPage`.
+3. H4 — cek `emailVerifiedAt` di tombol publish `WorkEditor` + pesan 403 `email_unverified` yang jelas.
+4. H1 — refactor `ProfilePage`, `VerifyPage`, `VerifyEmailBanner`, `AvatarPicker` dari `useState+useEffect+api.get` ke `useQuery`/`useMutation`, memakai endpoint wrapper yang sudah ada.
+
+**Setelah itu:** Batch 6 (wiring taxonomy/facets/settings/funnel dari server, lalu pecah god components), Batch 7 (deferred: C2, pagination, dll).
+
+**Cara lanjut besok:** baca §M ini, lalu kerjakan Batch 5.
