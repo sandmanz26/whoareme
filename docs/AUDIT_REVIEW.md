@@ -411,3 +411,55 @@ Browser desktop tersambung. SPA di `http://localhost:9800`, API `http://localhos
 - **Email verification di dev gagal**: `MAIL_TRANSPORT=http` (Resend) membalas 502, jadi token verifikasi tidak dikembalikan; verifikasi dilakukan lewat update DB. Di produksi ini tidak masalah, tetapi untuk dev sebaiknya `MAIL_TRANSPORT=log` atau `none`.
 
 **Commit fix:** `fix(panel): publish a new entry on first save`.
+
+---
+
+## S. Sisa pekerjaan (per 9 Oktober 2026)
+
+Daftar tunggal supaya tidak ada yang terlewat. Batch 1–8 sudah dieksekusi; yang di bawah ini belum.
+
+### S.1 Belum pernah disentuh
+
+| ID | Item | Bukti / kenapa | Upaya | Perlu browser |
+|---|---|---|---|---|
+| S3 | Register membocorkan keberadaan email (409 "already exists") | `usecase/user/Auth/index.ts:125` | Kecil | Tidak |
+| C.6 | `company`, `skills`, `languages`, `openToWork` tak bisa diedit dari UI | `useMyProfile` tidak mengirimnya; `ProfileForm` tak punya field | Sedang | Ya |
+| C.8 | `hasStoredAccount: true` hardcoded | `useAccount.tsx:284` | Kecil | Tidak |
+| H5 | `WorkEditor` belum pindah ke react-hook-form + Zod | `grep useForm` = 0 | Besar | Ya |
+| U4 | `WorkEditor` belum dipecah | §Q mencatatnya | Sedang | Ya |
+| H9 | Notice + moderation action belum atomik | didefer | Sedang | Tidak |
+| U2 | Skeletons/empty state per halaman | `PanelPage:49` dan `WorkPage:64` masih `return null` saat loading | Sedang | Ya |
+| U3 | `<a href="/...">` internal (reload penuh, bukan `Link`) | `WorkEditor:497`, `TermsPage:97,138` | Kecil | Ya |
+| Docs | `DATABASE.md`, `CLAUDE.md` masih menyebut native driver, scrypt, transaksi, refresh token | hanya `server/README.md` yang diperbaiki | Sedang | Tidak |
+| CI | `.github/workflows/ci.yml` belum pernah dijalankan | — | Kecil | Tidak |
+
+### S.2 Ditunda atas keputusan Anda
+
+- **C2 + `sessions`** (refresh token / multi-session / cek `payload.sub`). Lihat §F.4.
+- **H2** pagination server-side (rework `BrowseContext` + endpoint).
+- **S5/S6** image-bomb + EXIF strip (butuh `sharp` atau parser biner).
+
+### S.3 Won't fix / as-is (sengaja)
+
+- **H6** (token saat suspend) — efektif sudah aman karena auth butuh `status:"active"`; LOW.
+- **H11** admin seeder password default — keputusan klien: biarkan.
+- **C6** CORS no-Origin — as-is (tool QA).
+- **S1/S2** IP spoof & rate limiter in-memory — as-is untuk single instance; revisit saat Cloudflare/multi-instance.
+- **C.7** dua sumber kebenaran taxonomy — sengaja tidak disambungkan (§O).
+
+### S.4 Utang deploy (belum dijalankan)
+
+- `npm run db:setup` — index baru D3/D4.
+- `npm run db:migrate-uploads` — sebelum redirect path lama dilepas.
+- Jadwalkan `npm run db:reconcile`.
+- Set `TOKEN_HASH_SECRET` di `.env` produksi.
+- Jalankan/menunggu CI.
+
+### S.5 Celah verifikasi browser
+
+- Lebar **360 / 390 / 768 / 1024 / 1440** (butuh resize manual; pane harus terlihat).
+- Alur yang belum pernah diuji di UI: konsol moderasi (queue/entries/people/appeals/log/settings/funnel berangka), traffic panel berangka, panel akun suspended, redirect 401 → `/signin`, filter/pencarian/sort/grid-list, authoring (save draft, revert, hapus entri), upload avatar/thumbnail, sign in/out, forgot/reset password, verify page, report/notices.
+
+### Definisi selesai untuk dokumen ini
+
+Dokumen dianggap tuntas bila: seluruh **S.1** selesai atau dipindah resmi ke S.2/S.3, **S.4** dijalankan, dan **S.5** ditutup (atau disepakati sebagai risiko yang diterima).
