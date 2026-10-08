@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { Outlet, ScrollRestoration, useNavigate } from "react-router-dom"
 import { Toaster } from "react-hot-toast"
 import { Navbar } from "@/components/layout/Navbar"
@@ -27,7 +28,15 @@ function Layout() {
       </a>
       <Navbar onJoin={openJoin} />
       <main>
-        <Outlet />
+        <Suspense
+          fallback={
+            <div className="flex min-h-[60vh] items-center justify-center">
+              <p className="text-sm text-muted">Loading…</p>
+            </div>
+          }
+        >
+          <Outlet />
+        </Suspense>
       </main>
       <Footer />
       <JoinModal open={joinOpen} onClose={closeJoin} onOpenPanel={() => navigate("/panel")} />

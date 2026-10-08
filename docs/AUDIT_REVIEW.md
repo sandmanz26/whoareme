@@ -349,3 +349,24 @@ FE infra. (`§M` di atas kini historis.)
 - **God components** (`AdminPage`, `PanelPage`, `WorkEditor`): pemecahan besar tanpa test suite dan tanpa akses browser adalah risiko regresi yang tidak bisa diverifikasi. Ditunda sampai verifikasi browser tersedia. Satu perbaikan copy di `AdminPage` (banner) sudah dilakukan di Batch 5.
 
 **Verifikasi:** FE lint 0 error (12 warning lama), `npm run build` sukses, kontrak ingest terkonfirmasi. Smoke tidak berubah (118, server tidak disentuh).
+
+---
+
+## P. Batch 7 (sebagian, 9 Oktober 2026)
+
+### Dikerjakan
+
+| Item | Perubahan |
+|---|---|
+| U5 (error boundary) | `ErrorBoundary` di root (`main.tsx`) + `errorElement` per route (`RouteError`), jadi render error jadi halaman, bukan layar putih |
+| U5 (lazy) | Halaman di-`lazy()` di `routes.tsx`, `<Suspense>` di `Shell`; bundle awal turun dari ~955 kB ke ~641 kB dan setiap halaman jadi chunk sendiri |
+| CI | `.github/workflows/ci.yml`: lint + build SPA, lint + `test:smoke` API. **Belum dieksekusi** (tidak bisa dijalankan dari sesi ini) |
+
+### Masih deferred, dengan alasan
+
+- **C2 (refresh token/multi-session)** dan **`sessions`**: ini revamp auth penuh dan bertentangan dengan keputusan §F.4 ("sessions belum sekarang"). Tidak dikerjakan tanpa keputusan baru.
+- **H2 (pagination server-side)**: butuh rework `BrowseContext` + endpoint; nunggu keputusan desain.
+- **S5/S6 (image bomb / EXIF strip)**: bernilai (EXIF GPS pada potret itu isu privasi nyata) tapi butuh `sharp` atau parser biner; dikerjakan terpisah.
+- **God components**: masih menunggu verifikasi browser.
+
+**Verifikasi:** FE lint 0 error (12 warning lama), `npm run build` sukses (chunk terpisah), smoke tidak berubah (118). CI belum dijalankan.

@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [development, main]
+  pull_request:
+
+jobs:
+  frontend:
+    name: SPA lint and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  server:
+    name: API lint and smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+        working-directory: server
+      - run: npm run lint
+        working-directory: server
+      # Boots an ephemeral MongoDB via mongodb-memory-server and runs the full
+      # end-to-end suite. The mongod binary is downloaded on first run.
+      - run: npm run test:smoke
+        working-directory: server
