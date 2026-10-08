@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { useQuery } from "@tanstack/react-query"
 import { PanelShell } from "@/components/panel/PanelShell"
 import { Badge } from "@/components/ui/Badge"
 import { Button } from "@/components/ui/Button"
@@ -12,14 +13,9 @@ import { ROLES } from "@/data/taxonomy"
 import type { Person } from "@/data/people"
 import type { Work } from "@/data/work"
 import { flagsFor, RULE_LABELS, type Flag, type Severity } from "@/lib/moderation"
-import {
-  CONVERSIONS,
-  FUNNEL_STEPS,
-  rate,
-  readFunnel,
-  resetFunnel,
-  type FunnelCounts,
-} from "@/lib/analytics"
+import { CONVERSIONS, FUNNEL_STEPS, rate, type FunnelCounts } from "@/lib/analytics"
+import { fetchFunnel } from "@/lib/api/endpoints/moderation"
+import { QUERY_KEYS } from "@/lib/api/queryKeys"
 import { cn } from "@/lib/utils"
 import { useBrowse } from "@/context/BrowseContext"
 import { applyMeta } from "@/lib/head"
@@ -177,7 +173,7 @@ export function AdminPage() {
     funnel: {
       title: "Funnel",
       description:
-        "Named steps, counted. No cookies, no third-party script, nothing about who did what. In this build the counters are from this browser only.",
+        "Named steps, counted. No cookies, no third-party script, nothing about who did what. Counters are aggregated on the server across everyone.",
     },
     site: {
       title: "Site settings",
@@ -686,8 +682,29 @@ function PeopleSection({ allPeople, allWork }: { allPeople: Person[]; allWork: W
   )
 }
 
+const FUNNEL_DAYS = 30
+
 function FunnelSection() {
-  const [counts, setCounts] = useState<FunnelCounts>(() => readFunnel())
+  const { data, isPending, isError } = useQuery({
+    queryKey: QUERY_KEYS.moderationFunnel(FUNNEL_DAYS),
+    queryFn: () => fetchFunnel(FUNNEL_DAYS),
+    staleTime: 60 * 1000,
+  })
+
+  if (isPending) {
+    return <p className="py-16 text-center text-sm text-muted">Loading the funnel…</p>
+  }
+
+  if (isError) {
+    return (
+      <Empty
+        title="Could not load the funnel"
+        body="The API did not answer. Reload the page to try again."
+      />
+    )
+  }
+
+  const counts = (data?.totals ?? {}) as FunnelCounts
 
   const byStage = FUNNEL_STEPS.reduce<Record<string, (typeof FUNNEL_STEPS)[number][]>>(
     (groups, step) => {
@@ -702,7 +719,7 @@ function FunnelSection() {
     return (
       <Empty
         title="No events yet"
-        body="Sign up, open the entry form or run a search, then come back. Counters are per browser in this build."
+        body="Sign up, open the entry form or run a search, then come back. Counters are aggregated on the server across everyone."
       />
     )
   }
@@ -765,18 +782,8 @@ function FunnelSection() {
           Counters, not an event stream. There is no identifier, no timestamp per event, no path or
           referrer, and no third-party script. Two people who published an entry are
           indistinguishable here, which is enough to answer "do people finish" and not enough to
-          reconstruct anyone's session.
+          reconstruct anyone's session. The window is the last {data?.days ?? FUNNEL_DAYS} days.
         </p>
-        <div className="mt-4">
-          <ActionForm
-            label="Reset counters"
-            placeholder="Note for the record, then confirm"
-            onSubmit={() => {
-              resetFunnel()
-              setCounts({})
-            }}
-          />
-        </div>
       </section>
     </div>
   )

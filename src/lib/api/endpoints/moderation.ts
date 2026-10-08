@@ -109,3 +109,18 @@ export async function updateSettings(
   })
   return res.data.data
 }
+
+export interface ApiFunnelSummary {
+  days: number
+  from: string
+  to: string
+  totals: Partial<Record<string, number>>
+  series: Array<{ _id: string; counts: Partial<Record<string, number>> }>
+}
+
+export async function fetchFunnel(days = 30): Promise<ApiFunnelSummary> {
+  const res = await api.get<Wrap<ApiFunnelSummary>>("/moderation/analytics/funnel", {
+    params: { days },
+  })
+  return res.data.data
+}

@@ -329,3 +329,23 @@ FE infra. (`§M` di atas kini historis.)
 **Verifikasi:** FE lint 0 error (12 warning lama), `npm run build` sukses. Smoke tidak berubah (118) karena Batch 5 tidak menyentuh server. Verifikasi browser masih tertunda.
 
 **Berikutnya — Batch 6:** wiring `GET /user/taxonomy`, `GET /user/people/facets`, `GET /user/settings`, dan funnel ingest/dashboard dari server (mengganti data statis di FE), lalu pemecahan god components (`AdminPage` 997, `PanelPage` ~950, `WorkEditor` ~500).
+
+---
+
+## O. Batch 6 (sebagian, 9 Oktober 2026)
+
+### Dikerjakan: funnel dari server
+
+| Item | Perubahan |
+|---|---|
+| Ingest | `src/lib/analytics.ts`: `track()` tetap menaikkan counter lokal, lalu menjadwalkan `flushFunnel()` (debounce 5s); `pagehide` melakukan flush terakhir dengan `keepalive`. Flush mengirim snapshot, mengurangi persis yang terkirim, dan menyaring hanya step yang dikenal (skema server `.strict()`, key usang akan menggagalkan flush selamanya). |
+| Dashboard | `AdminPage` `FunnelSection` membaca `GET /moderation/analytics/funnel?days=30` via `useQuery` (loading/error), bukan `localStorage`. `resetFunnel` lokal dihapus karena tidak ada padanannya di server. |
+| Kontrak | Diverifikasi dengan curl: payload valid → 204; key asing → 400 (server strict). |
+
+### Sengaja ditunda, dengan alasan
+
+- **Taxonomy dari server** (`GET /user/taxonomy`): server hanya mengembalikan `id`/`status`/`kind`, tanpa label, blurb, atau tint yang dipakai UI. Menyambungkannya berarti menambah dependensi async pada seluruh filter untuk keuntungan nol, karena data statis FE diturunkan dari konstanta yang sama dan berubah bersamaan saat deploy. Tidak dikerjakan.
+- **People facets dari server** (`GET /user/people/facets`): `BrowseContext` sudah menghitung count dari data yang sama yang ia filter; facets server redundan sampai filtering dipindah ke server (H2, deferred). Tidak dikerjakan.
+- **God components** (`AdminPage`, `PanelPage`, `WorkEditor`): pemecahan besar tanpa test suite dan tanpa akses browser adalah risiko regresi yang tidak bisa diverifikasi. Ditunda sampai verifikasi browser tersedia. Satu perbaikan copy di `AdminPage` (banner) sudah dilakukan di Batch 5.
+
+**Verifikasi:** FE lint 0 error (12 warning lama), `npm run build` sukses, kontrak ingest terkonfirmasi. Smoke tidak berubah (118, server tidak disentuh).

@@ -14,14 +14,17 @@ import { readJson, writeJson } from "@/lib/storage"
  * publish an entry are indistinguishable in this data, which is the point -
  * the question is "do people finish", not "did this person finish".
  *
- * In this build the counters stay in `localStorage`, so they answer the
- * question for one browser only. `flush()` is the seam: point it at an
- * endpoint and the same counters become an aggregate. Deliberately counters
- * rather than an event stream, because a stream of timestamped events is a
- * behavioural record, and this does not need one to answer the question.
+ * Counters are accumulated in `localStorage` and flushed to the server in
+ * batches, so the aggregate spans everyone rather than one browser. The flush
+ * subtracts exactly what it sent, so an event that lands mid-request is neither
+ * lost nor counted twice. Deliberately counters rather than an event stream,
+ * because a stream of timestamped events is a behavioural record, and this does
+ * not need one to answer the question.
  */
 
 const KEY = "funnel"
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:4000"
+const FUNNEL_URL = `${API_BASE}/api/v1/moderation/analytics/funnel`
 
 export const FUNNEL_STEPS = [
   { id: "signup_opened", label: "Opened sign up", stage: "supply" },
@@ -50,6 +53,68 @@ export function readFunnel(): FunnelCounts {
   return readJson<FunnelCounts>(KEY, {})
 }
 
+const FLUSH_DELAY_MS = 5000
+let flushTimer: number | null = null
+
+function scheduleFlush(): void {
+  if (typeof window === "undefined" || flushTimer !== null) return
+  flushTimer = window.setTimeout(() => {
+    flushTimer = null
+    void flushFunnel()
+  }, FLUSH_DELAY_MS)
+}
+
+/**
+ * Send the counters accumulated in this browser to the server, then subtract
+ * exactly what was sent. On any failure the local counters stay put and the
+ * next flush retries. Fire-and-forget: an analytics write must never slow down
+ * or fail the thing the person was actually doing.
+ */
+export async function flushFunnel(): Promise<void> {
+  const local = readFunnel()
+  const known = new Set<string>(FUNNEL_STEPS.map((step) => step.id))
+
+  // Only known steps go out: the server schema is strict, so a leftover key from
+  // a step that was since removed would otherwise fail every flush forever.
+  const sent: FunnelCounts = {}
+  for (const [step, count] of Object.entries(local) as [FunnelStep, number][]) {
+    if (known.has(step) && count > 0) sent[step] = count
+  }
+
+  if (Object.keys(sent).length === 0) {
+    if (Object.keys(local).length > 0) writeJson(KEY, {})
+    return
+  }
+
+  try {
+    const res = await fetch(FUNNEL_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ counts: sent }),
+      keepalive: true,
+    })
+    if (!res.ok) return
+
+    const current = readFunnel()
+    const remaining: FunnelCounts = {}
+    for (const [step, count] of Object.entries(current) as [FunnelStep, number][]) {
+      if (!known.has(step)) continue
+      const leftover = count - (sent[step] ?? 0)
+      if (leftover > 0) remaining[step] = leftover
+    }
+    writeJson(KEY, remaining)
+  } catch {
+    // Keep the counters; the next flush retries.
+  }
+}
+
+if (typeof window !== "undefined") {
+  // A last flush as the page goes away, so a short visit is not lost.
+  window.addEventListener("pagehide", () => {
+    void flushFunnel()
+  })
+}
+
 /**
  * Increment one step.
  *
@@ -61,13 +126,10 @@ export function track(step: FunnelStep): void {
   try {
     const counts = readFunnel()
     writeJson(KEY, { ...counts, [step]: (counts[step] ?? 0) + 1 })
+    scheduleFlush()
   } catch {
     // Storage unavailable, private mode, quota. Losing a counter is fine.
   }
-}
-
-export function resetFunnel(): void {
-  writeJson(KEY, {})
 }
 
 export function stepLabel(id: FunnelStep): string {
