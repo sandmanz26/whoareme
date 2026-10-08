@@ -370,3 +370,19 @@ FE infra. (`§M` di atas kini historis.)
 - **God components**: masih menunggu verifikasi browser.
 
 **Verifikasi:** FE lint 0 error (12 warning lama), `npm run build` sukses (chunk terpisah), smoke tidak berubah (118). CI belum dijalankan.
+
+---
+
+## Q. Batch 8 — God component split (selesai, 9 Oktober 2026)
+
+| File | Sebelum | Sesudah | Komponen baru |
+|---|---|---|---|
+| `pages/AdminPage.tsx` | 997 | 154 | `components/admin/{primitives,ReviewQueue,EntriesTable,PeopleTable,FunnelSection,SiteSection,AuditLog}.tsx` |
+| `pages/PanelPage.tsx` | 959 | 176 | `components/panel/{Overview,ProfileForm,DeleteProfile,PortfolioSection,VerifyEmailBanner}.tsx` |
+| `pages/WorkPage.tsx` | 476 | 312 | `components/work/{Chapter,WorkAside}.tsx` |
+
+Commit: `5578180` (admin), `45cf91a` (panel), dan commit WorkPage.
+
+**Tidak dikerjakan:** pemecahan `WorkEditor` (488 LOC). Audit menaruhnya bersama migrasi RHF di H5, bukan murni pemecahan; biar jadi satu pekerjaan tersendiri.
+
+**Verifikasi:** `npm run lint` 0 error (12 warning lama), `npm run build` sukses. **Tidak ada perubahan perilaku yang disengaja**, tetapi UI belum dicek di browser (browser belum tersambung), jadi regresi visual belum bisa dikesampingkan.

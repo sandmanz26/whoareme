@@ -2,23 +2,20 @@ import { useEffect, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { Container } from "@/components/layout/Container"
-import { Avatar } from "@/components/ui/Avatar"
-import { SocialLinks } from "@/components/ui/SocialLinks"
 import { Badge } from "@/components/ui/Badge"
 import { Button } from "@/components/ui/Button"
-import { ArrowRight, ArrowUpRight, Chart, Pin } from "@/components/ui/Icon"
+import { ArrowRight, ArrowUpRight } from "@/components/ui/Icon"
 import { WorkCover } from "@/components/work/WorkCover"
 import { WorkFigures } from "@/components/work/WorkFigures"
-import { Reveal } from "@/components/work/Reveal"
+import { WorkCard } from "@/components/work/WorkCard"
+import { Chapter } from "@/components/work/Chapter"
+import { WorkAside } from "@/components/work/WorkAside"
 import { useReadingProgress } from "@/hooks/useReveal"
 import { templateById } from "@/data/workTemplates"
-import { WorkCard } from "@/components/work/WorkCard"
-import { headlineProof, proofOf, type WorkFigure } from "@/data/work"
+import { headlineProof, proofOf } from "@/data/work"
 import { figuresFor, orphanFigures } from "@/lib/figures"
 import { categoryById, roleById } from "@/data/taxonomy"
-import { businessModelById } from "@/data/businessModels"
 import { moreFromAuthor, similarWork } from "@/lib/similar"
-import { ReportButton } from "@/components/admin/ReportModal"
 import { useAccount } from "@/hooks/useAccount"
 import { useBrowse } from "@/context/BrowseContext"
 import { useTrafficSummary } from "@/hooks/useTrafficSummary"
@@ -27,29 +24,6 @@ import { track } from "@/lib/analytics"
 import { fetchWorkBySlug } from "@/lib/api/endpoints/work"
 import { mapWork } from "@/lib/api/mappers"
 import { QUERY_KEYS } from "@/lib/api/queryKeys"
-
-function Chapter({
-  title,
-  body,
-  figures = [],
-  delay = 0,
-}: {
-  title: string
-  body: string
-  figures?: readonly WorkFigure[]
-  delay?: number
-}) {
-  if (!body.trim() && figures.length === 0) return null
-  return (
-    <Reveal delay={delay}>
-      <section>
-        <h2 className="display text-[clamp(1.25rem,2.4vw,1.625rem)]">{title}</h2>
-        {body.trim() && <p className="mt-4 text-base leading-[1.75] text-ink-2">{body}</p>}
-        <WorkFigures figures={figures} />
-      </section>
-    </Reveal>
-  )
-}
 
 export function WorkPage() {
   const { id } = useParams<{ id: string }>()
@@ -263,152 +237,14 @@ export function WorkPage() {
           )}
         </div>
 
-        <aside className="flex flex-col gap-8 lg:sticky lg:top-24 lg:self-start">
-          {author && (
-            <div className="rounded-card border border-line bg-card p-5">
-              <button
-                type="button"
-                onClick={() => navigate(`/people/${author.id}`)}
-                className="group flex w-full cursor-pointer items-start gap-3.5 text-left"
-              >
-                <Avatar
-                  src={author.photo}
-                  name={author.name}
-                  className="size-12 shrink-0 rounded-[30%] border border-ink/10 bg-paper-2"
-                />
-                <div className="min-w-0">
-                  <p className="truncate font-display text-sm font-semibold text-ink transition-colors duration-200 group-hover:text-pop-violet">
-                    {author.name}
-                    {author.isViewer && <span className="ml-1 text-muted">· you</span>}
-                  </p>
-                  <p className="truncate text-sm text-ink-2">{author.title}</p>
-                  <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
-                    <Pin size={12} />
-                    <span className="truncate">
-                      {author.company} · {author.location}
-                    </span>
-                  </p>
-                </div>
-                <ArrowUpRight
-                  size={15}
-                  className="ml-auto shrink-0 text-muted opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                />
-              </button>
-              {author.links.length > 0 && (
-                <SocialLinks
-                  links={author.links}
-                  ownerName={author.name}
-                  className="mt-4 border-t border-line pt-4"
-                />
-              )}
-
-              <p className="mt-3 text-xs text-muted">
-                See the rest of their portfolio, grouped by topic.
-              </p>
-            </div>
-          )}
-
-          {proof.length > 0 && (
-            <div className="rounded-card border border-ink bg-ink p-5 text-paper">
-              <h2 className="eyebrow text-paper/50">Results claimed</h2>
-              <dl className="mt-4 space-y-4">
-                {proof.map((detail) => (
-                  <div key={detail.label}>
-                    <dt className="font-display text-[0.6875rem] font-medium tracking-[0.14em] uppercase text-pop-lime">
-                      {detail.label}
-                    </dt>
-                    <dd className="mt-1 font-display text-base leading-snug font-semibold">
-                      {detail.value}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          )}
-
-          <div className="rounded-card border border-line bg-card p-5">
-            <dl className="space-y-3 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted">Year</dt>
-                <dd className="font-display font-medium text-ink">{work.year}</dd>
-              </div>
-              {work.duration && (
-                <div className="flex justify-between gap-4">
-                  <dt className="text-muted">Duration</dt>
-                  <dd className="font-display font-medium text-ink">{work.duration}</dd>
-                </div>
-              )}
-              {work.model && (
-                <div className="flex justify-between gap-4 text-right">
-                  <dt className="shrink-0 text-muted">Business model</dt>
-                  <dd className="font-display font-medium text-ink">
-                    {businessModelById(work.model)?.label}
-                  </dd>
-                </div>
-              )}
-              {work.scope && (
-                <div className="flex justify-between gap-4 text-right">
-                  <dt className="shrink-0 text-muted">Scope</dt>
-                  <dd className="font-display font-medium text-ink">{work.scope}</dd>
-                </div>
-              )}
-            </dl>
-
-            {work.stack.length > 0 && (
-              <>
-                <ul className="mt-5 flex flex-wrap gap-1.5 border-t border-line pt-5">
-                  {work.stack.map((item, index) => (
-                    <li key={`${item}-${index}`}>
-                      <Badge>{item}</Badge>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-
-            {work.links.length > 0 && (
-              <>
-                <ul className="mt-5 space-y-2 border-t border-line pt-5">
-                  {work.links.map((link, index) => (
-                    <li key={`${link.href}-${index}`}>
-                      <a
-                        href={link.href}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="inline-flex items-center gap-1.5 font-display text-sm font-medium text-ink underline decoration-ink/25 underline-offset-4 transition-colors duration-200 hover:decoration-pop-pink"
-                      >
-                        {link.label}
-                        <ArrowUpRight size={14} />
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </div>
-
-          {opens !== null && (
-            <div className="rounded-card border border-line bg-paper-2/60 p-5">
-              <h2 className="eyebrow">Your numbers</h2>
-              <p className="mt-3 flex items-baseline gap-2">
-                <span className="display text-3xl leading-none">{opens}</span>
-                <span className="font-display text-sm text-muted">
-                  {opens === 1 ? "open" : "opens"}
-                </span>
-              </p>
-              <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-muted">
-                <Chart size={14} className="mt-0.5 shrink-0" />
-                <span>
-                  Only you see this. Counts opens by others - your own visits are excluded.
-                </span>
-              </p>
-            </div>
-          )}
-
-          <p className="text-center">
-            <ReportButton onClick={() => openReport({ kind: "work", id: work.id }, work.title)} />
-          </p>
-        </aside>
+        <WorkAside
+          work={work}
+          author={author}
+          proof={proof}
+          opens={opens}
+          onOpenAuthor={() => author && navigate(`/people/${author.id}`)}
+          onReport={() => openReport({ kind: "work", id: work.id }, work.title)}
+        />
       </Container>
 
       {moreByAuthor.length > 0 && author && (
