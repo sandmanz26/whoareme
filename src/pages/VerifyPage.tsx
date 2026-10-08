@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import axios from "axios"
 import { Container } from "@/components/layout/Container"
 import { Button } from "@/components/ui/Button"
 import { Check } from "@/components/ui/Icon"
 import { applyMeta } from "@/lib/head"
-import { api } from "@/lib/api/client"
+import { apiErrorMessage } from "@/lib/api/client"
+import { postVerifyConfirm } from "@/lib/api/endpoints/auth"
 import { useAccount } from "@/hooks/useAccount"
 
 type State = "loading" | "success" | "error"
@@ -27,23 +27,19 @@ export function VerifyPage() {
       return cleanup
     }
 
-    api
-      .post("/user/auth/verify/confirm", { token })
+    postVerifyConfirm(token)
       .then(async () => {
         try {
           await refreshAccount()
         } catch {
-          /* user may not be signed in - ok */
+          /* user may not be signed in, which is fine */
         }
         setState("success")
         setTimeout(() => navigate("/panel"), 3000)
       })
       .catch((err: unknown) => {
-        const msg = axios.isAxiosError(err)
-          ? ((err.response?.data as { message?: string })?.message ?? "Invalid or expired link.")
-          : "Something went wrong."
         setState("error")
-        setErrorMsg(msg)
+        setErrorMsg(apiErrorMessage(err))
       })
 
     return cleanup

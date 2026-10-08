@@ -192,6 +192,41 @@ export function AdminPage() {
 
   const head = titles[section] ?? titles.queue
 
+  if (admin.isLoading) {
+    return (
+      <PanelShell
+        eyebrow="Moderation"
+        items={items}
+        activeId={section}
+        title={head.title}
+        description={head.description}
+      >
+        <p className="py-16 text-center text-sm text-muted">Loading the moderation data…</p>
+      </PanelShell>
+    )
+  }
+
+  if (admin.isError) {
+    return (
+      <PanelShell
+        eyebrow="Moderation"
+        items={items}
+        activeId={section}
+        title={head.title}
+        description={head.description}
+      >
+        <div className="rounded-card border border-dashed border-ink/20 px-6 py-16 text-center">
+          <p className="font-display text-base font-semibold text-ink">
+            Could not load moderation data
+          </p>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-muted">
+            The API did not answer. Reload the page to try again.
+          </p>
+        </div>
+      </PanelShell>
+    )
+  }
+
   return (
     <PanelShell
       eyebrow="Moderation"
@@ -201,12 +236,11 @@ export function AdminPage() {
       description={head.description}
     >
       <div className="mb-8 rounded-card border border-ink bg-ink p-5 text-paper">
-        <p className="font-display text-sm font-semibold">This console has no access control.</p>
+        <p className="font-display text-sm font-semibold">Moderation is enforced by the API.</p>
         <p className="mt-2 text-sm leading-relaxed text-paper/75">
-          Anyone who can open this build can open this page, and every decision is stored in your
-          own browser only. The API in <code>/server</code> is where the real gate lives: an admin
-          role on a verified token, checked per request. Treat this as the interface, not the
-          boundary.
+          Decisions, reports, notices and settings live on the server. Every moderator route is
+          gated by <code>isAuth("moderator")</code> on a verified token, checked per request. This
+          console is the interface; the API is the boundary.
         </p>
       </div>
 

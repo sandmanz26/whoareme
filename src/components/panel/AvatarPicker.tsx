@@ -1,7 +1,8 @@
 import { useRef, useState } from "react"
 import { Avatar } from "@/components/ui/Avatar"
 import { Trash, Upload } from "@/components/ui/Icon"
-import { api } from "@/lib/api/client"
+import { apiErrorMessage } from "@/lib/api/client"
+import { deleteProfilePhoto, postProfilePhoto } from "@/lib/api/endpoints/uploads"
 import { useAccount } from "@/hooks/useAccount"
 
 interface AvatarPickerProps {
@@ -9,8 +10,6 @@ interface AvatarPickerProps {
   name: string
   onChange: (photo: string) => void
 }
-
-type ApiResponse<T> = { success: boolean; data: T; message: string }
 
 export function AvatarPicker({ value, name, onChange }: AvatarPickerProps) {
   const { refreshAccount } = useAccount()
@@ -23,18 +22,11 @@ export function AvatarPicker({ value, name, onChange }: AvatarPickerProps) {
     setError(null)
     setBusy(true)
     try {
-      const form = new FormData()
-      form.append("file", file)
-      const res = await api.post<ApiResponse<{ photoUrl: string }>>(
-        "/user/uploads/profile/photo",
-        form,
-        { headers: { "Content-Type": "multipart/form-data" } },
-      )
-      const url = res.data.data.photoUrl
-      onChange(url)
+      const { photoUrl } = await postProfilePhoto(file)
+      onChange(photoUrl)
       await refreshAccount()
-    } catch {
-      setError("Could not upload that image. Check the format and size (max 1.5 MB).")
+    } catch (err) {
+      setError(apiErrorMessage(err))
     } finally {
       setBusy(false)
       if (input.current) input.current.value = ""
@@ -45,11 +37,11 @@ export function AvatarPicker({ value, name, onChange }: AvatarPickerProps) {
     setError(null)
     setBusy(true)
     try {
-      await api.delete("/user/uploads/profile/photo")
+      await deleteProfilePhoto()
       onChange("")
       await refreshAccount()
-    } catch {
-      setError("Could not remove the photo.")
+    } catch (err) {
+      setError(apiErrorMessage(err))
     } finally {
       setBusy(false)
     }

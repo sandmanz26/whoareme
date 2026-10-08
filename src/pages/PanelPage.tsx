@@ -32,7 +32,8 @@ import { useAccount } from "@/hooks/useAccount"
 import { useMyWork } from "@/hooks/useMyWork"
 import { useMyProfile } from "@/hooks/useMyProfile"
 import { useTrafficSummary } from "@/hooks/useTrafficSummary"
-import { api, apiErrorMessage } from "@/lib/api/client"
+import { apiErrorMessage } from "@/lib/api/client"
+import { postVerifyRequest } from "@/lib/api/endpoints/auth"
 import { toast } from "react-hot-toast"
 import { useBrowse } from "@/context/BrowseContext"
 import { cn, initialsOf } from "@/lib/utils"
@@ -185,8 +186,10 @@ function VerifyEmailBanner() {
   async function sendLink() {
     setWorking(true)
     try {
-      await api.post("/user/auth/verify/request")
+      await postVerifyRequest()
       setSent(true)
+    } catch (err) {
+      toast.error(apiErrorMessage(err))
     } finally {
       setWorking(false)
     }

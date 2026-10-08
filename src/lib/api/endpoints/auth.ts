@@ -42,6 +42,21 @@ export async function deleteMe() {
   await api.delete("/user/auth/me")
 }
 
+export async function postVerifyRequest() {
+  const res = await api.post<
+    Wrap<{ alreadyVerified?: boolean; token?: string; deliveredBy?: string }>
+  >("/user/auth/verify/request")
+  return res.data.data
+}
+
+export async function postVerifyConfirm(token: string) {
+  const res = await api.post<Wrap<{ slug: string; email: string | null }>>(
+    "/user/auth/verify/confirm",
+    { token },
+  )
+  return res.data.data
+}
+
 export async function patchMe(patch: Record<string, unknown>) {
   const res = await api.patch<Wrap<{ user: ApiUser }>>("/user/auth/me", patch)
   return res.data.data

@@ -119,6 +119,10 @@ export function WorkEditor({
   }
 
   function submit(publish: boolean) {
+    if (publish && !account.emailVerifiedAt) {
+      setErrors({ form: "Confirm your email address before publishing. Drafts are unaffected." })
+      return
+    }
     if (publish) {
       const specs = guided ? [...COMMON_FIELDS, ...STORY_FIELDS, ...templateFields] : COMMON_FIELDS
       const found = validateFields(specs, state.values)
@@ -327,7 +331,9 @@ export function WorkEditor({
         </Fieldset>
 
         <div className="flex flex-wrap items-center gap-3 border-t border-line pt-6">
-          <Button type="submit">{state.published ? "Update published entry" : "Publish"}</Button>
+          <Button type="submit" disabled={!state.published && !account.emailVerifiedAt}>
+            {state.published ? "Update published entry" : "Publish"}
+          </Button>
           <Button type="button" variant="outline" onClick={() => submit(false)}>
             Save draft
           </Button>
@@ -353,6 +359,17 @@ export function WorkEditor({
             >
               Delete entry
             </button>
+          )}
+          {errors.form && (
+            <p role="alert" className="w-full text-xs font-medium text-pop-pink">
+              {errors.form}
+            </p>
+          )}
+          {!state.published && !account.emailVerifiedAt && !errors.form && (
+            <p className="w-full text-xs leading-relaxed text-muted">
+              Verify your email before publishing. Your drafts are safe, and you can send a link
+              from the panel overview.
+            </p>
           )}
           {savedAt && (
             <p

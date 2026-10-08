@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { useQuery } from "@tanstack/react-query"
 import { Container } from "@/components/layout/Container"
 import { Avatar } from "@/components/ui/Avatar"
 import { SocialLinks } from "@/components/ui/SocialLinks"
@@ -18,8 +19,9 @@ import type { Work } from "@/data/work"
 import type { Person } from "@/data/people"
 import type { Author } from "@/lib/authors"
 import { linksFor } from "@/data/platforms"
-import { api } from "@/lib/api/client"
-import { mapPerson, mapWorkCard, type ApiUser, type ApiWorkCard } from "@/lib/api/mappers"
+import { fetchPersonBySlug, fetchPersonWork } from "@/lib/api/endpoints/people"
+import { mapPerson, mapWorkCard } from "@/lib/api/mappers"
+import { QUERY_KEYS } from "@/lib/api/queryKeys"
 
 interface TopicGroup {
   id: CategoryId
@@ -50,53 +52,54 @@ function Stat({ value, label }: { value: string | number; label: string }) {
   )
 }
 
-type ApiResponse<T> = { success: boolean; data: T; message: string }
-
 export function ProfilePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { addSkillFilter, openReport } = useBrowse()
 
-  const [person, setPerson] = useState<Person | null | undefined>(undefined)
-  const [work, setWork] = useState<Work[]>([])
-  const [authors, setAuthors] = useState<Map<string, Author>>(new Map())
+  const personQuery = useQuery({
+    queryKey: QUERY_KEYS.person(id ?? ""),
+    queryFn: () => fetchPersonBySlug(id!),
+    enabled: !!id,
+    retry: false,
+  })
+  const workQuery = useQuery({
+    queryKey: QUERY_KEYS.personWork(id ?? ""),
+    queryFn: () => fetchPersonWork(id!),
+    enabled: !!id,
+    retry: false,
+  })
 
-  useEffect(() => {
-    if (!id) {
-      setPerson(null)
-      return
+  // undefined = still loading, null = not found or failed.
+  const person: Person | null | undefined = !id
+    ? null
+    : personQuery.isPending
+      ? undefined
+      : personQuery.data
+        ? mapPerson(personQuery.data.user)
+        : null
+
+  const work = useMemo(
+    () => (workQuery.data?.items ?? []).map(mapWorkCard).sort((a, b) => b.year - a.year),
+    [workQuery.data],
+  )
+
+  const authors = useMemo(() => {
+    if (!person) return new Map<string, Author>()
+    const authorEntry: Author = {
+      id: person.id,
+      name: person.name,
+      title: person.title,
+      company: person.company,
+      location: person.location,
+      role: person.role,
+      years: person.years,
+      languages: person.languages,
+      photo: person.photo,
+      links: linksFor(person.role, person.id),
     }
-    setPerson(undefined)
-    setWork([])
-
-    Promise.all([
-      api.get<ApiResponse<{ user: ApiUser }>>(`/user/people/${id}`),
-      api.get<ApiResponse<{ items: ApiWorkCard[]; meta: unknown }>>(`/user/people/${id}/work`),
-    ])
-      .then(([personRes, workRes]) => {
-        const mapped = mapPerson(personRes.data.data.user)
-        setPerson(mapped)
-
-        const authorEntry: Author = {
-          id: mapped.id,
-          name: mapped.name,
-          title: mapped.title,
-          company: mapped.company,
-          location: mapped.location,
-          role: mapped.role,
-          years: mapped.years,
-          languages: mapped.languages,
-          photo: mapped.photo,
-          links: linksFor(mapped.role, mapped.id),
-        }
-        setAuthors(new Map([[mapped.id, authorEntry]]))
-
-        const items = workRes.data.data.items.map(mapWorkCard)
-        items.sort((a, b) => b.year - a.year)
-        setWork(items)
-      })
-      .catch(() => setPerson(null))
-  }, [id])
+    return new Map([[person.id, authorEntry]])
+  }, [person])
 
   const groups = useMemo(() => groupByTopic(work), [work])
 
@@ -127,11 +130,16 @@ export function ProfilePage() {
   }
 
   if (person === null) {
+    const failed = personQuery.isError
     return (
       <Container className="flex min-h-[60vh] flex-col items-center justify-center py-24 text-center">
-        <h1 className="display text-3xl">Profile not found</h1>
+        <h1 className="display text-3xl">
+          {failed ? "Could not load this profile" : "Profile not found"}
+        </h1>
         <p className="mt-3 max-w-sm text-sm text-muted">
-          The link may be stale, or this person is no longer listed in the directory.
+          {failed
+            ? "The API did not answer. Try again in a moment."
+            : "The link may be stale, or this person is no longer listed in the directory."}
         </p>
         <Button className="mt-7" onClick={() => navigate("/")}>
           Back to the directory

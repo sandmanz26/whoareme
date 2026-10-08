@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react"
@@ -80,6 +81,29 @@ export function AccountProvider({ children }: { children: ReactNode }) {
 
   // Read drafts from the shared query cache (populated after login / session restore)
   const { drafts } = useMyWork()
+
+  // Keep the latest account readable from the 401 listener without re-binding it.
+  const accountRef = useRef<Account | null>(null)
+  useEffect(() => {
+    accountRef.current = account
+  }, [account])
+
+  // A 401 from anywhere means the session is gone. Clear it locally; AuthRoute
+  // does the redirect. A suspended account is exempt, since a 401 is the
+  // expected answer when it reaches past the two routes it may use.
+  useEffect(() => {
+    function onUnauthorized() {
+      if (accountRef.current?.status === "suspended") return
+      removeKey(TOKEN_KEY)
+      setApiToken(null)
+      setTokenExists(false)
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.me })
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.workMineList })
+      setAccount(null)
+    }
+    window.addEventListener("wru:unauthorized", onUnauthorized)
+    return () => window.removeEventListener("wru:unauthorized", onUnauthorized)
+  }, [queryClient])
 
   // ── Session restore via useQuery ───────────────────────────────────────────
   const {

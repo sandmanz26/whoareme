@@ -132,6 +132,10 @@ function mapLogEntry(l: ApiModerationLogEntry): AuditEntry {
 
 interface AdminContextValue {
   state: ModerationState
+  /** True while the moderator-only queries are still in flight. */
+  isLoading: boolean
+  /** True when any moderator-only query failed. */
+  isError: boolean
   isWorkHidden: (workId: string) => boolean
   isPersonSuspended: (personId: string) => boolean
   isRoleDisabled: (role: RoleId) => boolean
@@ -159,6 +163,12 @@ interface AdminContextValue {
 
 const AdminContext = createContext<AdminContextValue | null>(null)
 
+// Stable empty arrays, so the derived lists do not change identity every render
+// and invalidate the context memo.
+const EMPTY_REPORTS: ApiModerationReport[] = []
+const EMPTY_APPEALS: ApiModerationAppeal[] = []
+const EMPTY_LOG: ApiModerationLogEntry[] = []
+
 /**
  * Moderation decisions and site settings, sourced from the API.
  *
@@ -179,33 +189,38 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const [reviewed, setReviewed] = useState<string[]>([])
 
-  const { data: apiReports = [] } = useQuery({
+  const reportsQuery = useQuery({
     queryKey: QUERY_KEYS.moderationReports,
     queryFn: fetchReports,
     enabled: isMod,
     staleTime: 60 * 1000,
   })
 
-  const { data: apiAppeals = [] } = useQuery({
+  const appealsQuery = useQuery({
     queryKey: QUERY_KEYS.moderationAppeals,
     queryFn: fetchAppeals,
     enabled: isMod,
     staleTime: 60 * 1000,
   })
 
-  const { data: apiLog = [] } = useQuery({
+  const logQuery = useQuery({
     queryKey: QUERY_KEYS.moderationLog,
     queryFn: fetchAuditLog,
     enabled: isMod,
     staleTime: 60 * 1000,
   })
 
-  const { data: apiSettings = null } = useQuery({
+  const settingsQuery = useQuery({
     queryKey: QUERY_KEYS.moderationSettings,
     queryFn: fetchSettings,
     enabled: isMod,
     staleTime: 5 * 60 * 1000,
   })
+
+  const apiReports = reportsQuery.data ?? EMPTY_REPORTS
+  const apiAppeals = appealsQuery.data ?? EMPTY_APPEALS
+  const apiLog = logQuery.data ?? EMPTY_LOG
+  const apiSettings = settingsQuery.data ?? null
 
   // Public settings are readable without a session. They carry the withdrawn
   // crafts and the editable copy, so a visitor sees the same controls a
@@ -417,9 +432,21 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     [queryClient],
   )
 
+  const isLoading =
+    !!isMod &&
+    (reportsQuery.isPending ||
+      appealsQuery.isPending ||
+      logQuery.isPending ||
+      settingsQuery.isPending)
+  const isError =
+    !!isMod &&
+    (reportsQuery.isError || appealsQuery.isError || logQuery.isError || settingsQuery.isError)
+
   const value = useMemo<AdminContextValue>(
     () => ({
       state,
+      isLoading,
+      isError,
       isWorkHidden: () => false,
       isPersonSuspended: () => false,
       isRoleDisabled: (role) => state.disabledRoles.includes(role),
@@ -440,6 +467,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     }),
     [
       state,
+      isLoading,
+      isError,
       report,
       setWorkHidden,
       setPersonSuspended,

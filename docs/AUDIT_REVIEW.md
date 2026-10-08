@@ -312,3 +312,20 @@ Data dan reliability.
 **Setelah itu:** Batch 6 (wiring taxonomy/facets/settings/funnel dari server, lalu pecah god components), Batch 7 (deferred: C2, pagination, dll).
 
 **Cara lanjut besok:** baca §M ini, lalu kerjakan Batch 5.
+
+---
+
+## N. Batch 5 (selesai, 9 Oktober 2026)
+
+FE infra. (`§M` di atas kini historis.)
+
+| Item | Perubahan |
+|---|---|
+| C8 | `client.ts`: timeout 10s + response interceptor. 401 pada endpoint non-auth memancarkan event `wru:unauthorized`; `useAccount` mendengarkannya dan membersihkan sesi, kecuali untuk akun suspended. Route guard yang mengarahkan ke `/signin`. |
+| H3 | `useAdmin` mengekspos `isLoading`/`isError`; `AdminPage` menampilkan state loading/error; banner konsol diperbaiki (dulu keliru bilang "no access control / stored in your browser"). |
+| H4 | Tombol publish `WorkEditor` dinonaktifkan sampai email terverifikasi, dengan alasan; error 403 server tetap muncul lewat toast. |
+| H1 | `ProfilePage` pindah ke `useQuery` (membedakan 404 vs error); `VerifyPage`, `VerifyEmailBanner`, `AvatarPicker` memakai wrapper endpoint (`postVerifyConfirm`, `postVerifyRequest`, `postProfilePhoto`, `deleteProfilePhoto`) alih-alih `api.*` mentah. |
+
+**Verifikasi:** FE lint 0 error (12 warning lama), `npm run build` sukses. Smoke tidak berubah (118) karena Batch 5 tidak menyentuh server. Verifikasi browser masih tertunda.
+
+**Berikutnya — Batch 6:** wiring `GET /user/taxonomy`, `GET /user/people/facets`, `GET /user/settings`, dan funnel ingest/dashboard dari server (mengganti data statis di FE), lalu pemecahan god components (`AdminPage` 997, `PanelPage` ~950, `WorkEditor` ~500).
