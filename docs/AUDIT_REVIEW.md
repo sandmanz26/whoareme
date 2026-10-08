@@ -386,3 +386,28 @@ Commit: `5578180` (admin), `45cf91a` (panel), dan commit WorkPage.
 **Tidak dikerjakan:** pemecahan `WorkEditor` (488 LOC). Audit menaruhnya bersama migrasi RHF di H5, bukan murni pemecahan; biar jadi satu pekerjaan tersendiri.
 
 **Verifikasi:** `npm run lint` 0 error (12 warning lama), `npm run build` sukses. **Tidak ada perubahan perilaku yang disengaja**, tetapi UI belum dicek di browser (browser belum tersambung), jadi regresi visual belum bisa dikesampingkan.
+
+---
+
+## R. Verifikasi browser (9 Oktober 2026)
+
+Browser desktop tersambung. SPA di `http://localhost:9800`, API `http://localhost:4000`.
+
+### Lulus
+
+- **Sapuan route** (`/`, `/work`, `/about`, `/changelog`, `/privacy`, `/terms`, `/content-policy`, `/accessibility`, `/signin`, 404): semua render dengan heading benar, **0 console error**, tidak ada overflow horizontal (lebar ~1000px). Guard route bekerja: `/panel` → `/signin`, `/admin` → `/`.
+- **Alur penuh**: register lewat modal (201) → panel render → banner verify email tampil → WorkStarter → WorkEditor (readiness 5/5) → Publish → entri muncul di home, `/work`, dan halaman case study → hapus akun (`DELETE /auth/me` 200, token dibersihkan, redirect `/signin`) → entri ikut hilang dari publik (API 404). Semua tanpa console error.
+- **Batch 6 funnel**: flush terkirim (`POST .../analytics/funnel` 204) dan `whoareyou:funnel` kembali `{}`, artinya counter benar-benar terkirim lalu dibersihkan.
+- **Batch 5 H4**: setelah email terverifikasi, banner verify hilang dan tombol Publish aktif.
+
+### Bug ditemukan dan diperbaiki
+
+**Publish entri baru tidak pernah terkirim.** `POST /user/work` 201, tapi tidak ada `POST /work/:id/publish`; entri tersimpan sebagai draft. Sebabnya di `useMyWork.saveDraft` cabang create: `resolved` dibangun ulang dari respons server (selalu `status: "draft"`) dan **menjatuhkan flag `published`** dari draft pemanggil, sehingga pengecekan publish tidak pernah menyala. Diperbaiki dengan membawa `published` melintasi create. Diverifikasi ulang: kini `POST /work/:id/publish` 200 dan nav menampilkan "1/2".
+
+### Keterbatasan yang belum tuntas
+
+- **Lebar 360/390/768/1024/1440 belum diuji**: tidak ada tool kontol viewport; perlu resize manual.
+- Tab berada dalam keadaan `document.hidden` → pengukuran layout kurang dapat diandalkan dan screenshot tidak tersedia. Perlu pane browser benar-benar terlihat.
+- **Email verification di dev gagal**: `MAIL_TRANSPORT=http` (Resend) membalas 502, jadi token verifikasi tidak dikembalikan; verifikasi dilakukan lewat update DB. Di produksi ini tidak masalah, tetapi untuk dev sebaiknya `MAIL_TRANSPORT=log` atau `none`.
+
+**Commit fix:** `fix(panel): publish a new entry on first save`.

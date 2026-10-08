@@ -58,6 +58,10 @@ export function useMyWork() {
       const serverDraft = mapApiWorkMineToDraft(created.work)
       resolved = {
         ...serverDraft,
+        // Carry the caller's publish intent across the create: the server always
+        // returns a new entry as a draft, so without this the first save of a
+        // published entry would silently stay a draft.
+        published: draft.published,
         values: draft.values,
         links: draft.links,
         sections: draft.sections,
