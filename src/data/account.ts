@@ -8,7 +8,13 @@ export interface Account {
   location: string
   role: RoleId
   title: string
+  company: string
   years: string
+  /** Filterable on the home page, so this is a real spec rather than a note. */
+  skills: string[]
+  /** Working languages, seeded from the country at signup. */
+  languages: string[]
+  openToWork: boolean
   topics: CategoryId[]
   portfolio: string
   /** Shown as the bio on the profile page and as the pitch on the card. */

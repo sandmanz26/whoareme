@@ -43,7 +43,16 @@ interface AccountContextValue {
   register: (
     account: Omit<
       Account,
-      "id" | "createdAt" | "passwordHash" | "emailVerifiedAt" | "access" | "status"
+      | "id"
+      | "createdAt"
+      | "passwordHash"
+      | "emailVerifiedAt"
+      | "access"
+      | "status"
+      | "company"
+      | "skills"
+      | "languages"
+      | "openToWork"
     >,
     password: string,
   ) => Promise<Account>

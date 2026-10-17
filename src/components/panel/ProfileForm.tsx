@@ -4,11 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { updateProfileSchema, type UpdateProfileValues } from "@/lib/validation/authSchemas"
 import { AvatarPicker } from "@/components/panel/AvatarPicker"
 import { DeleteProfile } from "@/components/panel/DeleteProfile"
+import { SkillPicker } from "@/components/panel/SkillPicker"
 import { Button } from "@/components/ui/Button"
 import { Check } from "@/components/ui/Icon"
 import { ChipGroup, Field, SelectInput, TextArea, TextInput } from "@/components/ui/Field"
 import type { Account } from "@/data/account"
+import { LANGUAGES } from "@/data/people"
 import { CATEGORIES, LIVE_ROLES, type CategoryId, type RoleId } from "@/data/taxonomy"
+import { cn } from "@/lib/utils"
 
 const CATEGORY_OPTIONS = CATEGORIES.map((c) => ({ id: c.id, label: c.label }))
 
@@ -32,6 +35,10 @@ export function ProfileForm({
       years: account.years,
       role: account.role,
       title: account.title,
+      company: account.company,
+      skills: account.skills,
+      languages: account.languages,
+      openToWork: account.openToWork,
       topics: account.topics,
       portfolio: account.portfolio,
       pitch: account.pitch,
@@ -128,6 +135,16 @@ export function ProfileForm({
             />
           )}
         </Field>
+        <Field label="Company" hint="Your employer, studio, or 'Independent'.">
+          {({ id, invalid }) => (
+            <TextInput
+              id={id}
+              invalid={invalid}
+              value={values.company ?? ""}
+              onChange={(e) => form.setValue("company", e.target.value)}
+            />
+          )}
+        </Field>
       </div>
 
       <ChipGroup
@@ -148,6 +165,53 @@ export function ProfileForm({
         }}
         hint="The worlds you have really shipped in. Pick up to 4."
       />
+
+      <SkillPicker
+        role={(values.role as RoleId) || account.role}
+        value={values.skills ?? []}
+        onChange={(skills) => form.setValue("skills", skills)}
+        max={24}
+      />
+
+      <ChipGroup
+        legend="Working languages"
+        options={LANGUAGES.map((language) => ({ id: language, label: language }))}
+        value={values.languages ?? []}
+        max={12}
+        onToggle={(language) => {
+          const current = values.languages ?? []
+          form.setValue(
+            "languages",
+            current.includes(language)
+              ? current.filter((item) => item !== language)
+              : [...current, language],
+          )
+        }}
+        hint="Languages you would actually work in."
+      />
+
+      <div className="flex items-center justify-between gap-4 rounded-2xl border border-line bg-card px-4 py-3">
+        <div>
+          <p className="font-display text-sm font-medium text-ink">Open to work</p>
+          <p className="mt-0.5 text-xs text-muted">
+            Shows the availability marker on your cards and profile.
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={values.openToWork ?? false}
+          onClick={() => form.setValue("openToWork", !(values.openToWork ?? false))}
+          className={cn(
+            "shrink-0 cursor-pointer rounded-pill border px-3 py-1.5 font-display text-xs font-medium transition-colors duration-200",
+            values.openToWork
+              ? "border-ink bg-ink text-paper"
+              : "border-ink/15 bg-paper-2 text-muted hover:border-ink/40",
+          )}
+        >
+          {values.openToWork ? "On" : "Off"}
+        </button>
+      </div>
 
       <Field
         label="Portfolio or profile link"

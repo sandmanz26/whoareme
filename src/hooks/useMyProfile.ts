@@ -12,9 +12,13 @@ function profilePatchToApi(patch: Partial<Account>): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   if (patch.name !== undefined) out.name = patch.name
   if (patch.title !== undefined) out.title = patch.title
+  if (patch.company !== undefined) out.company = patch.company
   if (patch.location !== undefined) out.location = patch.location
   if (patch.role !== undefined) out.role = patch.role
   if (patch.years !== undefined) out.years = Number(patch.years) || 0
+  if (patch.skills !== undefined) out.skills = patch.skills
+  if (patch.languages !== undefined) out.languages = patch.languages
+  if (patch.openToWork !== undefined) out.openToWork = patch.openToWork
   if (patch.topics !== undefined) out.topics = patch.topics
   if (patch.portfolio !== undefined) out.portfolioUrl = patch.portfolio
   if (patch.pitch !== undefined) out.pitch = patch.pitch
