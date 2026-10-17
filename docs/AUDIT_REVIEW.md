@@ -462,11 +462,44 @@ Tidak ada item kode yang tersisa. Semua isi S.1 sebelumnya sudah dikerjakan; yan
 
 ### S.5 Celah verifikasi browser
 
-- Lebar **360 / 390 / 768 / 1024 / 1440** (butuh resize manual; pane harus terlihat).
-- Alur yang belum pernah diuji di UI: konsol moderasi (queue/entries/people/appeals/log/settings/funnel berangka), traffic panel berangka, panel akun suspended, redirect 401 → `/signin`, filter/pencarian/sort/grid-list, authoring (save draft, revert, hapus entri), upload avatar/thumbnail, sign in/out, forgot/reset password, verify page, report/notices.
-- **Alur signup baru (verify-then-sign-in) belum diverifikasi di browser**: browser desktop terputus setelah perubahan S3. Verifikasi manual: submit signup → "Check your inbox"; link verifikasi ada di log API (`MAIL_TRANSPORT=log`); buka link → sign in.
-- **WorkEditor setelah H5/U4 belum diverifikasi di browser**: browser terputus. Verifikasi manual: buka entri, ubah field (preview/readiness ikut), save draft, publish, revert, hapus.
+Sudah diverifikasi (headless Chrome via CDP, 17 Oktober 2026 — lihat §T):
+
+- Responsif 360/390/768/1024/1440 pada `/`, `/work`, `/work/:slug`, `/people/:id`, `/privacy`, `/terms`, `/panel`, `/admin`.
+- Signup → verify → sign in; authoring publish → index/home → revert → delete; search, sort, layout; profil; traffic panel; seluruh tab konsol moderasi.
+
+Belum diuji di UI:
+
+- Panel akun suspended dan redirect 401 → `/signin`.
+- Upload avatar/thumbnail lewat UI.
+- Submit report dan alur notices/appeals.
+- Forgot/reset password lewat UI (API-nya tercakup smoke).
 
 ### Definisi selesai untuk dokumen ini
 
 Dokumen dianggap tuntas bila: seluruh **S.1** selesai atau dipindah resmi ke S.2/S.3, **S.4** dijalankan, dan **S.5** ditutup (atau disepakati sebagai risiko yang diterima).
+
+---
+
+## T. Verifikasi browser putaran 2 (17 Oktober 2026)
+
+Tool browser desktop tidak menempel ke sesi (`browser.disconnected`), jadi verifikasi dijalankan dengan **Chrome headless + DevTools Protocol** (Node 22, tanpa dependensi): `Emulation.setDeviceMetricsOverride` untuk lebar, `Runtime.evaluate` untuk interaksi, `Network`/`Log` untuk error.
+
+### Lulus
+
+- Sapuan 12 route: semua render dengan heading benar, **0 console error**.
+- Alur penuh: signup (202, "Check your inbox", tanpa token) → link verifikasi dari log API → `/verify` → sign in → panel → WorkEditor readiness 5/5 → publish → muncul di `/work` dan home → revert (persist setelah reload) → delete (hilang setelah reload). **0 console error, 0 network error, 0 exception.**
+- Responsif: **5 lebar × 8 route**, tidak ada overflow (`scrollWidth === clientWidth`): `/`, `/work`, `/work/:slug`, `/people/:id`, `/privacy`, `/terms`, `/panel`, `/admin`.
+- Search (empty state), sort A-Z, layout list; halaman profil (2 entries, Industry/SaaS); traffic panel; 6 tab konsol moderasi.
+- Satu 429 pada `/moderation/analytics/funnel` muncul karena automasi memicu banyak flush `pagehide`; bukan bug produk.
+
+### Bug ditemukan dan diperbaiki
+
+| Fix | Commit | Masalah |
+|---|---|---|
+| Verify StrictMode | `7dfcd08` | Token single-use dikirim dua kali oleh StrictMode; request kedua 400 dan menimpa sukses dengan error. |
+| Zod untouched fields | `39b2ae3` | Field opsional yang belum disentuh bernilai `undefined`; schema menolak dengan "expected string". |
+| Save/revert status | `39b2ae3` | "Save draft" meng-unpublish entri published; revert tidak memperbarui UI sampai reload. |
+
+### Belum diuji
+
+Panel akun suspended, redirect 401, upload avatar/thumbnail, submit report, notices/appeals, forgot/reset password lewat UI. Lihat §S.5.
