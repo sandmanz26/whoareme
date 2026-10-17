@@ -25,7 +25,9 @@ export function useTrafficSummary(): TrafficSummary {
   const { data, isPending } = useQuery({
     queryKey: QUERY_KEYS.trafficSummary,
     queryFn: () => fetchTrafficSummary(DAYS),
-    enabled: !!account,
+    // A suspended account may only read notices and delete itself, so this
+    // request would 401. Skip it rather than provoking an error.
+    enabled: !!account && account.status !== "suspended",
     staleTime: 5 * 60 * 1000,
     select: (raw) => ({
       series: {
@@ -44,6 +46,6 @@ export function useTrafficSummary(): TrafficSummary {
     series: data?.series ?? EMPTY_SERIES,
     totals: data?.totals ?? { profileViews: 0, workOpens: 0 },
     opensBySlug: data?.opensBySlug ?? {},
-    isPending: isPending && !!account,
+    isPending: isPending && !!account && account.status !== "suspended",
   }
 }
