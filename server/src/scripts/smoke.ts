@@ -101,6 +101,27 @@ async function uploadFile(
   return { status: res.status, json: (text ? JSON.parse(text) : {}) as Json }
 }
 
+/**
+ * Register, then sign in.
+ *
+ * Registration deliberately returns no token and a uniform body, so the
+ * endpoint cannot be used to enumerate addresses. A session therefore needs a
+ * login after the account exists.
+ */
+async function registerAndLogin(base: string, body: Json) {
+  const reg = await post(base, "/auth/register", body)
+  const login = await post(base, "/auth/login", {
+    email: body["email"],
+    password: body["password"],
+  })
+  const data = (login.json["data"] as Json) ?? {}
+  return {
+    status: reg.status,
+    token: data["token"] as string,
+    user: (data["user"] as Json) ?? {},
+  }
+}
+
 // ── Minimal work input that passes publishable validation ─────────────────────
 
 function makeWork(overrides: Partial<Record<string, unknown>> = {}): Json {
@@ -194,7 +215,7 @@ async function main() {
 
   // ── § 3 Auth — register ───────────────────────────────────────────────────────
   console.log("\n§3 Auth")
-  const reg = await post(base, "/auth/register", {
+  const regBody = {
     name: "Smoke User",
     email: "smoke@test.local",
     password: "SmokePass123!",
@@ -203,25 +224,14 @@ async function main() {
     title: "Senior Engineer",
     years: 5,
     topics: ["saas"],
-  })
-  assertEq("POST /auth/register → 201", reg.status, 201)
-  assert("register returns token", typeof (reg.json["data"] as Json)["token"] === "string")
-  assert("register returns user", typeof (reg.json["data"] as Json)["user"] === "object")
+  }
+  const reg = await post(base, "/auth/register", regBody)
+  assertEq("POST /auth/register → 202", reg.status, 202)
+  assert("register response carries no token", (reg.json["data"] ?? null) === null)
 
-  const userId = ((reg.json["data"] as Json)["user"] as Json)["slug"] as string
-
-  // Duplicate registration
-  const dup = await post(base, "/auth/register", {
-    name: "Smoke User",
-    email: "smoke@test.local",
-    password: "SmokePass123!",
-    location: "Jakarta, ID",
-    role: "engineering",
-    title: "SE",
-    years: 5,
-    topics: ["saas"],
-  })
-  assertEq("duplicate register → 409", dup.status, 409)
+  // Duplicate registration returns the same generic response, not a 409.
+  const dup = await post(base, "/auth/register", { ...regBody, title: "SE" })
+  assertEq("duplicate register → 202", dup.status, 202)
 
   // Bad login
   const badLogin = await post(base, "/auth/login", { email: "smoke@test.local", password: "wrong" })
@@ -236,6 +246,7 @@ async function main() {
   assertEq("good login → 200", login.status, 200)
   assert("login returns token", typeof (login.json["data"] as Json)["token"] === "string")
   const loginToken = (login.json["data"] as Json)["token"] as string
+  const userId = ((login.json["data"] as Json)["user"] as Json)["slug"] as string
 
   // Me
   const me = await get(base, "/auth/me", loginToken)
@@ -499,7 +510,7 @@ async function main() {
   console.log("\n§10 Moderation")
 
   // Register a second user who will be the moderator
-  const modReg = await post(base, "/auth/register", {
+  const modReg = await registerAndLogin(base, {
     name: "Smoke Mod",
     email: "mod@test.local",
     password: "ModPass456!",
@@ -509,9 +520,9 @@ async function main() {
     years: 8,
     topics: ["saas"],
   })
-  assertEq("moderator register → 201", modReg.status, 201)
-  const modToken = (modReg.json["data"] as Json)["token"] as string
-  const modSlug = ((modReg.json["data"] as Json)["user"] as Json)["slug"] as string
+  assertEq("moderator register → 202", modReg.status, 202)
+  const modToken = modReg.token
+  const modSlug = modReg.user["slug"] as string
 
   // Directly promote to moderator via DB (no admin API exists).
   // isAuth reads access from the DB record at middleware time, so the existing token
@@ -551,7 +562,7 @@ async function main() {
   }
 
   // Register a third user (the target for suspend/reinstate)
-  const target = await post(base, "/auth/register", {
+  const target = await registerAndLogin(base, {
     name: "Smoke Target",
     email: "target@test.local",
     password: "TargetPass789!",
@@ -561,8 +572,8 @@ async function main() {
     years: 3,
     topics: ["saas"],
   })
-  const targetToken = (target.json["data"] as Json)["token"] as string
-  const targetSlug = ((target.json["data"] as Json)["user"] as Json)["slug"] as string
+  const targetToken = target.token
+  const targetSlug = target.user["slug"] as string
 
   // Create + publish a work as target user (need verified email first)
   const tvreq = await post(base, "/auth/verify/request", {}, targetToken)
@@ -686,7 +697,7 @@ async function main() {
       assertEq("same-actor appeal decide → 403", selfDecide.status, 403)
 
       // Register a second moderator to decide
-      const mod2Reg = await post(base, "/auth/register", {
+      const mod2Reg = await registerAndLogin(base, {
         name: "Smoke Mod2",
         email: "mod2@test.local",
         password: "Mod2Pass000!",
@@ -696,8 +707,8 @@ async function main() {
         years: 4,
         topics: ["saas"],
       })
-      const mod2Slug = ((mod2Reg.json["data"] as Json)["user"] as Json)["slug"] as string
-      const mod2Token = (mod2Reg.json["data"] as Json)["token"] as string
+      const mod2Slug = mod2Reg.user["slug"] as string
+      const mod2Token = mod2Reg.token
       await User.updateOne({ slug: mod2Slug }, { $set: { access: "moderator" } })
 
       // mod2 overturns the appeal (this republishes the work)
@@ -842,15 +853,15 @@ async function main() {
     const email = "deletion-probe@example.com"
     const password = "deletion-probe-12345"
 
-    const reg = await post(base, "/auth/register", {
+    const reg = await registerAndLogin(base, {
       name: "Deletion Probe",
       email,
       password,
       role: "engineering",
       years: 4,
     })
-    assertEq("register deletion probe → 201", reg.status, 201)
-    const probeToken = (reg.json["data"] as Json)["token"] as string
+    assertEq("register deletion probe → 202", reg.status, 202)
+    const probeToken = reg.token
 
     // Verify so the probe can publish, then publish one entry.
     const vreq = await post(base, "/auth/verify/request", {}, probeToken)
@@ -890,20 +901,20 @@ async function main() {
       role: "engineering",
       years: 1,
     })
-    assertEq("email freed for re-registration → 201", reReg.status, 201)
+    assertEq("email freed for re-registration → 202", reReg.status, 202)
   }
 
   // ── § 19 Moderator republish quota guard ──────────────────────────────────────
   console.log("\n§19 Moderator republish quota guard")
   {
-    const owner = await post(base, "/auth/register", {
+    const owner = await registerAndLogin(base, {
       name: "Quota Probe",
       email: "quota-probe@example.com",
       password: "quota-probe-12345",
       role: "engineering",
       years: 3,
     })
-    const ownerToken = (owner.json["data"] as Json)["token"] as string
+    const ownerToken = owner.token
     const ovreq = await post(base, "/auth/verify/request", {}, ownerToken)
     await post(base, "/auth/verify/confirm", {
       token: (ovreq.json["data"] as Json)["token"] as string,
@@ -916,15 +927,15 @@ async function main() {
     await post(base, `/work/${aWork["_id"] as string}/publish`, {}, ownerToken)
     await post(base, `/work/${bWork["_id"] as string}/publish`, {}, ownerToken)
 
-    const modReg = await post(base, "/auth/register", {
+    const modReg = await registerAndLogin(base, {
       name: "Quota Mod",
       email: "quota-mod@example.com",
       password: "quota-mod-12345",
       role: "product",
       years: 6,
     })
-    const qmodToken = (modReg.json["data"] as Json)["token"] as string
-    const qmodSlug = ((modReg.json["data"] as Json)["user"] as Json)["slug"] as string
+    const qmodToken = modReg.token
+    const qmodSlug = modReg.user["slug"] as string
     await User.updateOne({ slug: qmodSlug }, { $set: { access: "moderator" } })
 
     // Take A down, so saas has one published entry.
@@ -959,14 +970,14 @@ async function main() {
   // ── § 20 Uploads ──────────────────────────────────────────────────────────────
   console.log("\n§20 Uploads")
   {
-    const reg = await post(base, "/auth/register", {
+    const reg = await registerAndLogin(base, {
       name: "Upload Probe",
       email: "upload-probe@example.com",
       password: "upload-probe-12345",
       role: "engineering",
       years: 2,
     })
-    const uToken = (reg.json["data"] as Json)["token"] as string
+    const uToken = reg.token
     const made = await post(base, "/work", makeWork({ title: "Upload probe entry" }), uToken)
     const workId = ((made.json["data"] as Json)["work"] as Json)["_id"] as string
 
@@ -997,14 +1008,14 @@ async function main() {
   // ── § 21 Suspended account access ─────────────────────────────────────────────
   console.log("\n§21 Suspended account access")
   {
-    const reg = await post(base, "/auth/register", {
+    const reg = await registerAndLogin(base, {
       name: "Suspend Probe",
       email: "suspend-probe@example.com",
       password: "suspend-probe-12345",
       role: "design",
       years: 2,
     })
-    const sSlug = ((reg.json["data"] as Json)["user"] as Json)["slug"] as string
+    const sSlug = reg.user["slug"] as string
 
     const sus = await post(
       mod,
@@ -1050,14 +1061,14 @@ async function main() {
   // ── § 22 Work delete cascade ──────────────────────────────────────────────────
   console.log("\n§22 Work delete cascade")
   {
-    const reg = await post(base, "/auth/register", {
+    const reg = await registerAndLogin(base, {
       name: "Delete Work Probe",
       email: "delete-work-probe@example.com",
       password: "delete-work-probe-12345",
       role: "engineering",
       years: 2,
     })
-    const dToken = (reg.json["data"] as Json)["token"] as string
+    const dToken = reg.token
     const vreq = await post(base, "/auth/verify/request", {}, dToken)
     await post(base, "/auth/verify/confirm", {
       token: (vreq.json["data"] as Json)["token"] as string,

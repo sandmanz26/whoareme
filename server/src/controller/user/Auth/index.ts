@@ -13,7 +13,9 @@ import {
   sendMail,
   verificationMail,
   passwordResetMail,
+  accountExistsMail,
 } from "../../../service/mail.js"
+import { logger } from "../../../libraries/logger.js"
 import { env } from "../../../config/index.js"
 
 const verifyConfirmSchema = z.object({ token: z.string().min(16).max(200) })
@@ -21,8 +23,21 @@ const verifyConfirmSchema = z.object({ token: z.string().min(16).max(200) })
 export const AuthController = {
   async Register(req: Request, res: Response) {
     const input = registerSchema.parse(req.body)
-    const data = await AuthUsecase.Register(input)
-    sendResponse(res, 201, true, data, "Account created successfully.")
+    const outcome = await AuthUsecase.Register(input)
+
+    // The response below is identical whether the address was free or already
+    // taken. Only the email differs, and it goes to the address itself.
+    if (outcome.kind === "created") {
+      const sent = await sendMail(
+        verificationMail(outcome.email, outcome.name, outcome.verifyToken),
+      )
+      if (!sent.sent) logger.warn({ reason: sent.reason }, "verification email not sent")
+    } else if (outcome.notify) {
+      const sent = await sendMail(accountExistsMail(outcome.email, outcome.name))
+      if (!sent.sent) logger.warn({ reason: sent.reason }, "account-exists email not sent")
+    }
+
+    sendResponse(res, 202, true, null, "Check your inbox for the next step.")
   },
 
   async Login(req: Request, res: Response) {

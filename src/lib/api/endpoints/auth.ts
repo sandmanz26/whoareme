@@ -22,8 +22,9 @@ export interface RegisterInput {
 }
 
 export async function postRegister(input: RegisterInput) {
-  const res = await api.post<Wrap<{ token: string; user: ApiUser }>>("/user/auth/register", input)
-  return res.data.data
+  // 202 with a deliberately uniform body: the response never says whether the
+  // address was free, so it cannot be used to enumerate accounts.
+  await api.post("/user/auth/register", input)
 }
 
 export async function postLogin(email: string, password: string) {

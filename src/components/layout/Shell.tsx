@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { Outlet, ScrollRestoration, useNavigate } from "react-router-dom"
+import { Outlet, ScrollRestoration } from "react-router-dom"
 import { Toaster } from "react-hot-toast"
 import { Navbar } from "@/components/layout/Navbar"
 import { Footer } from "@/components/layout/Footer"
@@ -10,7 +10,6 @@ import { AccountProvider } from "@/hooks/useAccount"
 import { AdminProvider } from "@/hooks/useAdmin"
 
 function Layout() {
-  const navigate = useNavigate()
   const { joinOpen, closeJoin, reportOf, closeReport, openJoin } = useBrowse()
 
   return (
@@ -39,7 +38,7 @@ function Layout() {
         </Suspense>
       </main>
       <Footer />
-      <JoinModal open={joinOpen} onClose={closeJoin} onOpenPanel={() => navigate("/panel")} />
+      <JoinModal open={joinOpen} onClose={closeJoin} />
       <ReportModal
         open={reportOf !== null}
         onClose={closeReport}

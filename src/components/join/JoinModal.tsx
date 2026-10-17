@@ -1,4 +1,5 @@
 import { useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { isAxiosError } from "axios"
@@ -7,7 +8,6 @@ import { Button } from "@/components/ui/Button"
 import { Field, PasswordInput, SelectInput, TextInput } from "@/components/ui/Field"
 import { ArrowRight, Check } from "@/components/ui/Icon"
 import { track } from "@/lib/analytics"
-import { initialsOf } from "@/lib/utils"
 import { ROLE_OPTIONS } from "./joinForm"
 import type { RoleId } from "@/data/taxonomy"
 import { useAccount } from "@/hooks/useAccount"
@@ -16,11 +16,11 @@ import { registerSchema, type RegisterValues } from "@/lib/validation/authSchema
 interface JoinModalProps {
   open: boolean
   onClose: () => void
-  onOpenPanel: () => void
 }
 
-export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
+export function JoinModal({ open, onClose }: JoinModalProps) {
   const { register: registerAccount } = useAccount()
+  const navigate = useNavigate()
   const form = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: { name: "", email: "", role: "", password: "" },
@@ -72,10 +72,10 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
     <Modal
       open={open}
       onClose={handleClose}
-      title={isSubmitSuccessful ? "You're on the list" : "Create your profile"}
+      title={isSubmitSuccessful ? "Check your inbox" : "Create your profile"}
       description={
         isSubmitSuccessful
-          ? "Your profile is created. Next: your title, location, a portfolio link and a bio, all on your panel."
+          ? `We sent a sign-up link to ${values.email}. Confirm it, then sign in.`
           : "Who you are, how to get back in, and what you do. The rest - title, location, a portfolio link, a bio - is a field on your panel whenever you're ready."
       }
     >
@@ -83,10 +83,9 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
         <SuccessState
           values={values}
           onClose={handleClose}
-          onOpenPanel={() => {
-            onClose()
-            onOpenPanel()
-            window.setTimeout(() => form.reset(), 200)
+          onSignIn={() => {
+            handleClose()
+            navigate("/signin")
           }}
         />
       ) : (
@@ -211,52 +210,31 @@ export function JoinModal({ open, onClose, onOpenPanel }: JoinModalProps) {
 function SuccessState({
   values,
   onClose,
-  onOpenPanel,
+  onSignIn,
 }: {
   values: RegisterValues
   onClose: () => void
-  onOpenPanel: () => void
+  onSignIn: () => void
 }) {
-  const role = ROLE_OPTIONS.find((o) => o.id === values.role)
-
   return (
     <div className="animate-fade-up flex flex-col items-center text-center">
       <span className="grid size-14 place-items-center rounded-pill bg-pop-lime text-ink">
         <Check size={26} />
       </span>
 
-      <h3 className="display mt-5 text-2xl">Profile ready, {values.name.split(" ")[0]}</h3>
-      <p className="mt-2 max-w-sm text-sm text-muted">
-        Add your title, location, a portfolio link and a bio from your panel - then add real work.
-        Your panel has a different form for every craft.
+      <h3 className="display mt-5 text-2xl">Check your inbox</h3>
+      <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
+        We sent a link to <strong className="text-ink">{values.email}</strong>. Open it to confirm
+        the address, then sign in. If that address already had an account, the email explains how
+        to get back in instead.
       </p>
-
-      <div className="mt-7 w-full rounded-card border border-line bg-paper p-5 text-left">
-        <div className="flex items-start gap-4">
-          <span className="grid size-14 shrink-0 place-items-center rounded-[30%] bg-ink font-display text-lg font-bold text-paper">
-            {initialsOf(values.name)}
-          </span>
-          <div className="min-w-0">
-            <p className="truncate font-display text-base font-semibold text-ink">{values.name}</p>
-            <p className="truncate text-sm text-ink-2">Add your title</p>
-          </div>
-        </div>
-
-        {role && (
-          <ul className="mt-4 flex flex-wrap gap-1.5">
-            <li className="rounded-pill border border-ink/20 bg-paper-2 px-2.5 py-1 font-display text-[0.6875rem] font-medium text-ink-2">
-              {role.label}
-            </li>
-          </ul>
-        )}
-      </div>
 
       <div className="mt-7 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
         <Button variant="outline" onClick={onClose}>
-          Later
+          Close
         </Button>
-        <Button onClick={onOpenPanel}>
-          Finish your profile
+        <Button onClick={onSignIn}>
+          Sign in
           <ArrowRight size={17} />
         </Button>
       </div>

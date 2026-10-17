@@ -14,7 +14,7 @@ import { removeStoredFile } from "../../../utils/files.js"
 import { uniqueSlug } from "../../../utils/slug.js"
 import { buildSearchBlob } from "../../../utils/text.js"
 import { languagesFor } from "../../../utils/languages.js"
-import { badRequest, conflict, notFound, unauthorized } from "../../../middleware/error.js"
+import { badRequest, notFound, unauthorized } from "../../../middleware/error.js"
 import { logger } from "../../../libraries/logger.js"
 import { ROLES, TOPICS, isRoleLive } from "../../../constant/app.js"
 
@@ -119,17 +119,42 @@ function ownerUser(user: UserLike) {
   }
 }
 
+const EXISTS_NOTICE_COOLDOWN_MS = 10 * 60 * 1000
+const existsNoticeAt = new Map<string, number>()
+
 export const AuthUsecase = {
+  /**
+   * Creates an account, or silently does nothing when the address is taken.
+   *
+   * The response is identical either way, so the endpoint cannot be used to
+   * enumerate accounts. The cost is that signup no longer signs the person in:
+   * they confirm the address by email and then sign in. When the address is
+   * already registered, its owner gets a "you already have an account" email,
+   * throttled per address so this cannot be used to flood an inbox.
+   */
   async Register(input: z.infer<typeof registerSchema>) {
     const existing = await User.findOne({ email: input.email }).lean()
-    if (existing) throw conflict("An account with that email already exists.", { field: "email" })
+    if (existing) {
+      // Equalise the timing with the created path, where bcrypt dominates.
+      await hashPassword(input.password).catch(() => {})
+      const now = Date.now()
+      const last = existsNoticeAt.get(input.email) ?? 0
+      const notify = now - last >= EXISTS_NOTICE_COOLDOWN_MS
+      if (notify) existsNoticeAt.set(input.email, now)
+      return {
+        kind: "existing" as const,
+        notify,
+        email: existing.email as string,
+        name: existing.name,
+      }
+    }
 
     const slug = await uniqueSlug(input.name, async (candidate) =>
       Boolean(await User.exists({ slug: candidate })),
     )
 
     const passwordHash = await hashPassword(input.password)
-    const token = signToken({ sub: slug, slug, role: input.role, access: "member" })
+    const verifyToken = randomBytes(32).toString("base64url")
 
     const user = await User.create({
       slug,
@@ -148,7 +173,9 @@ export const AuthUsecase = {
       photoUrl: "",
       portfolioUrl: input.portfolioUrl,
       pitch: input.pitch,
-      token,
+      emailVerifyTokenHash: hashToken(verifyToken),
+      emailVerifyExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      token: null,
       status: "active",
       access: "member",
       counts: { publishedWorks: 0, topicUsage: {} },
@@ -165,7 +192,12 @@ export const AuthUsecase = {
     })
     await user.save()
 
-    return { user: ownerUser(user as unknown as UserLike), token }
+    return {
+      kind: "created" as const,
+      email: user.email as string,
+      name: user.name,
+      verifyToken,
+    }
   },
 
   async Login(input: z.infer<typeof loginSchema>) {

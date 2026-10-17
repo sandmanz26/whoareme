@@ -195,3 +195,45 @@ This link expires in 1 hour. If you didn't request this, ignore this email — y
 
   return { to, subject: "Reset your password — whoareyou", text, html }
 }
+
+export function accountExistsMail(to: string, name: string): MailPayload {
+  const firstName = name.split(" ")[0]
+  const signIn = `${env.APP_BASE_URL}/signin`
+  const reset = `${env.APP_BASE_URL}/reset`
+
+  const html = emailLayout(
+    `<h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#0b0b0f;letter-spacing:-0.03em;line-height:1.2;">
+      You already have an account
+    </h1>
+    <p style="margin:0 0 6px;font-size:15px;color:#2a2a31;line-height:1.6;">
+      Hi ${firstName},
+    </p>
+    <p style="margin:0;font-size:15px;color:#6b6b76;line-height:1.6;">
+      Someone tried to create a whoareyou account with this address. If that was you,
+      sign in instead. If you have forgotten the password, reset it.
+    </p>
+    ${ctaButton(signIn, "Sign in")}
+    <p style="margin:20px 0 0;font-size:13px;color:#6b6b76;line-height:1.6;">
+      Forgot the password?
+      <a href="${reset}" style="color:#0b0b0f;">Reset it here</a>.
+    </p>
+    <hr style="margin:32px 0;border:none;border-top:1px solid #e2e0d7;" />
+    <p style="margin:0;font-size:13px;color:#6b6b76;line-height:1.6;">
+      If this wasn't you, ignore this email. Nothing was created or changed.
+    </p>
+    ${fallbackLink(signIn)}`,
+    `Someone tried to sign up with this address.`,
+  )
+
+  const text = `Hi ${firstName},
+
+Someone tried to create a whoareyou account with this address. If that was you, sign in:
+
+${signIn}
+
+Forgot your password? Reset it here: ${reset}
+
+If this wasn't you, ignore this email. Nothing was created or changed.`
+
+  return { to, subject: "You already have a whoareyou account", text, html }
+}

@@ -55,7 +55,7 @@ interface AccountContextValue {
       | "openToWork"
     >,
     password: string,
-  ) => Promise<Account>
+  ) => Promise<void>
   signIn: (email: string, password: string) => Promise<SignInResult>
   resetPassword: (email: string, password: string) => Promise<SignInResult>
   confirmPasswordReset: (token: string, password: string) => Promise<SignInResult>
@@ -164,7 +164,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   // ── Auth actions ───────────────────────────────────────────────────────────
   const register = useCallback<AccountContextValue["register"]>(
     async (input, password) => {
-      const { token, user } = await postRegister({
+      await postRegister({
         name: input.name,
         email: input.email,
         password,
@@ -176,16 +176,10 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         portfolioUrl: input.portfolio || "",
         pitch: input.pitch || "",
       })
-      writeJson(TOKEN_KEY, token)
-      setApiToken(token)
-      const mapped = mapAccount(user)
-      setAccount(mapped)
-      queryClient.setQueryData<WorkDraft[]>(QUERY_KEYS.workMineList, [])
-      queryClient.setQueryData(QUERY_KEYS.me, { user })
-      setTokenExists(true)
-      return mapped
+      // Registration no longer signs the person in: the address has to be
+      // confirmed by email first, and the response is uniform by design.
     },
-    [queryClient],
+    [],
   )
 
   const signIn = useCallback<AccountContextValue["signIn"]>(
