@@ -183,7 +183,11 @@ export function WorkEditor({
     }
 
     track(publish ? "entry_published" : "entry_saved_draft")
-    onSave({ ...state, values: form.getValues(), published: publish }, publish)
+    // Saving without publishing keeps the current status: "Save draft" on an
+    // already-published entry should not quietly take it down. Reverting is the
+    // explicit action that does that.
+    const nextPublished = publish ? true : state.published
+    onSave({ ...state, values: form.getValues(), published: nextPublished }, publish)
     setSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
   }
 
@@ -368,7 +372,9 @@ export function WorkEditor({
               type="button"
               variant="ghost"
               onClick={() => {
-                onSave({ ...state, values: form.getValues(), published: false }, false)
+                const values = form.getValues()
+                onSave({ ...state, values, published: false }, false)
+                setState((current) => ({ ...current, values, published: false }))
                 setSavedAt(
                   new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
                 )
