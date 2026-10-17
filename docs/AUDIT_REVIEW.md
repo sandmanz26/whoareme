@@ -422,7 +422,6 @@ Daftar tunggal supaya tidak ada yang terlewat. Batch 1–8 sudah dieksekusi; yan
 
 | ID | Item | Bukti / kenapa | Upaya | Perlu browser |
 |---|---|---|---|---|
-| S3 | Register membocorkan keberadaan email (409 "already exists") | `usecase/user/Auth/index.ts:125`; fix penuh mengubah kontrak signup (tidak auto-login) | Sedang, **butuh keputusan produk** | Ya |
 | H5 | `WorkEditor` belum pindah ke react-hook-form + Zod | `grep useForm` = 0 | Besar | Ya |
 | U4 | `WorkEditor` belum dipecah | masih satu file besar | Sedang | Ya |
 | Docs | `DATABASE.md`/`CLAUDE.md`: klaim utama (native driver, scrypt, transaksi, refresh token, localStorage fallback) sudah diperbaiki; audit menyeluruh belum | — | Kecil | Tidak |
@@ -437,6 +436,7 @@ Daftar tunggal supaya tidak ada yang terlewat. Batch 1–8 sudah dieksekusi; yan
 | U2 | `1ff0ef3` | Loading state di guard, panel, work page, index, home rails |
 | H9 | `166197f` | `recordAndNotify` diekstrak + retry notice + log action id (mitigasi; atomicity sejati butuh transaksi) |
 | C.6 | `94cf22d` | Company, skills, languages, openToWork bisa diedit |
+| S3 | `5744619` | Register seragam 202 tanpa token; signup verify-then-sign-in; email asimetris + throttle per alamat; smoke register→login |
 
 ### S.2 Ditunda atas keputusan Anda
 
@@ -458,12 +458,14 @@ Daftar tunggal supaya tidak ada yang terlewat. Batch 1–8 sudah dieksekusi; yan
 - `npm run db:migrate-uploads` — sebelum redirect path lama dilepas.
 - Jadwalkan `npm run db:reconcile`.
 - Set `TOKEN_HASH_SECRET` di `.env` produksi.
+- `MAIL_TRANSPORT` nyata di produksi (wajib, karena signup sekarang bergantung pada email). Dev: `log`.
 - Jalankan/menunggu CI.
 
 ### S.5 Celah verifikasi browser
 
 - Lebar **360 / 390 / 768 / 1024 / 1440** (butuh resize manual; pane harus terlihat).
 - Alur yang belum pernah diuji di UI: konsol moderasi (queue/entries/people/appeals/log/settings/funnel berangka), traffic panel berangka, panel akun suspended, redirect 401 → `/signin`, filter/pencarian/sort/grid-list, authoring (save draft, revert, hapus entri), upload avatar/thumbnail, sign in/out, forgot/reset password, verify page, report/notices.
+- **Alur signup baru (verify-then-sign-in) belum diverifikasi di browser**: browser desktop terputus setelah perubahan S3. Verifikasi manual: submit signup → "Check your inbox"; link verifikasi ada di log API (`MAIL_TRANSPORT=log`); buka link → sign in.
 
 ### Definisi selesai untuk dokumen ini
 
