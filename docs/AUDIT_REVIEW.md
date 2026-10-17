@@ -418,14 +418,9 @@ Browser desktop tersambung. SPA di `http://localhost:9800`, API `http://localhos
 
 Daftar tunggal supaya tidak ada yang terlewat. Batch 1–8 sudah dieksekusi; yang di bawah ini belum.
 
-### S.1 Belum selesai
+### S.1 Belum selesai (kode)
 
-| ID | Item | Bukti / kenapa | Upaya | Perlu browser |
-|---|---|---|---|---|
-| H5 | `WorkEditor` belum pindah ke react-hook-form + Zod | `grep useForm` = 0 | Besar | Ya |
-| U4 | `WorkEditor` belum dipecah | masih satu file besar | Sedang | Ya |
-| Docs | `DATABASE.md`/`CLAUDE.md`: klaim utama (native driver, scrypt, transaksi, refresh token, localStorage fallback) sudah diperbaiki; audit menyeluruh belum | — | Kecil | Tidak |
-| CI | Workflow valid (YAML lolos parse) dan perintahnya dijalankan lokal; belum dieksekusi GitHub Actions | `.github/workflows/ci.yml` | Kecil | Tidak |
+Tidak ada item kode yang tersisa. Semua isi S.1 sebelumnya sudah dikerjakan; yang tersisa hanya **verifikasi browser** (lihat S.5) dan utang deploy (S.4).
 
 ### Selesai sejak §S dibuat (17 Oktober 2026)
 
@@ -437,6 +432,10 @@ Daftar tunggal supaya tidak ada yang terlewat. Batch 1–8 sudah dieksekusi; yan
 | H9 | `166197f` | `recordAndNotify` diekstrak + retry notice + log action id (mitigasi; atomicity sejati butuh transaksi) |
 | C.6 | `94cf22d` | Company, skills, languages, openToWork bisa diedit |
 | S3 | `5744619` | Register seragam 202 tanpa token; signup verify-then-sign-in; email asimetris + throttle per alamat; smoke register→login |
+| H5 | `a4a2f65` | WorkEditor → react-hook-form + Zod (`lib/validation/workValues.ts`) |
+| U4 | `a4a2f65` | Aside, topic quota, confidentiality note diekstrak; editor di-remount per draft |
+| Docs | `8a96a16` | `CLAUDE.md` + `DATABASE.md` klaim utama diperbaiki |
+| CI | — | YAML valid; perintah dijalankan lokal; belum dieksekusi GitHub Actions |
 
 ### S.2 Ditunda atas keputusan Anda
 
@@ -466,6 +465,7 @@ Daftar tunggal supaya tidak ada yang terlewat. Batch 1–8 sudah dieksekusi; yan
 - Lebar **360 / 390 / 768 / 1024 / 1440** (butuh resize manual; pane harus terlihat).
 - Alur yang belum pernah diuji di UI: konsol moderasi (queue/entries/people/appeals/log/settings/funnel berangka), traffic panel berangka, panel akun suspended, redirect 401 → `/signin`, filter/pencarian/sort/grid-list, authoring (save draft, revert, hapus entri), upload avatar/thumbnail, sign in/out, forgot/reset password, verify page, report/notices.
 - **Alur signup baru (verify-then-sign-in) belum diverifikasi di browser**: browser desktop terputus setelah perubahan S3. Verifikasi manual: submit signup → "Check your inbox"; link verifikasi ada di log API (`MAIL_TRANSPORT=log`); buka link → sign in.
+- **WorkEditor setelah H5/U4 belum diverifikasi di browser**: browser terputus. Verifikasi manual: buka entri, ubah field (preview/readiness ikut), save draft, publish, revert, hapus.
 
 ### Definisi selesai untuk dokumen ini
 
