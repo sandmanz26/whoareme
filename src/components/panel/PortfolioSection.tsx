@@ -72,6 +72,7 @@ export function PortfolioSection({
       >
         {newDraft ? (
           <WorkEditor
+            key={newDraft.id}
             draft={newDraft}
             account={account}
             author={author}
@@ -124,6 +125,7 @@ export function PortfolioSection({
         } · ${existing.published ? "published" : "draft"}`}
       >
         <WorkEditor
+          key={existing.id}
           draft={existing}
           account={account}
           author={author}

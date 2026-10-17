@@ -1,27 +1,27 @@
 import { useMemo, useState, type ReactNode } from "react"
-import { Link } from "react-router-dom"
+import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/Button"
 import { Combobox } from "@/components/ui/Combobox"
-import { SchemaField, validateFields, type FieldErrors } from "./SchemaForm"
+import { Check } from "@/components/ui/Icon"
+import { SchemaField } from "./SchemaForm"
 import { SkillPicker } from "./SkillPicker"
 import { ThumbnailPicker } from "./ThumbnailPicker"
 import { LinkListEditor, MetricEditor, SectionEditor } from "./ListEditors"
 import { FigureEditor } from "./FigureEditor"
-import { PublishReadiness } from "./PublishReadiness"
+import { WorkEditorAside } from "./WorkEditorAside"
+import { TopicQuotaGroup } from "./TopicQuotaGroup"
+import { ConfidentialityNote } from "./ConfidentialityNote"
 import { readinessFor } from "@/lib/readiness"
+import { workValuesSchema, type WorkValues } from "@/lib/validation/workValues"
 import { dataUrlBytes } from "@/lib/image"
 import { track } from "@/lib/analytics"
-import { WorkCard } from "@/components/work/WorkCard"
 import { COMMON_FIELDS, STORY_FIELDS } from "@/data/portfolioSchemas"
 import { fieldsForTemplate, templateHeadline, templatesFor } from "@/data/workTemplates"
-import { CATEGORIES, roleById } from "@/data/taxonomy"
-import type { CategoryId } from "@/data/taxonomy"
+import { CATEGORIES, roleById, type CategoryId } from "@/data/taxonomy"
 import { TOPIC_QUOTA, topicUsage, type Account, type WorkDraft } from "@/data/account"
 import { headlineProof } from "@/data/work"
 import { workFromDraft } from "@/lib/workMapper"
 import type { Author } from "@/lib/authors"
-import { Check } from "@/components/ui/Icon"
-import { cn } from "@/lib/utils"
 
 interface WorkEditorProps {
   draft: WorkDraft
@@ -64,13 +64,27 @@ export function WorkEditor({
   onDelete,
 }: WorkEditorProps) {
   const [state, setState] = useState<WorkDraft>(draft)
-  const [errors, setErrors] = useState<FieldErrors>({})
   const [savedAt, setSavedAt] = useState<string | null>(null)
+
+  const form = useForm<WorkValues>({
+    defaultValues: draft.values,
+    mode: "onSubmit",
+  })
+  // `watch()` re-renders on every keystroke so the preview and readiness stay
+  // live. The values are still the single source for the fields.
+  const values = form.watch()
+  const fieldErrors = form.formState.errors as Record<
+    string,
+    { message?: string } | undefined
+  >
+  const errorFor = (name: string) => fieldErrors[name]?.message
 
   const templateFields = fieldsForTemplate(state.role, state.template)
   const template = templateHeadline(state.role, state.template)
   const guided = state.mode === "template"
-  const preview = workFromDraft(state, account)
+
+  const previewDraft: WorkDraft = { ...state, values }
+  const preview = workFromDraft(previewDraft, account)
 
   // Figures attach to chapters, and a free-form entry's chapters are whatever
   // the author named them - so the options follow the entry, not a constant.
@@ -96,9 +110,9 @@ export function WorkEditor({
   // Quota is per topic and counts published entries only - drafts are free.
   const usage = useMemo(() => topicUsage(siblings, state.id), [siblings, state.id])
 
-  // Computed from the same function the publish check runs, so the panel can
+  // Computed from the same draft the publish check validates, so the panel can
   // never promise something publish then refuses.
-  const readiness = useMemo(() => readinessFor(state, usage), [state, usage])
+  const readiness = readinessFor(previewDraft, usage)
 
   function patch(part: Partial<WorkDraft>) {
     setState((current) => ({ ...current, ...part }))
@@ -106,8 +120,8 @@ export function WorkEditor({
   }
 
   function updateField(name: string, value: string) {
-    setState((current) => ({ ...current, values: { ...current.values, [name]: value } }))
-    setErrors((current) => (current[name] ? { ...current, [name]: "" } : current))
+    form.setValue(name, value, { shouldDirty: true })
+    form.clearErrors(name)
     setSavedAt(null)
   }
 
@@ -116,17 +130,28 @@ export function WorkEditor({
     if (!selected && (usage[id] ?? 0) >= TOPIC_QUOTA) return
     if (!selected && state.topics.length >= 4) return
     patch({ topics: selected ? state.topics.filter((t) => t !== id) : [...state.topics, id] })
-    setErrors((current) => ({ ...current, topics: "" }))
+    form.clearErrors("topics")
   }
 
   function submit(publish: boolean) {
     if (publish && !account.emailVerifiedAt) {
-      setErrors({ form: "Confirm your email address before publishing. Drafts are unaffected." })
+      form.setError("form", {
+        message: "Confirm your email address before publishing. Drafts are unaffected.",
+      })
       return
     }
+
     if (publish) {
       const specs = guided ? [...COMMON_FIELDS, ...STORY_FIELDS, ...templateFields] : COMMON_FIELDS
-      const found = validateFields(specs, state.values)
+      const found: Record<string, string> = {}
+
+      const parsed = workValuesSchema(specs).safeParse(form.getValues())
+      if (!parsed.success) {
+        for (const issue of parsed.error.issues) {
+          const key = String(issue.path[0] ?? "form")
+          if (!found[key]) found[key] = issue.message
+        }
+      }
 
       if (state.topics.length === 0) found.topics = "Pick at least one topic so people can find it."
       const overQuota = state.topics.filter((topic) => (usage[topic] ?? 0) >= TOPIC_QUOTA)
@@ -146,9 +171,9 @@ export function WorkEditor({
         found.sections = "Write at least one section with a heading and some body text."
       }
 
-      const active = Object.fromEntries(Object.entries(found).filter(([, message]) => message))
-      if (Object.keys(active).length > 0) {
-        setErrors(active)
+      if (Object.keys(found).length > 0) {
+        form.clearErrors()
+        for (const [name, message] of Object.entries(found)) form.setError(name, { message })
         document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
         // Counted because it is the interesting failure: people who tried to
         // publish and were turned back are the ones the form is losing.
@@ -158,7 +183,7 @@ export function WorkEditor({
     }
 
     track(publish ? "entry_published" : "entry_saved_draft")
-    onSave({ ...state, published: publish }, publish)
+    onSave({ ...state, values: form.getValues(), published: publish }, publish)
     setSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
   }
 
@@ -219,8 +244,8 @@ export function WorkEditor({
             <SchemaField
               key={spec.name}
               spec={spec}
-              value={state.values[spec.name] ?? ""}
-              error={errors[spec.name]}
+              value={values[spec.name] ?? ""}
+              error={errorFor(spec.name)}
               onChange={updateField}
             />
           ))}
@@ -229,7 +254,7 @@ export function WorkEditor({
             selected={state.topics}
             usage={usage}
             onToggle={toggleTopic}
-            error={errors.topics}
+            error={errorFor("topics")}
           />
 
           <SkillPicker
@@ -237,9 +262,9 @@ export function WorkEditor({
             value={state.skills}
             onChange={(skills) => {
               patch({ skills })
-              setErrors((current) => ({ ...current, skills: "" }))
+              form.clearErrors("skills")
             }}
-            error={errors.skills}
+            error={errorFor("skills")}
           />
 
           <ThumbnailPicker
@@ -261,8 +286,8 @@ export function WorkEditor({
                 <SchemaField
                   key={spec.name}
                   spec={spec}
-                  value={state.values[spec.name] ?? ""}
-                  error={errors[spec.name]}
+                  value={values[spec.name] ?? ""}
+                  error={errorFor(spec.name)}
                   onChange={updateField}
                 />
               ))}
@@ -278,8 +303,8 @@ export function WorkEditor({
                 <SchemaField
                   key={spec.name}
                   spec={spec}
-                  value={state.values[spec.name] ?? ""}
-                  error={errors[spec.name]}
+                  value={values[spec.name] ?? ""}
+                  error={errorFor(spec.name)}
                   onChange={updateField}
                 />
               ))}
@@ -292,9 +317,9 @@ export function WorkEditor({
               intro="Your headings, your order. Reorder with the arrows; empty sections are dropped."
             >
               <SectionEditor value={state.sections} onChange={(sections) => patch({ sections })} />
-              {errors.sections && (
+              {errorFor("sections") && (
                 <p role="alert" className="text-xs font-medium text-pop-pink">
-                  {errors.sections}
+                  {errorFor("sections")}
                 </p>
               )}
             </Fieldset>
@@ -321,9 +346,9 @@ export function WorkEditor({
             otherBytes={otherBytes}
             onChange={(figures) => {
               patch({ figures })
-              setErrors((current) => (current.figures ? { ...current, figures: "" } : current))
+              form.clearErrors("figures")
             }}
-            error={errors.figures}
+            error={errorFor("figures")}
           />
         </Fieldset>
 
@@ -343,7 +368,7 @@ export function WorkEditor({
               type="button"
               variant="ghost"
               onClick={() => {
-                onSave({ ...state, published: false }, false)
+                onSave({ ...state, values: form.getValues(), published: false }, false)
                 setSavedAt(
                   new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
                 )
@@ -361,12 +386,12 @@ export function WorkEditor({
               Delete entry
             </button>
           )}
-          {errors.form && (
+          {errorFor("form") && (
             <p role="alert" className="w-full text-xs font-medium text-pop-pink">
-              {errors.form}
+              {errorFor("form")}
             </p>
           )}
-          {!state.published && !account.emailVerifiedAt && !errors.form && (
+          {!state.published && !account.emailVerifiedAt && !errorFor("form") && (
             <p className="w-full text-xs leading-relaxed text-muted">
               Verify your email before publishing. Your drafts are safe, and you can send a link
               from the panel overview.
@@ -385,122 +410,12 @@ export function WorkEditor({
       </form>
 
       {/* Live preview: people write better entries when they can see the card. */}
-      <aside className="flex min-w-0 flex-col gap-6 xl:sticky xl:top-24 xl:self-start">
-        <PublishReadiness items={readiness} published={state.published} />
-
-        <div>
-          <p className="eyebrow">Preview</p>
-          <div className="mt-4 flex min-w-0">
-            <WorkCard work={preview} author={author} index={0} />
-          </div>
-          <p className="mt-3 text-xs leading-relaxed text-muted">
-            Without an upload the cover is drawn from your craft and headline result - so an entry
-            under NDA is never penalised for having no screenshot.
-          </p>
-        </div>
-      </aside>
-    </div>
-  )
-}
-
-/**
- * Topics double as a quota: two published entries per topic, per person. The
- * cap is visible in the chips rather than only appearing as an error at the
- * end, so nobody writes a third SaaS case study before finding out.
- */
-function TopicQuotaGroup({
-  selected,
-  usage,
-  onToggle,
-  error,
-}: {
-  selected: CategoryId[]
-  usage: Record<string, number>
-  onToggle: (id: CategoryId) => void
-  error?: string
-}) {
-  const atMax = selected.length >= 4
-  return (
-    <fieldset className="flex flex-col gap-2">
-      <legend className="mb-2 font-display text-sm font-medium text-ink">Topics</legend>
-      <div className="flex flex-wrap gap-2">
-        {CATEGORIES.map((category) => {
-          const used = usage[category.id] ?? 0
-          const isSelected = selected.includes(category.id)
-          const atCap = !isSelected && (used >= TOPIC_QUOTA || atMax)
-
-          return (
-            <button
-              key={category.id}
-              type="button"
-              aria-pressed={isSelected}
-              disabled={atCap}
-              title={
-                atCap ? `${TOPIC_QUOTA} published entries already in ${category.label}` : undefined
-              }
-              onClick={() => onToggle(category.id)}
-              className={cn(
-                "flex cursor-pointer items-center gap-2 rounded-pill border px-4 py-2.5",
-                "font-display text-sm font-medium transition-all duration-200 ease-pop active:scale-[0.97]",
-                isSelected
-                  ? "border-ink bg-ink text-paper"
-                  : "border-line bg-card text-ink-2 hover:border-ink/40",
-                atCap && "cursor-not-allowed opacity-40 hover:border-line",
-              )}
-            >
-              {category.label}
-              <span className={cn("text-[0.6875rem]", isSelected ? "text-paper/60" : "text-muted")}>
-                {used}/{TOPIC_QUOTA}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-      <p className="text-xs text-muted">
-        Two published entries per topic. It keeps the directory readable and forces you to lead with
-        your best two.
-      </p>
-      {error && (
-        <p role="alert" className="text-xs font-medium text-pop-pink">
-          {error}
-        </p>
-      )}
-    </fieldset>
-  )
-}
-
-/**
- * The confidentiality prompt, next to the evidence fields.
- *
- * Every other portfolio site asks for pictures. This one asks for the number
- * that moved, which is frequently the precise thing an employment contract or
- * a client NDA treats as confidential - and a metric is often more sensitive
- * than a screenshot, not less.
- *
- * It offers the way out rather than only the risk: the shape of a result is
- * usually publishable when the raw figure is not, and "four hours to under
- * one" is still evidence.
- */
-function ConfidentialityNote() {
-  return (
-    <div className="rounded-card border border-ink/15 bg-paper-2/70 p-4">
-      <p className="font-display text-sm font-semibold text-ink">
-        Is this figure yours to publish?
-      </p>
-      <p className="mt-2 text-sm leading-relaxed text-muted">
-        Results are the part an NDA or an employment contract usually covers. If you are not sure,
-        publish the shape instead of the raw number: <em>a four-hour job down to under one</em>{" "}
-        carries the same weight as the exact minutes and gives nothing away. Publishing something
-        you were not free to publish is a problem you would own, not us.
-      </p>
-      <p className="mt-2 text-sm">
-        <Link
-          to="/terms"
-          className="font-display font-medium text-ink underline decoration-ink/25 underline-offset-4 transition-colors duration-200 hover:decoration-pop-pink"
-        >
-          What you warrant when you publish
-        </Link>
-      </p>
+      <WorkEditorAside
+        readiness={readiness}
+        published={state.published}
+        preview={preview}
+        author={author}
+      />
     </div>
   )
 }
