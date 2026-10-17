@@ -37,8 +37,6 @@ interface AccountContextValue {
   account: Account | null
   /** True while the initial GET /auth/me is in-flight. Guard auth-redirects on this. */
   isInitializing: boolean
-  hasStoredAccount: boolean
-  storedEmail: string | null
   /** Kept for BrowseContext backward compatibility. Mutations live in useMyWork(). */
   drafts: WorkDraft[]
   publishedWork: Work[]
@@ -281,8 +279,6 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     () => ({
       account,
       isInitializing,
-      hasStoredAccount: true,
-      storedEmail: account?.email ?? null,
       drafts,
       publishedWork,
       register,
