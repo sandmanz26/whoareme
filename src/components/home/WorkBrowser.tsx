@@ -20,6 +20,7 @@ interface WorkBrowserProps {
   onFilterChange: (patch: Partial<Filters>) => void
   onResetFilters: () => void
   onJoin: () => void
+  isLoading?: boolean
 }
 
 /**
@@ -35,6 +36,7 @@ export function WorkBrowser({
   onFilterChange,
   onResetFilters,
   onJoin,
+  isLoading = false,
 }: WorkBrowserProps) {
   const navigate = useNavigate()
   const { copy } = useAdmin()
@@ -92,7 +94,13 @@ export function WorkBrowser({
           />
         </div>
 
-        {work.length > 0 ? (
+        {isLoading && work.length === 0 ? (
+          <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3" aria-busy="true">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="h-64 animate-pulse rounded-card bg-paper-2" />
+            ))}
+          </div>
+        ) : work.length > 0 ? (
           <>
             <ul className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {visible.map((item, index) => (

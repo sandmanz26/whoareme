@@ -23,6 +23,7 @@ export function HomePage() {
     authors,
     handleRoleSelect,
     openJoin,
+    isLoading,
   } = useBrowse()
 
   useEffect(() => {
@@ -55,6 +56,7 @@ export function HomePage() {
         onFilterChange={patchFilters}
         onResetFilters={resetFilters}
         onJoin={openJoin}
+        isLoading={isLoading}
       />
 
       <Directory
@@ -74,6 +76,7 @@ export function HomePage() {
         }}
         onResetFilters={resetFilters}
         onJoin={openJoin}
+        isLoading={isLoading}
       />
 
       <JoinCta onJoin={openJoin} />

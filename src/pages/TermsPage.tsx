@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import { PageIntro, Prose, Section } from "@/components/layout/PageIntro"
 
 /**
@@ -93,12 +94,12 @@ export function TermsPage() {
         <Section title="Moderation, and your right to argue with it">
           <p>
             We remove entries and suspend profiles. The grounds are in the{" "}
-            <a
-              href="/content-policy"
+            <Link
+              to="/content-policy"
               className="font-display font-medium text-ink underline decoration-ink/25 underline-offset-4 transition-colors duration-200 hover:decoration-pop-pink"
             >
               content policy
-            </a>
+            </Link>
             . Two commitments attach to every decision:
           </p>
           <ul className="flex list-disc flex-col gap-2 pl-5">
@@ -134,12 +135,12 @@ export function TermsPage() {
           <p>
             We will change these terms. When a change affects what you may publish or how moderation
             works, we will say so on the{" "}
-            <a
-              href="/changelog"
+            <Link
+              to="/changelog"
               className="font-display font-medium text-ink underline decoration-ink/25 underline-offset-4 transition-colors duration-200 hover:decoration-pop-pink"
             >
               changelog
-            </a>{" "}
+            </Link>{" "}
             rather than quietly reissuing the page and relying on you to diff it.
           </p>
         </Section>

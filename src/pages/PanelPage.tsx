@@ -1,6 +1,7 @@
 import { useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { PanelShell, type PanelNavItem } from "@/components/panel/PanelShell"
+import { RouteLoading } from "@/components/layout/RouteLoading"
 import { TrafficPanel } from "@/components/panel/TrafficPanel"
 import { NoticeList } from "@/components/panel/NoticeList"
 import { Overview } from "@/components/panel/Overview"
@@ -46,7 +47,7 @@ export function PanelPage() {
     }
   }, [section, entry])
 
-  if (isInitializing) return null
+  if (isInitializing) return <RouteLoading label="Loading your panel…" />
   if (!account) return <SignedOut onJoin={openJoin} />
 
   const published = drafts.filter((d) => d.published).length

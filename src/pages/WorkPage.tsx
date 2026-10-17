@@ -61,7 +61,23 @@ export function WorkPage() {
     })
   }, [work, authors])
 
-  if (isPending) return null
+  if (isPending) {
+    return (
+      <Container className="py-10" aria-busy="true">
+        <div className="animate-pulse">
+          <div className="h-52 w-full rounded-card bg-paper-2 sm:h-72" />
+          <div className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <div className="space-y-4">
+              <div className="h-7 w-2/3 rounded-pill bg-paper-2" />
+              <div className="h-4 w-full rounded-pill bg-paper-2" />
+              <div className="h-4 w-5/6 rounded-pill bg-paper-2" />
+            </div>
+            <div className="h-40 rounded-card bg-paper-2" />
+          </div>
+        </div>
+      </Container>
+    )
+  }
 
   if (!work) {
     return (

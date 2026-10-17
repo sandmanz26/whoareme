@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react"
+import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/Button"
 import { Combobox } from "@/components/ui/Combobox"
 import { SchemaField, validateFields, type FieldErrors } from "./SchemaForm"
@@ -493,12 +494,12 @@ function ConfidentialityNote() {
         you were not free to publish is a problem you would own, not us.
       </p>
       <p className="mt-2 text-sm">
-        <a
-          href="/terms"
+        <Link
+          to="/terms"
           className="font-display font-medium text-ink underline decoration-ink/25 underline-offset-4 transition-colors duration-200 hover:decoration-pop-pink"
         >
           What you warrant when you publish
-        </a>
+        </Link>
       </p>
     </div>
   )

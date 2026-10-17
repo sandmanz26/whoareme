@@ -30,6 +30,7 @@ interface DirectoryProps {
   onCategoryChange: (category: CategoryId | null) => void
   onResetFilters: () => void
   onJoin: () => void
+  isLoading?: boolean
 }
 
 export function Directory({
@@ -42,6 +43,7 @@ export function Directory({
   onCategoryChange,
   onResetFilters,
   onJoin,
+  isLoading = false,
 }: DirectoryProps) {
   const { copy } = useAdmin()
   const [showAllCategories, setShowAllCategories] = useState(false)
@@ -184,7 +186,13 @@ export function Directory({
         </div>
 
         {/* ── Results ───────────────────────────────────────────────── */}
-        {people.length > 0 ? (
+        {isLoading && people.length === 0 ? (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="h-40 animate-pulse rounded-card bg-paper-2" />
+            ))}
+          </div>
+        ) : people.length > 0 ? (
           <>
             <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {visible.map((person, index) => (

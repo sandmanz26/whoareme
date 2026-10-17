@@ -48,6 +48,8 @@ interface BrowseContextValue {
   allPeople: Person[]
   rawWork: Work[]
   rawPeople: Person[]
+  /** True while the first people/work fetch is in flight. */
+  isLoading: boolean
   authors: Map<string, Author>
   work: Work[]
   people: Person[]
@@ -88,7 +90,7 @@ function useBrowseState(): BrowseContextValue {
     label: string
   } | null>(null)
 
-  const { data: apiPeople = [] } = useQuery({
+  const { data: apiPeople = [], isPending: peoplePending } = useQuery({
     queryKey: QUERY_KEYS.peopleList(),
     queryFn: async () => {
       const { items } = await fetchPeopleList({ limit: 300 })
@@ -97,7 +99,7 @@ function useBrowseState(): BrowseContextValue {
     staleTime: 2 * 60 * 1000,
   })
 
-  const { data: apiWork = [] } = useQuery({
+  const { data: apiWork = [], isPending: workPending } = useQuery({
     queryKey: QUERY_KEYS.workList(),
     queryFn: async () => {
       const { items } = await fetchWorkList({ limit: 1000 })
@@ -105,6 +107,8 @@ function useBrowseState(): BrowseContextValue {
     },
     staleTime: 2 * 60 * 1000,
   })
+
+  const isLoading = peoplePending || workPending
 
   const rawWork = useMemo(() => apiWork.filter((item) => isRoleLive(item.role)), [apiWork])
 
@@ -205,6 +209,7 @@ function useBrowseState(): BrowseContextValue {
     allPeople,
     rawWork,
     rawPeople,
+    isLoading,
     authors,
     work,
     people,

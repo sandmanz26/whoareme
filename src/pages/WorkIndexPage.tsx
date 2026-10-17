@@ -30,7 +30,8 @@ const SORTS: Array<{ id: Sort; label: string }> = [
 
 export function WorkIndexPage() {
   const { copy } = useAdmin()
-  const { work, allWork, authors, filters, patchFilters, resetFilters, openJoin } = useBrowse()
+  const { work, allWork, authors, filters, patchFilters, resetFilters, openJoin, isLoading } =
+    useBrowse()
   const [sort, setSort] = useState<Sort>("recent")
   const [layout, setLayout] = useState<Layout>("grid")
 
@@ -61,7 +62,9 @@ export function WorkIndexPage() {
           Every case study <span className="text-muted">in the directory</span>
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted">
-          {allWork.length} entries from people who build technology.{" "}
+          {isLoading
+            ? "Loading entries…"
+            : `${allWork.length} entries from people who build technology.`}{" "}
           {copy("work.index.description")}
         </p>
       </Container>
@@ -120,7 +123,13 @@ export function WorkIndexPage() {
           </div>
         </div>
 
-        {sorted.length === 0 ? (
+        {isLoading ? (
+          <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3" aria-busy="true">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="h-64 animate-pulse rounded-card bg-paper-2" />
+            ))}
+          </div>
+        ) : sorted.length === 0 ? (
           <div className="mt-8 flex flex-col items-center rounded-card border border-dashed border-ink/20 bg-card px-6 py-16 text-center">
             <span className="grid size-12 place-items-center rounded-pill bg-paper-2 text-muted">
               <Search size={22} />
