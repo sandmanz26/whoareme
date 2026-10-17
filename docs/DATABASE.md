@@ -862,14 +862,18 @@ bookkeeping.
 }
 ```
 
-The notice is written in the same transaction as the action, never as a
-follow-up. The appeal is embedded rather than a collection of its own: it is
-only ever read with its notice, there is at most one, and it is bounded.
+The notice is written straight after the action, not as a later job. A
+standalone MongoDB has no multi-document transaction, so this is compensating:
+the action is the accountability record, and the notice is retried once with
+the action id logged if it still fails. The appeal is embedded rather than a
+collection of its own: it is only ever read with its notice, there is at most
+one, and it is bounded.
 
 ```js
-db.notices.createIndex({ userId: 1, createdAt: -1 })                  // the author's list
-db.notices.createIndex({ "appeal.outcome": 1, "appeal.createdAt": 1 }) // the reviewer's queue
-db.notices.createIndex({ actionId: 1 })
+db.notices.createIndex({ userId: 1, createdAt: -1 }) // the author's list
+db.notices.createIndex({ userId: 1, readAt: 1 })     // unread badge
+db.notices.createIndex({ "appeal.outcome": 1 })      // the reviewer's queue
+db.notices.createIndex({ actionId: 1 }, { unique: true })
 // No TTL, for the same reason the audit log has none.
 ```
 

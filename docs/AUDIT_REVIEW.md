@@ -418,20 +418,25 @@ Browser desktop tersambung. SPA di `http://localhost:9800`, API `http://localhos
 
 Daftar tunggal supaya tidak ada yang terlewat. Batch 1–8 sudah dieksekusi; yang di bawah ini belum.
 
-### S.1 Belum pernah disentuh
+### S.1 Belum selesai
 
 | ID | Item | Bukti / kenapa | Upaya | Perlu browser |
 |---|---|---|---|---|
-| S3 | Register membocorkan keberadaan email (409 "already exists") | `usecase/user/Auth/index.ts:125` | Kecil | Tidak |
-| C.6 | `company`, `skills`, `languages`, `openToWork` tak bisa diedit dari UI | `useMyProfile` tidak mengirimnya; `ProfileForm` tak punya field | Sedang | Ya |
-| C.8 | `hasStoredAccount: true` hardcoded | `useAccount.tsx:284` | Kecil | Tidak |
+| S3 | Register membocorkan keberadaan email (409 "already exists") | `usecase/user/Auth/index.ts:125`; fix penuh mengubah kontrak signup (tidak auto-login) | Sedang, **butuh keputusan produk** | Ya |
 | H5 | `WorkEditor` belum pindah ke react-hook-form + Zod | `grep useForm` = 0 | Besar | Ya |
-| U4 | `WorkEditor` belum dipecah | §Q mencatatnya | Sedang | Ya |
-| H9 | Notice + moderation action belum atomik | didefer | Sedang | Tidak |
-| U2 | Skeletons/empty state per halaman | `PanelPage:49` dan `WorkPage:64` masih `return null` saat loading | Sedang | Ya |
-| U3 | `<a href="/...">` internal (reload penuh, bukan `Link`) | `WorkEditor:497`, `TermsPage:97,138` | Kecil | Ya |
-| Docs | `DATABASE.md`, `CLAUDE.md` masih menyebut native driver, scrypt, transaksi, refresh token | hanya `server/README.md` yang diperbaiki | Sedang | Tidak |
-| CI | `.github/workflows/ci.yml` belum pernah dijalankan | — | Kecil | Tidak |
+| U4 | `WorkEditor` belum dipecah | masih satu file besar | Sedang | Ya |
+| Docs | `DATABASE.md`/`CLAUDE.md`: klaim utama (native driver, scrypt, transaksi, refresh token, localStorage fallback) sudah diperbaiki; audit menyeluruh belum | — | Kecil | Tidak |
+| CI | Workflow valid (YAML lolos parse) dan perintahnya dijalankan lokal; belum dieksekusi GitHub Actions | `.github/workflows/ci.yml` | Kecil | Tidak |
+
+### Selesai sejak §S dibuat (17 Oktober 2026)
+
+| ID | Commit | Isi |
+|---|---|---|
+| C.8 | `2dbaf07` | Hapus `hasStoredAccount`/`storedEmail` |
+| U3 | `1ff0ef3` | Link internal memakai `<Link>` |
+| U2 | `1ff0ef3` | Loading state di guard, panel, work page, index, home rails |
+| H9 | `166197f` | `recordAndNotify` diekstrak + retry notice + log action id (mitigasi; atomicity sejati butuh transaksi) |
+| C.6 | `94cf22d` | Company, skills, languages, openToWork bisa diedit |
 
 ### S.2 Ditunda atas keputusan Anda
 
