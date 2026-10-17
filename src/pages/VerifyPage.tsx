@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { Container } from "@/components/layout/Container"
 import { Button } from "@/components/ui/Button"
@@ -16,6 +16,10 @@ export function VerifyPage() {
   const { refreshAccount } = useAccount()
   const [state, setState] = useState<State>("loading")
   const [errorMsg, setErrorMsg] = useState("")
+  // The confirmation token is single-use. React StrictMode runs effects twice in
+  // development; without this guard the second request fails with "expired" and
+  // overwrites a successful confirmation with an error.
+  const submitted = useRef(false)
 
   useEffect(() => {
     const cleanup = applyMeta({ title: "Verify email", noindex: true })
@@ -26,6 +30,8 @@ export function VerifyPage() {
       setErrorMsg("No verification token found in the URL.")
       return cleanup
     }
+    if (submitted.current) return cleanup
+    submitted.current = true
 
     postVerifyConfirm(token)
       .then(async () => {
