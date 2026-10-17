@@ -462,17 +462,15 @@ Tidak ada item kode yang tersisa. Semua isi S.1 sebelumnya sudah dikerjakan; yan
 
 ### S.5 Celah verifikasi browser
 
-Sudah diverifikasi (headless Chrome via CDP, 17 Oktober 2026 — lihat §T):
+Tidak ada alur S.5 yang tersisa. Sudah diverifikasi (headless Chrome via CDP, 17 Oktober 2026 — lihat §T):
 
 - Responsif 360/390/768/1024/1440 pada `/`, `/work`, `/work/:slug`, `/people/:id`, `/privacy`, `/terms`, `/panel`, `/admin`.
 - Signup → verify → sign in; authoring publish → index/home → revert → delete; search, sort, layout; profil; traffic panel; seluruh tab konsol moderasi.
-
-Belum diuji di UI:
-
-- Panel akun suspended dan redirect 401 → `/signin`.
-- Upload avatar/thumbnail lewat UI.
-- Submit report dan alur notices/appeals.
-- Forgot/reset password lewat UI (API-nya tercakup smoke).
+- Panel akun suspended + notice + appeal; moderator kedua membalik appeal; akun kembali aktif.
+- Redirect 401 → `/signin` (token di-null-kan di DB, sesi dibersihkan).
+- Upload avatar lewat UI (tersimpan di `/uploads/profiles/`).
+- Submit report dari halaman case study.
+- Forgot/reset password lewat UI (link dari log API) sampai sign in.
 
 ### Definisi selesai untuk dokumen ini
 
@@ -500,6 +498,20 @@ Tool browser desktop tidak menempel ke sesi (`browser.disconnected`), jadi verif
 | Zod untouched fields | `39b2ae3` | Field opsional yang belum disentuh bernilai `undefined`; schema menolak dengan "expected string". |
 | Save/revert status | `39b2ae3` | "Save draft" meng-unpublish entri published; revert tidak memperbarui UI sampai reload. |
 
-### Belum diuji
+### Lanjutan: alur akun, upload, report, reset
 
-Panel akun suspended, redirect 401, upload avatar/thumbnail, submit report, notices/appeals, forgot/reset password lewat UI. Lihat §S.5.
+| Alur | Hasil |
+|---|---|
+| Akun suspended | login terbatas, panel "Account suspended", notice berisi alasan |
+| Appeal | "Contest this decision" → kirim → "Appeal submitted" |
+| Keputusan moderator | moderator **berbeda** membalik appeal → akun aktif kembali |
+| Redirect 401 | token di-null-kan di DB → `/panel` → `/signin`, token lokal dibersihkan |
+| Upload avatar | file tersimpan di `/uploads/profiles/`, UI menampilkan "Photo saved." |
+| Report | modal → pilih alasan → kirim → "Sent for review" |
+| Reset password | link dari log → password baru → langsung sign in |
+
+Catatan:
+
+- Moderator yang sama tidak bisa meninjau appeal yang ia putuskan (403). Itu aturan yang benar; verifikasi memakai moderator kedua.
+- Query traffic di panel suspended dulu memicu 401; `useTrafficSummary` sekarang tidak fetch untuk akun suspended.
+- Data uji (`e2e-*`, `debug-*`, `suspend*`) sudah dihapus. Tersisa dua moderator dev: `manual-check@example.com` (password sekarang `manual-check-67890`) dan `mod2-check@example.com` (`mod2-check-12345`). Akun `r3ndydinar@gmail.com` tidak disentuh.
