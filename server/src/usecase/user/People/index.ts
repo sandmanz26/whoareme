@@ -180,7 +180,11 @@ export const PeopleUsecase = {
 
     await TrafficDaily.updateOne(
       { ownerId, day },
-      { $inc: { profile: 1, total: 0 }, $setOnInsert: { ownerId, day, work: {}, total: 0 } },
+      // `total` belongs to work opens only. Incrementing it here would also
+      // collide with the `$setOnInsert` below: MongoDB rejects an update that
+      // touches the same path in both operators, and the caller is
+      // fire-and-forget, so the profile counter silently stayed at zero.
+      { $inc: { profile: 1 }, $setOnInsert: { ownerId, day, work: {}, total: 0 } },
       { upsert: true },
     )
   },

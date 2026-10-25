@@ -30,7 +30,9 @@ export const ModerationNoticesUsecase = {
     if (!notice) throw notFound("Notice")
     if (!notice.appeal) throw badRequest("That notice has not been appealed.")
     if (notice.appeal.outcome) throw conflict("That appeal has already been decided.")
-    if ((notice.actorId as unknown as Types.ObjectId).toString() === actor.id) {
+
+    const selfReviewed = (notice.actorId as unknown as Types.ObjectId).toString() === actor.id
+    if (selfReviewed && actor.access !== "admin") {
       throw forbidden(
         "An appeal has to be reviewed by someone other than whoever took the decision.",
       )
@@ -38,9 +40,14 @@ export const ModerationNoticesUsecase = {
 
     // Claim the decision atomically. The checks above give a clear error, but two
     // moderators acting at once both pass them; only one wins this update, so the
-    // reversal below runs exactly once.
+    // reversal below runs exactly once. An admin may review their own decision,
+    // and the audit line below records that it was self-reviewed.
     const claimed = await Notice.findOneAndUpdate(
-      { _id: noticeId, "appeal.outcome": null, actorId: { $ne: actor.id } },
+      {
+        _id: noticeId,
+        "appeal.outcome": null,
+        ...(selfReviewed ? {} : { actorId: { $ne: actor.id } }),
+      },
       {
         $set: {
           "appeal.outcome": outcome,
@@ -76,7 +83,7 @@ export const ModerationNoticesUsecase = {
       targetKind: notice.targetKind,
       targetId: notice.targetId,
       targetLabel: notice.targetLabel,
-      reason: `Appeal ${outcome}: ${reason}`,
+      reason: `Appeal ${outcome}${selfReviewed ? " (self-reviewed by an admin)" : ""}: ${reason}`,
       actorId: actor.id,
       actorSlug: actor.slug,
     })

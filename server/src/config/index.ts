@@ -37,10 +37,31 @@ const schema = z.object({
   APP_BASE_URL: z.string().url().default("http://localhost:9800"),
   API_BASE_URL: z.string().url().default("http://localhost:4000"),
 
-  MAIL_TRANSPORT: z.enum(["none", "log", "http"]).default("none"),
+  // none        development only, the token comes back in the response
+  // log         written to the log instead of sent
+  // resend      JSON POST to MAIL_API_URL (Resend API)
+  // nodemailer  SMTP, e.g. a Google account with an app password
+  // http        legacy alias for resend
+  MAIL_TRANSPORT: z
+    .enum(["none", "log", "resend", "nodemailer", "http"])
+    .default("none")
+    .transform((value) => (value === "http" ? "resend" : value)),
   MAIL_API_URL: z.string().default(""),
   MAIL_API_KEY: z.string().default(""),
   MAIL_FROM: z.string().default(""),
+
+  // SMTP transport (MAIL_TRANSPORT=nodemailer). A Google account needs an App
+  // Password, not the account password. Leave SMTP_HOST empty to use the
+  // well-known service named by SMTP_SERVICE.
+  SMTP_SERVICE: z.string().default("gmail"),
+  SMTP_HOST: z.string().default(""),
+  SMTP_PORT: z.coerce.number().int().positive().max(65535).default(587),
+  SMTP_SECURE: z
+    .string()
+    .default("false")
+    .transform((value) => value === "true" || value === "1"),
+  SMTP_USER: z.string().default(""),
+  SMTP_PASS: z.string().default(""),
 })
 
 const parsed = schema.safeParse(process.env)
@@ -52,9 +73,18 @@ if (!parsed.success) {
 
 export const env = parsed.data
 
-if (env.MAIL_TRANSPORT === "http") {
+if (env.MAIL_TRANSPORT === "resend") {
   for (const key of ["MAIL_API_URL", "MAIL_API_KEY", "MAIL_FROM"] as const) {
-    if (!env[key]) throw new Error(`MAIL_TRANSPORT=http needs ${key}.`)
+    if (!env[key]) throw new Error(`MAIL_TRANSPORT=resend needs ${key}.`)
+  }
+}
+
+if (env.MAIL_TRANSPORT === "nodemailer") {
+  for (const key of ["MAIL_FROM", "SMTP_USER", "SMTP_PASS"] as const) {
+    if (!env[key]) throw new Error(`MAIL_TRANSPORT=nodemailer needs ${key}.`)
+  }
+  if (!env.SMTP_HOST && !env.SMTP_SERVICE) {
+    throw new Error("MAIL_TRANSPORT=nodemailer needs SMTP_HOST or SMTP_SERVICE.")
   }
 }
 

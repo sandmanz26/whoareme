@@ -30,6 +30,23 @@ writes, never transactions. `npm run db:reconcile` is the safety net for a count
 that drifts; run it on a schedule. `docker-compose.yml` starts a single-node
 replica set if you prefer, but nothing in the API requires one.
 
+## Mail
+
+`MAIL_TRANSPORT` selects how verification and password-reset mail leaves the
+server:
+
+| Value | What it does |
+|---|---|
+| `none` | development only; the token comes back in the API response |
+| `log` | writes the message to the log |
+| `resend` | POSTs to the Resend API (`MAIL_API_URL`, `MAIL_API_KEY`) |
+| `nodemailer` | sends over SMTP (`SMTP_SERVICE` or `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`) |
+
+`http` is still accepted as an alias for `resend`. For Gmail, turn on 2-Step
+Verification, create an App Password, set `SMTP_SERVICE=gmail`, and make
+`MAIL_FROM` the same address as `SMTP_USER` (or an alias on that account).
+Production refuses to start with `MAIL_TRANSPORT=none`.
+
 ## Verify
 
 ```bash
@@ -129,7 +146,7 @@ revocation is immediate. There is no refresh token yet.
 | POST | `/moderation/work/:id/unpublish` \| `/republish` | moderator — writes a notice to the author |
 | POST | `/moderation/users/:id/suspend` \| `/reinstate` | moderator — fans `authorSuspended` onto their entries |
 | GET | `/moderation/appeals` | moderator — appeals nobody has answered |
-| POST | `/moderation/appeals/:id/decide` | moderator — `{ outcome, reason }`; 403 if you took the decision |
+| POST | `/moderation/appeals/:id/decide` | moderator — `{ outcome, reason }`; 403 if you took the decision, unless you are an admin |
 | GET | `/moderation/log` | moderator — the audit log |
 | PUT | `/moderation/settings` | moderator — `{ contact?, copy?, disabledRoles?, reason }` |
 | GET | `/notices` | auth — the decisions taken about **you**, with their reasons |
@@ -170,9 +187,11 @@ browse controls.
 **A moderation decision writes its notice in the same operation.** Split into
 two calls, the missing half would always be the notice, because nothing
 visibly breaks when an author is not told. An appeal has to be reviewed by
-somebody other than whoever decided (enforced in the service, not the UI), and
-overturning genuinely republishes or reinstates — an outcome that changed
-nothing would be worse than no appeal, because it would look like recourse.
+somebody other than whoever decided (enforced in the service, not the UI). An
+admin may review their own decision, and the audit line records that it was
+self-reviewed. Overturning genuinely republishes or reinstates — an outcome
+that changed nothing would be worse than no appeal, because it would look like
+recourse.
 
 **The funnel is counters, not events.** One document per day, `$inc` only, and
 a `$jsonSchema` with `additionalProperties: false` so the collection could not

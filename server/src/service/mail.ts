@@ -1,7 +1,31 @@
+import nodemailer from "nodemailer"
+import type { Transporter } from "nodemailer"
 import { env } from "../config/index.js"
 
 export function mailConfigured(): boolean {
   return env.MAIL_TRANSPORT !== "none"
+}
+
+let smtpTransport: Transporter | null = null
+
+function getSmtpTransport(): Transporter {
+  if (smtpTransport) return smtpTransport
+
+  const connection = env.SMTP_HOST
+    ? { host: env.SMTP_HOST, port: env.SMTP_PORT, secure: env.SMTP_SECURE }
+    : { service: env.SMTP_SERVICE, port: env.SMTP_PORT, secure: env.SMTP_SECURE }
+
+  smtpTransport = nodemailer.createTransport({
+    ...connection,
+    auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
+    // Do not let a wrong host or a blocked port hold a request open for the
+    // library defaults (two minutes to connect, ten to go idle).
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
+  })
+
+  return smtpTransport
 }
 
 interface MailPayload {
@@ -19,7 +43,7 @@ export async function sendMail(payload: MailPayload): Promise<MailResult> {
     return { sent: true, transport: "log" }
   }
 
-  if (env.MAIL_TRANSPORT === "http") {
+  if (env.MAIL_TRANSPORT === "resend") {
     const res = await fetch(env.MAIL_API_URL, {
       method: "POST",
       headers: {
@@ -34,7 +58,23 @@ export async function sendMail(payload: MailPayload): Promise<MailResult> {
       return { sent: false, reason: `${res.status} ${body}` }
     }
 
-    return { sent: true, transport: "http" }
+    return { sent: true, transport: "resend" }
+  }
+
+  if (env.MAIL_TRANSPORT === "nodemailer") {
+    try {
+      await getSmtpTransport().sendMail({
+        from: env.MAIL_FROM,
+        to: payload.to,
+        subject: payload.subject,
+        text: payload.text,
+        html: payload.html,
+      })
+      return { sent: true, transport: "nodemailer" }
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error)
+      return { sent: false, reason }
+    }
   }
 
   return { sent: false, reason: "No mail transport configured." }

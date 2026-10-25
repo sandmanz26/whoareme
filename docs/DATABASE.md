@@ -881,6 +881,7 @@ Two rules are enforced in the service, not the interface, because the interface
 is not the thing that has to hold:
 
 1. An appeal is reviewed by somebody **other than** whoever took the decision.
+   Admins may review their own, and the audit line records it as self-reviewed.
 2. `overturned` performs the actual reversal — republish or reinstate — before
    the outcome is recorded. An appeal marked upheld with nothing undone would
    be worse than no appeal, because it would look like recourse.

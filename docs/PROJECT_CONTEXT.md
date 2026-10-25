@@ -65,8 +65,9 @@ verification by mail), directory listing and facets, work CRUD, publish with
 atomic quota enforcement, similar-work scoring, the experience and language
 filters, the launch scope, traffic recording and summary, GridFS thumbnails and
 profile photos, reports, moderation with an audit log, notices to the people a
-decision was about, appeals a second moderator must review, site settings, the
-taxonomy, and funnel counters. Verified by `npm run test:smoke`: **125
+decision was about, appeals a second moderator must review (an admin may review
+their own, recorded as self-reviewed), site settings, the
+taxonomy, and funnel counters. Verified by `npm run test:smoke`: **124
 assertions, all passing**, against an ephemeral single-node MongoDB replica set.
 
 There is **nothing the SPA does that the API cannot answer.** What is missing
@@ -674,7 +675,8 @@ the taxonomy has not drifted.
 - `src/hooks/useAdmin.tsx` moves onto `/api/moderation/*` and
   `src/components/panel/NoticeList.tsx` onto `/api/notices`. Note that the
   server refuses to let a moderator review an appeal against their own
-  decision; the SPA has no such check, and this is where it gets one.
+  decision, while an admin may do so and the audit line records it as
+  self-reviewed; the SPA has no such check, and this is where it gets one.
 - The traffic disclosure copy in `TrafficPanel` comes out once numbers are real.
 - Decide the fallback: keep the offline/localStorage path as a demo mode, or
   drop it. Rule 2 in `CLAUDE.md` currently says keep it.
@@ -687,7 +689,8 @@ the taxonomy has not drifted.
   no `mongod` on this machine. Publish runs in a transaction, so it must be a
   replica set, not a standalone. Then `npm run db:setup && npm run db:seed`.
 - **Password reset.** Email verification is wired up and mailed
-  (`MAIL_TRANSPORT`, see `server/lib/mail.ts`); reset is not.
+  (`MAIL_TRANSPORT`, see `server/src/service/mail.ts`; Resend or SMTP through
+  nodemailer); reset is not.
 - Rate limits are in-process. Behind more than one instance, move to a Redis
   store or each replica gets its own budget.
 - `helmet` CSP tuned for whatever domain serves the SPA.

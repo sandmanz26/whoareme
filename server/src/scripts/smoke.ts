@@ -430,6 +430,23 @@ async function main() {
     assertEq("GET /traffic/me → 200", r.status, 200)
     assert("traffic summary is object", typeof r.json["data"] === "object")
 
+    // Profile views and work opens write to different fields of the same daily
+    // document. The profile update once incremented `total` while also setting
+    // it on insert, which MongoDB rejects as a conflict; because the controller
+    // is fire-and-forget, only the work counter moved. This pins that down.
+    const viewedProfile = await get(base, `/people/${userId}`, undefined, "smoke-profile-viewer/1.0")
+    assertEq("anonymous profile view → 200", viewedProfile.status, 200)
+
+    type ProfileData = { totals: { profileViews: number } }
+    let profileData: ProfileData | null = null
+    for (let i = 0; i < 40; i++) {
+      const summary = await get(base, "/traffic/me", loginToken)
+      profileData = summary.json["data"] as ProfileData
+      if ((profileData.totals.profileViews ?? 0) > 0) break
+      await new Promise((resolve) => setTimeout(resolve, 50))
+    }
+    assert("traffic profileViews > 0", (profileData?.totals.profileViews ?? 0) > 0)
+
     // The traffic read is an aggregate, which does not cast the owner id against
     // the schema. Prove a recorded view comes back, since a total of zero was
     // the silent failure this covers.
@@ -734,6 +751,47 @@ async function main() {
         mod2Token,
       )
       assertEq("double appeal decide → 409", decide2.status, 409)
+
+      // An admin may review their own decision. The overturn above republished
+      // the work, so unpublish it again to produce a fresh notice for the same
+      // actor, then promote that actor to admin before they decide.
+      const unpubAgain = await post(
+        mod,
+        `/work/${twSlug}/unpublish`,
+        { reason: "Second look at the same entry." },
+        modToken,
+      )
+      assertEq("moderator unpublishes again → 200", unpubAgain.status, 200)
+
+      const noticeRes3 = await get(base, "/notices", targetToken)
+      const noticeList3 = ((noticeRes3.json["data"] as Json)["items"] ??
+        noticeRes3.json["data"]) as Json[]
+      const adminNoticeId = noticeList3.find(
+        (n) => n["action"] === "unpublish" && !n["appeal"],
+      )?.["_id"] as string | undefined
+      assert("fresh notice for admin self-review", typeof adminNoticeId === "string")
+
+      if (adminNoticeId) {
+        const adminAppeal = await post(
+          base,
+          `/notices/${adminNoticeId}/appeal`,
+          { text: "A second appeal on the fresh notice, for the admin self-review case." },
+          targetToken,
+        )
+        assertEq("second appeal → 201", adminAppeal.status, 201)
+
+        await User.updateOne({ slug: modSlug }, { $set: { access: "admin" } })
+        const selfAdmin = await post(
+          mod,
+          `/appeals/${adminNoticeId}/decide`,
+          {
+            outcome: "overturned",
+            reason: "Admin reviewed the same decision and reversed it.",
+          },
+          modToken,
+        )
+        assertEq("admin self-review → 200", selfAdmin.status, 200)
+      }
     } else {
       assert("skipped appeal test (no unpublish notice found)", true)
     }
@@ -747,6 +805,12 @@ async function main() {
     const logItems = ((r.json["data"] as Json)["items"] ?? r.json["data"]) as Json[]
     assert("audit log is array", Array.isArray(logItems))
     assert("audit log has entries", logItems.length > 0)
+    assert(
+      "audit records admin self-review",
+      logItems.some((entry) =>
+        String(entry["reason"] ?? "").includes("self-reviewed by an admin"),
+      ),
+    )
   }
 
   // ── § 13 Moderation settings ──────────────────────────────────────────────────

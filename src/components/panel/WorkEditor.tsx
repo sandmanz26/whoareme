@@ -73,10 +73,7 @@ export function WorkEditor({
   // `watch()` re-renders on every keystroke so the preview and readiness stay
   // live. The values are still the single source for the fields.
   const values = form.watch()
-  const fieldErrors = form.formState.errors as Record<
-    string,
-    { message?: string } | undefined
-  >
+  const fieldErrors = form.formState.errors as Record<string, { message?: string } | undefined>
   const errorFor = (name: string) => fieldErrors[name]?.message
 
   const templateFields = fieldsForTemplate(state.role, state.template)
